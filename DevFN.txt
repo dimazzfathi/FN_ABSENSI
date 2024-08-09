@@ -1,4 +1,21 @@
-Halaman yang akan di bangun
-1. Tampilan untuk Dashboar
-2. halaman login
-3. logo
+Halaman yang akan di bangun:
+
+Dashboard
+Absensi
+Naik Kelas
+Master Data
+ -Akademik
+    -Tahun Ajaran
+    -Kelas
+    -Jurusan
+ -Siswa
+    -Siswa
+    -Rombel
+ -Guru
+    -Mapel
+    -Guru
+Administrator
+ -Profile
+ -Add User
+ -Log Out
+Setting
