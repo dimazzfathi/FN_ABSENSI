@@ -1,3 +1,0 @@
-helo
-
-ini dari sulug
