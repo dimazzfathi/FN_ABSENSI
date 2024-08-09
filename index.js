@@ -1,1 +1,0 @@
-aku lagi mengisi ini
