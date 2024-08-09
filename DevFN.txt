@@ -1,4 +1,4 @@
-objek yang akan dibangun
+Halaman yang akan di bangun
 1. Tampilan untuk Dashboar
 2. halaman login
-3. logout
+3. logo
