@@ -1,7 +1,12 @@
-import Image from "next/image";
+import React from 'react'
+import LoginFrom from './administrator/login/page'
 
-export default function Home() {
+function page() {
   return (
-    <h1></h1>
-  );
+    <div>
+     <h1>helo</h1>
+    </div>
+  )
 }
+
+export default page
