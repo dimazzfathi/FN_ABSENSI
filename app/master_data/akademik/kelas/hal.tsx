@@ -133,7 +133,7 @@ export default function Hal() {
 
   return (
     <>
-      <div className='min-h-screen max-w-full bg-slate-100'>
+      <div className='rounded-lg max-w-full bg-slate-100'>
         <div className="pt-8 ml-7">
           <h1 className="text-2xl font-bold">Kelas</h1>
           <nav>
