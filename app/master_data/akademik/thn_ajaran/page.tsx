@@ -1,11 +1,9 @@
-import React from 'react'
+import Hal from '../thn_ajaran/hal';
 
-function page() {
+export default function Home() {
   return (
-    <div>
-      <h1>hai</h1>
+    <div className=" mx-auto">
+      <Hal />
     </div>
-  )
+  );
 }
-
-export default page
