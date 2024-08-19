@@ -2,38 +2,65 @@
 import React, { useState } from 'react'
 import Sidebar from '../sidebar/page';
 import Link from 'next/link';
-import Drop from "./app"
+import Drop from "./app";
+import { HomeIcon, AcademicCapIcon, UserGroupIcon, CogIcon } from '@heroicons/react/24/solid';
+import { ClipboardDocumentIcon, ChartBarIcon, CalendarIcon, UserCircleIcon, ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 
-    const Navbar = ({ toggleSidebar, isOpen }: { toggleSidebar: () => void; isOpen: boolean; }) => {
 
-    const [isClick, setisClick] = useState(false);
-    const [isMasterDataOpen, setIsMasterDataOpen] = useState(false);
-    const [isAkademikOpen, setIsAkademikOpen] = useState(false);
-    const [isSiswaOpen, setIsSiswaOpen] = useState(false);
-    const [isGuruOpen, setIsGuruOpen] = useState(false);
-    const [isAdminOpen, setIsAdminOpen] = useState(false);
-  
-    const toggleNavbar = () => {
-      setisClick(!isClick);
-    };
-    const toggleMasterData = () => {
-      setIsMasterDataOpen(!isMasterDataOpen);
-    };
-    const toggleAkademik = () => {
-      setIsAkademikOpen(!isAkademikOpen);
-    };
-    const toggleSiswa = () => {
-      setIsSiswaOpen(!isSiswaOpen);
-    };
-    const toggleGuru = () => {
-      setIsGuruOpen(!isGuruOpen);
-    };
-    const toggleAdmin = () => {
-      setIsAdminOpen(!isAdminOpen);
-    };
+const Navbar = ({ toggleSidebar, isOpen }: { toggleSidebar: () => void; isOpen: boolean; }) => {
+
+const [isClick, setisClick] = useState(false);
+const toggleNavbar = () => {setisClick(!isClick);};
+const [isMasterDataOpen, setMasterDataOpen] = useState(false);
+const [isAkademikOpen, setAkademikOpen] = useState(false);
+const [isSiswaOpen, setSiswaOpen] = useState(false);
+const [isGuruOpen, setGuruOpen] = useState(false);
+const [isAdminOpen, setAdminOpen] = useState(false);
+const [activeMenu, setActiveMenu] = useState(''); // State untuk menu aktif
+
+
+const toggleMasterData = () => {
+  setMasterDataOpen(!isMasterDataOpen);
+  setAkademikOpen(false);
+  setSiswaOpen(false);
+  setGuruOpen(false);
+  setAdminOpen(false);
+};
+
+const toggleAkademik = () => {
+  setAkademikOpen(!isAkademikOpen);
+  setSiswaOpen(false);
+  setGuruOpen(false);
+  setAdminOpen(false);
+};
+
+const toggleSiswa = () => {
+  setSiswaOpen(!isSiswaOpen);
+  setAkademikOpen(false);
+  setGuruOpen(false);
+  setAdminOpen(false);
+};
+
+const toggleGuru = () => {
+  setGuruOpen(!isGuruOpen);
+  setAkademikOpen(false);
+  setSiswaOpen(false);
+  setAdminOpen(false);
+};
+
+const toggleAdmin = () => {
+  setAdminOpen(!isAdminOpen);
+  setMasterDataOpen(false);
+  setAkademikOpen(false);
+  setSiswaOpen(false);
+  setGuruOpen(false);
+};
+const handleMenuClick = (menu) => {
+  setActiveMenu(menu);
+};
     return (
     <>
-    <nav className="bg-teal-400 z-50 relative sticky top-0">
+    <nav className="bg-teal-500 z-30 relative sticky top-0 shadow-lg">
       <div className="max-w mx-auto px-4 sm:px-6 lg:px-8 ">
           <div className="flex items-center justify-between h-16">
               <div className="flex items-center">
@@ -57,19 +84,25 @@ import Drop from "./app"
                     </svg>
                 </button>
                  <div className="flex-shrink-0 p-4">
-                  <a href="/" className='text-white'>Logo</a>
+                  <a href="" className='text-white'>Logo</a>
                 </div>
               </div>
-                <div className="hidden md:block">
+                    
+                <div className="block">
                     <div className="ml-4 flex items-center space-x-4">
-                    <span className='w-12 h-12 rounded-full'>
-                      <img src="" alt="" width={112} height={112} className='bg-transparent w-auto h-auto'/>
+                    <span className="hidden text-right lg:block">
+                      <span className='block text-sm font-medium text-black dark:text-text'>Bima</span>
+                      <span className='block text-xs'>Admin</span>
                     </span>
+                    <span className='w-10 h-10 rounded-full'>
+                      <img src="/image/logo 2.jpg" alt="" width={112} height={112} className='bg-black w-auto h-auto rounded-full'/>
+                    </span>
+
                     <Drop />
-                    </div>
+                </div>
                     
                 </div>
-                <div className="md:hidden flex items-center">
+                {/* <div className="md:hidden flex items-center">
                     <button
                     className='inline-flex items-center justify-center p-2 rounded-md text-white hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white ' onClick={toggleNavbar}>
                          {isClick ? (
@@ -98,7 +131,7 @@ import Drop from "./app"
                             </svg>
                          )}
                     </button>
-                </div>
+                </div> */}
           </div>
       </div>
         <div className={`transition-all duration-500 ease-in-out overflow-hidden ${
@@ -121,36 +154,40 @@ import Drop from "./app"
                 
     </nav>
 
-    <div className="flex flex-1 flex-col lg:ml-72.5 z-50">
+    
       {/* Sidebar */}
       <div
-        className={`fixed top-0 left-0 h-full bg-teal-400 text-white w-64 p-5 transform 
+        className={`fixed top-0 left-0 z-20 bg-teal-400 text-white w-64 p-5 transform 
             ${ isOpen ? 'translate-x-0' : '-translate-x-full'}  transition-transform duration-500 ease-in-out`}>
           <div>
           </div>
-        <nav className='pt-16'>
+        <nav className='pt-16 min-h-screen'>
+          <h2 className='px-4 opacity-75'>Menu</h2>
           <ul>
             <li className="mb-2">
               <Link href="/">
-              <div className="px-4 py-2 hover:bg-teal-200 rounded">
-                <p>
-                  Dashboard
-                </p>
+              <div onClick={() => handleMenuClick('dashboard')}className={`px-4 py-2 hover:bg-teal-200 rounded flex items-center cursor-pointer ${activeMenu === 'dashboard' ? 'bg-teal-500' : ''}`}>
+                <HomeIcon className="h-6 w-6 mr-2" />
+                <p>Dashboard</p>
               </div>
               </Link>
             </li>
             <li className="mb-2">
-              <Link href="/absensi">
-                <p className="block px-4 py-2 hover:bg-teal-200 rounded">
-                  Absensi
-                </p>
+              <Link href="../../components/absensi">
+              <div onClick={() => handleMenuClick('absensi')}
+                                className={`px-4 py-2 hover:bg-teal-200 rounded flex items-center cursor-pointer ${activeMenu === 'absensi' ? 'bg-teal-500' : ''}`}>
+                <ClipboardDocumentIcon className="h-6 w-6 mr-2" />
+                <p>Absensi</p>
+              </div>
               </Link>
             </li>
             <li className="mb-2">
-              <Link href="/naik-kelas">
-                <p className="block px-4 py-2 hover:bg-teal-200 rounded">
-                  Naik Kelas
-                </p>
+              <Link href="../components/naik_kelas">
+              <div onClick={() => handleMenuClick('naik_kelas')}
+                                className={`px-4 py-2 hover:bg-teal-200 rounded flex items-center cursor-pointer ${activeMenu === 'naik_kelas' ? 'bg-teal-500' : ''}`}>
+                <AcademicCapIcon className="h-6 w-6 mr-2" />
+                <p>Naik Kelas</p>
+              </div>
               </Link>
             </li>
             <li className="mb-2">
@@ -158,25 +195,11 @@ import Drop from "./app"
                 onClick={toggleMasterData}
                 className="w-full text-left block px-4 py-2 hover:bg-teal-200 rounded focus:outline-none"
               >
-                Master Data
-                
-                <svg
-                  className={`w-4 h-4 transform transition-transform duration-300 ${
-                    isMasterDataOpen ? 'rotate-180' : 'rotate-0'
-                  }`}
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
-                
+                <div onClick={() => handleMenuClick('master_data')}className={`w-full text-left px-4 py-2 hover:bg-teal-200 rounded focus:outline-none ${activeMenu === 'master_data' ? 'bg-teal-500' : ''}`} className="hover:bg-teal-200 rounded flex items-center cursor-pointer">
+                <ChartBarIcon className="h-6 w-6 mr-2" />
+                <p className='pe-7'>Master Data</p>
+                {isMasterDataOpen ? <ChevronUpIcon className="h-5 w-5" /> : <ChevronDownIcon className="h-5 w-5" />}
+              </div>
               </button>
               <div className={`transition-all duration-500 ease-in-out overflow-hidden ${
                     isMasterDataOpen ? 'max-h-screen ' : 'max-h-0 opacity-0'}`}>
@@ -187,31 +210,28 @@ import Drop from "./app"
                   onClick={toggleAkademik}
                   className="w-full text-left block px-4 py-2 hover:bg-teal-200 rounded focus:outline-none"
                   >
-                    Akademik
+                    <div className="hover:bg-teal-200 rounded flex items-center cursor-pointer">
+                {/* <AcademicCapIcon className="h-6 w-6 mr-2" /> */}
+                <p className='opacity-85'>Akademik</p>
+              </div>
                   </button>
                   <div className={`transition-all duration-500 ease-in-out overflow-hidden ${
                     isAkademikOpen ? 'max-h-screen ' : 'max-h-0 opacity-0'}`}>
                     {isAkademikOpen && (
                 <ul className="pl-4 mt-2 space-y-1">
                   <li>
-                    <Link href="/master-data/akademik">
-                      <p className="block px-4 py-2 hover:bg-gray-600 rounded">
-                        Tahun Ajaran
-                      </p>
+                    <Link href="../../master_data/akademik/thn_ajaran">
+                        <p className="block px-4 py-2 hover:bg-gray-600 rounded opacity-70">Tahun Ajaran</p>
                     </Link>
                   </li>
                   <li>
-                    <Link href="/master-data/siswa">
-                      <p className="block px-4 py-2 hover:bg-gray-600 rounded">
-                        Kelas
-                      </p>
+                    <Link href="../../master_data/akademik/kelas">
+                        <p className="block px-4 py-2 hover:bg-gray-600 rounded opacity-70">Kelas</p>
                     </Link>
                   </li>
                   <li>
-                    <Link href="/master-data/guru">
-                      <p className="block px-4 py-2 hover:bg-gray-600 rounded">
-                        Jurusan
-                      </p>
+                    <Link href="../../master_data/akademik/jurusan">
+                        <p className="block px-4 py-2 hover:bg-gray-600 rounded opacity-70">Jurusan</p>
                     </Link>
                   </li>
                 </ul>
@@ -223,22 +243,22 @@ import Drop from "./app"
                   onClick={toggleSiswa}
                   className="w-full text-left block px-4 py-2 hover:bg-teal-200 rounded focus:outline-none"
                   >
-                    Siswa
+                    <p className='opacity-85'>Siswa</p>
                   </button>
                   <div className={`transition-all duration-500 ease-in-out overflow-hidden ${
                     isSiswaOpen ? 'max-h-screen ' : 'max-h-0 opacity-0'}`}>
                     {isSiswaOpen && (
                         <ul className="pl-4 mt-2 space-y-1">
                           <li>
-                            <Link href="/master-data/akademik">
-                              <p className="block px-4 py-2 hover:bg-gray-600 rounded">
+                            <Link href="../../master_data/siswa/data_siswa">
+                              <p className="block px-4 py-2 hover:bg-gray-600 rounded opacity-70">
                                 Siswa
                               </p>
                             </Link>
                           </li>
                           <li>
-                            <Link href="/master-data/siswa">
-                              <p className="block px-4 py-2 hover:bg-gray-600 rounded">
+                            <Link href="../../master_data/siswa/rombel">
+                              <p className="block px-4 py-2 hover:bg-gray-600 rounded opacity-70">
                                 Rombel
                               </p>
                             </Link>
@@ -250,7 +270,7 @@ import Drop from "./app"
                   <li>
                   <button
                   onClick={toggleGuru}
-                  className="w-full text-left block px-4 py-2 hover:bg-teal-200 rounded focus:outline-none"
+                  className="w-full text-left block px-4 py-2 hover:bg-teal-200 rounded focus:outline-none opacity-85"
                   >
                     Guru
                   </button>
@@ -259,15 +279,15 @@ import Drop from "./app"
                     {isGuruOpen && (
                         <ul className="pl-4 mt-2 space-y-1">
                           <li>
-                            <Link href="/master-data/akademik">
-                              <p className="block px-4 py-2 hover:bg-gray-600 rounded">
+                            <Link href="../../master_data/guru/mapel">
+                              <p className="block px-4 py-2 hover:bg-gray-600 rounded opacity-70">
                                 Mapel
                               </p>
                             </Link>
                           </li>
                           <li>
-                            <Link href="/master-data/siswa">
-                              <p className="block px-4 py-2 hover:bg-gray-600 rounded">
+                            <Link href="../../master_data/guru/data_guru">
+                              <p className="block px-4 py-2 hover:bg-gray-600 rounded opacity-70">
                                 Guru
                               </p>
                             </Link>
@@ -283,31 +303,35 @@ import Drop from "./app"
             <li className="mb-2">
                 <button
                     onClick={toggleAdmin}
-                    className="w-full text-left block px-4 py-2 hover:bg-teal-200 rounded focus:outline-none"
+                    className="w-full text-left flex items-center px-4 py-2 hover:bg-teal-200 rounded focus:outline-none"
                   >
-                    Administrator
+                   <div onClick={() => handleMenuClick('master_data')}className={`w-full text-left flex items-center px-4 py-2 hover:bg-teal-200 rounded focus:outline-none ${activeMenu === 'master_data' ? 'bg-teal-500' : ''}`} className="hover:bg-teal-200 rounded flex items-center cursor-pointer">
+                <UserGroupIcon className="h-6 w-6 mr-2" />
+                <p className='pe-4'>Administrator</p>
+                {isAdminOpen ? <ChevronUpIcon className="h-5 w-5" /> : <ChevronDownIcon className="h-5 w-5" />}
+              </div>
                 </button>
                 <div className={`transition-all duration-500 ease-in-out overflow-hidden ${
                     isAdminOpen ? 'max-h-screen ' : 'max-h-0 opacity-0'}`}>
                 {isAdminOpen && (
                 <ul className="pl-4 mt-2 space-y-1">
                   <li>
-                    <Link href="/master-data/akademik">
-                      <p className="block px-4 py-2 hover:bg-gray-600 rounded">
+                    <Link href="../../administrator/profile">
+                      <p className="block px-4 py-2 hover:bg-gray-600 rounded opacity-85">
                         Profile
                       </p>
                     </Link>
                   </li>
                   <li>
-                    <Link href="/master-data/siswa">
-                      <p className="block px-4 py-2 hover:bg-gray-600 rounded">
+                    <Link href="../../administrator/add_user">
+                      <p className="block px-4 py-2 hover:bg-gray-600 rounded opacity-85">
                         Add User
                       </p>
                     </Link>
                   </li>
                   <li>
-                    <Link href="/master-data/siswa">
-                      <p className="block px-4 py-2 hover:bg-gray-600 rounded">
+                    <Link href="../../administrator/logout">
+                      <p className="block px-4 py-2 hover:bg-gray-600 rounded opacity-85">
                         Logout
                       </p>
                     </Link>
@@ -317,10 +341,12 @@ import Drop from "./app"
                 </div>
             </li>
             <li className="mb-2">
-              <Link href="/naik-kelas">
-                <p className="block px-4 py-2 hover:bg-teal-200 rounded">
-                  Setting
-                </p>
+              <Link href="../../../setting">
+              <div onClick={() => handleMenuClick('setting')}
+                                className={`px-4 py-2 hover:bg-teal-200 rounded flex items-center cursor-pointer ${activeMenu === 'setting' ? 'bg-teal-500' : ''}`}>
+                <CogIcon className="h-6 w-6 mr-2" />
+                <p>Setting</p>
+              </div>
               </Link>
             </li>
             
@@ -328,7 +354,7 @@ import Drop from "./app"
           </ul>
         </nav>
       </div>
-    </div>
+    
 
       {/* Main content */}
       {/* <main

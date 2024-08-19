@@ -1,15 +1,11 @@
 export default function Footer() {
     return (
-      <footer className="bg-teal-400 text-white py-6 z-50 relative">
-        <div className="container mx-auto text-center">
-          <p className="text-sm">
-            &copy; {new Date().getFullYear()} TheSija.
+      <footer className="bg-slate-100 text-white py-6 relative shadow-md z-0">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <p className="text-sm text-teal-500">
+             Developed by IT BMDev and SIJA major.
           </p>
-          <div className="flex justify-center space-x-4 mt-4">
-            <a href="#" className="hover:text-gray-400">Privacy Policy</a>
-            <a href="#" className="hover:text-gray-400">Terms of Service</a>
-            <a href="#" className="hover:text-gray-400">Contact Us</a>
-          </div>
+          <p className="text-sm text-teal-500">Copyright &copy; {new Date().getFullYear()} | Budi Mulia Vocational High School</p>
         </div>
       </footer>
     );

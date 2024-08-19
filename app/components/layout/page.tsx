@@ -9,7 +9,7 @@ export default function Home() {
     <div className=''>
 
     
-      <Navbar />
+      {/* <Navbar /> */}
       <div className="flex flex-col w-full">
         
         <main className="flex-grow p-4">

@@ -1,7 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
-import React, { useRef } from 'react';
-
+import { useState, useEffect, useRef } from 'react';
 
 export default function Kelas() {
   // State untuk menyimpan nilai input
@@ -154,28 +152,19 @@ export default function Kelas() {
           <nav>
             <ol className="flex space-x-2 text-sm text-gray-700">
               <li>
-                <a
-                  href="index.html"
-                  className="text-teal-500 hover:underline"
-                >
-                  Home
-                </a>
+                <a href="index.html" className="text-teal-500 hover:underline">Home</a>
               </li>
               <li>
                 <span className="text-gray-500">/</span>
               </li>
               <li>
-                <a href="#" className="text-teal-500 hover:underline">
-                  Master Data
-                </a>
+                <a href="#" className="text-teal-500 hover:underline">Master Data</a>
               </li>
               <li>
                 <span className="text-gray-500">/</span>
               </li>
               <li>
-                <a href="#" className="text-teal-500 hover:underline">
-                  Akademik
-                </a>
+                <a href="#" className="text-teal-500 hover:underline">Akademik</a>
               </li>
               <li>
                 <span className="text-gray-500">/</span>
