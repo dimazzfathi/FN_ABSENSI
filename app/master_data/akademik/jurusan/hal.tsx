@@ -251,7 +251,7 @@ export default function Jurusan() {
                 value={jurusanValue}
                 onChange={handleJurusanChange}
                 className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
-                placeholder="Tahun Ajaran..."
+                placeholder="Jurusan..."
               />
               <div className="flex justify-end">
                 <button
