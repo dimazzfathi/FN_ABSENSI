@@ -4,7 +4,6 @@ import React, { useState } from 'react'
 import Layout from "../../../components/layout/page"
 import Navbar from "../../../components/layout/navbar/page"
 import Footer from "../../../components/layout/footer/page"
-import Kelas from "./hal"
 
   const Page = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -15,11 +14,6 @@ import Kelas from "./hal"
 
 
   return (
-
-    <div className=" mx-auto">
-      <Kelas />
-    </div>
-  );
     <>
     <div>
     <Navbar isOpen={isOpen} toggleSidebar={toggleSidebar} />

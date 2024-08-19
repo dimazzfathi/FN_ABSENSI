@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 import Layout from "../../../components/layout/page"
 import Navbar from "../../../components/layout/navbar/page"
 import Footer from "../../../components/layout/footer/page"
-import Kelas from "../kelas/page"
+import Jurusan from '../jurusan/hal';
 
   const Page = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -22,7 +22,7 @@ import Kelas from "../kelas/page"
     <main className={`px-30 transition-transform duration-300 z-40 ${isOpen ? 'ml-64' : 'ml-0'}`}>
       <div className="flex-1 p-6 ">
           <div className="min-h-screen">
-            <Kelas />
+          <Jurusan />
           </div>
       </div>
     </main>
@@ -33,14 +33,3 @@ import Kelas from "../kelas/page"
 }
 
 export default Page
-
-import Jurusan from '../jurusan/hal';
-
-export default function Home() {
-  return (
-    <div className=" mx-auto">
-      <Jurusan />
-    </div>
-  );
-}
-
