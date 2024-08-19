@@ -18,8 +18,7 @@ export default function Jurusan() {
 
   
   useEffect(() => {
-    // Hapus data untuk pengujian
-    localStorage.removeItem("tableDataJurusan");
+  
   
     // Muat data dari localStorage
     const savedData = JSON.parse(localStorage.getItem("tableDataJurusan")) || [];
@@ -52,7 +51,11 @@ export default function Jurusan() {
     }
   };
 
-  
+  const handleNextClick = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
 
   const handleEditClick = (item) => {
     setEditData(item);
@@ -236,7 +239,25 @@ export default function Jurusan() {
                     </tbody>
                   </table>
                 </div>
-                
+                <div className="flex justify-between items-center mt-4">
+               
+               <div>
+                 <button
+                   onClick={handlePreviousClick}
+                   className="px-3 py-2 sm:px-3 ml-3 mb-2 sm:py-2 bg-teal-400 text-white rounded-lg text-sm sm:text-base mr-2"
+                   disabled={currentPage === 1}
+                 >
+                   Previous
+                 </button>
+                 <button
+                   onClick={handleNextClick}
+                   className="px-3 py-2 sm:px-3  sm:py-2 bg-teal-400 text-white rounded-lg text-sm sm:text-base"
+                   disabled={currentPage === totalPages}
+                 >
+                   Next
+                 </button>
+               </div>
+             </div>
               </div>
             </div>
           </div>
