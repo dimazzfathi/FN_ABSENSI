@@ -1,3 +1,4 @@
+
 "use client";
 import React, { useState } from 'react'
 import Layout from "../../../components/layout/page"
@@ -30,3 +31,14 @@ import Footer from "../../../components/layout/footer/page"
 }
 
 export default Page
+
+import Jurusan from '../jurusan/hal';
+
+export default function Home() {
+  return (
+    <div className=" mx-auto">
+      <Jurusan />
+    </div>
+  );
+}
+

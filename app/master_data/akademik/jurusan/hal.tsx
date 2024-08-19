@@ -1,10 +1,8 @@
 "use client";
 import { useState, useEffect, useRef } from 'react';
 
-export default function Hal() {
-  const [tahunAjaranValue, setTahunAjaranValue] = useState("");
-  const [statusValue, setStatusValue] = useState("");
-
+export default function Jurusan() {
+  const [jurusanValue, setJurusanValue] = useState("");
   const [tableData, setTableData] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [openDropdown, setOpenDropdown] = useState(null);
@@ -21,36 +19,30 @@ export default function Hal() {
   
   useEffect(() => {
     // Hapus data untuk pengujian
-    localStorage.removeItem("tableDataTahunAjaran");
+    localStorage.removeItem("tableDataJurusan");
   
     // Muat data dari localStorage
-    const savedData = JSON.parse(localStorage.getItem("tableDataTahunAjaran")) || [];
+    const savedData = JSON.parse(localStorage.getItem("tableDataJurusan")) || [];
     const sortedData = savedData.map((item, index) => ({ ...item, no: index + 1 }));
     setTableData(sortedData);
   }, []);
 
-  const handleTahunAjaranChange = (e) => {
-    setTahunAjaranValue(e.target.value);
+  const handleJurusanChange = (e) => {
+    setJurusanValue(e.target.value);
   };
-
-  const handleStatusChange = (e) => {
-    setStatusValue(e.target.value);
-  };
-
   const handleSaveClick = () => {
     // Cek apakah tableData kosong
     const newNo = tableData.length > 0 ? Math.max(...tableData.map(item => item.no)) + 1 : 1;
   
     const newData = [
       ...tableData,
-      { no: newNo, tahunAjaran: tahunAjaranValue, status: statusValue },
+      { no: newNo, jurusan: jurusanValue},
     ];
   
     setTableData(newData);
-    localStorage.setItem("tableDataTahunAjaran", JSON.stringify(newData));
-  
-    setTahunAjaranValue("");
-    setStatusValue("");
+    localStorage.setItem("tableDataJurusan", JSON.stringify(newData));
+    setJurusanValue("");
+    
   };
   
 
@@ -64,22 +56,20 @@ export default function Hal() {
 
   const handleEditClick = (item) => {
     setEditData(item);
-    setTahunAjaranValue(item.tahunAjaran);
-    setStatusValue(item.status);
+    setJurusanValue(item.jurusan);
     setShowEditModal(true);
   };
 
   const handleSaveEdit = () => {
     const updatedData = tableData.map((item) =>
       item.no === editData.no
-        ? { ...item, tahunAjaran: tahunAjaranValue, status: statusValue }
+        ? { ...item, jurusan: jurusanValue,}
         : item
     );
     setTableData(updatedData);
-    localStorage.setItem("tableDataTahunAjaran", JSON.stringify(updatedData));
+    localStorage.setItem("tableDataJurusan", JSON.stringify(updatedData));
     setShowEditModal(false);
-    setTahunAjaranValue("");
-    setStatusValue("");
+    setJurusanValue("");
   };
 
   const handleDeleteClick = (id) => {
@@ -97,7 +87,7 @@ export default function Hal() {
       no: index + 1,
     }));
     setTableData(updatedData);
-    localStorage.setItem("tableDataTahunAjaran", JSON.stringify(updatedData));
+    localStorage.setItem("tableDataJurusan", JSON.stringify(updatedData));
     setConfirmDelete({ visible: false, id: null });
   };
   
@@ -115,9 +105,9 @@ export default function Hal() {
   };
 
   const filteredData = tableData.filter((item) => {
-    const tahunAjaranMatch = item.tahunAjaran ? item.tahunAjaran.toLowerCase().includes(searchTerm.toLowerCase()) : false;
+    const jurusanMatch = item.jurusan ? item.jurusan.toLowerCase().includes(searchTerm.toLowerCase()) : false;
     const statusMatch = item.status ? item.status.toLowerCase().includes(searchTerm.toLowerCase()) : false;
-    return tahunAjaranMatch || statusMatch;
+    return jurusanMatch || statusMatch;
   });
 
   const handleItemsPerPageChange = (e) => {
@@ -131,17 +121,11 @@ export default function Hal() {
     currentPage * itemsPerPage
   );
 
-  const statusOptions = [
-    { value: "Aktif", color: "text-green-500" },
-    { value: "Lulus", color: "text-red-500" },
-  ];
-
-
   return (
     <>
       <div className="rounded-lg max-w-full bg-slate-100">
         <div className="pt-8 ml-7">
-          <h1 className="text-2xl font-bold">Tahun Ajaran</h1>
+          <h1 className="text-2xl font-bold">Jurusan</h1>
           <nav>
             <ol className="flex space-x-2 text-sm text-gray-700">
               <li>
@@ -168,7 +152,7 @@ export default function Hal() {
               <li>
                 <span className="text-gray-500">/</span>
               </li>
-              <li className="text-gray-500">Tahun Ajaran</li>
+              <li className="text-gray-500">Jurusan</li>
             </ol>
           </nav>
         </div>
@@ -177,30 +161,14 @@ export default function Hal() {
         <div className="flex flex-col lg:flex-row">
           <div className="w-full lg:w-1/3 p-4 lg:p-6">
             <div className="bg-white rounded-lg shadow-md p-4 lg:p-6 border">
-              <h2 className="text-xl mb-2 sm:text-xl font-bold">Input Tahun Ajaran</h2>
+              <h2 className="text-xl mb-2 sm:text-xl font-bold">Input Jurusan</h2>
               <input
                 type="text"
-                value={tahunAjaranValue}
-                onChange={handleTahunAjaranChange}
+                value={jurusanValue}
+                onChange={handleJurusanChange}
                 className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
-                placeholder="Tahun Ajaran..."
+                placeholder="Jurusan..."
               />
-              <h2 className="text-xl mb-2 sm:text-xl font-bold mt-4">
-                Input Status
-              </h2>
-              <select
-                value={statusValue}
-                onChange={handleStatusChange}
-                className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
-              >
-                <option value="">Pilih Status...</option>
-                {statusOptions.map((option, index) => (
-                  <option key={index} value={option.value}>
-                    {option.value}
-                  </option>
-                ))}
-              </select>
-
               <div className="flex justify-end mt-4">
                 <button
                   onClick={handleSaveClick}
@@ -218,7 +186,7 @@ export default function Hal() {
                 <div className="flex flex-col lg:flex-row justify-between mb-4">
                   <div className="p-2">
                     <h2 className="text-xl sm:text-2xl text-white font-bold">
-                      Tabel Tahun Ajaran
+                      Tabel Jurusan
                     </h2>
                   </div>
                   <div className="flex lg:flex-row justify-between p-2 items-center">
@@ -230,7 +198,7 @@ export default function Hal() {
                         value={searchTerm}
                         onChange={handleSearchChange}
                         className="p-2 border border-gray-300 rounded-l-xl rounded-r-xl text-sm sm:text-base"
-                        placeholder="Cari Tahun Ajaran atau Status..."
+                        placeholder="Cari Jurusan..."
                       />
                     </div>
                   </div>
@@ -240,8 +208,7 @@ export default function Hal() {
                     <thead>
                       <tr ml-2>
                         <th className="p-2 sm:p-3 rounded-l-xl  bg-slate-500 text-white">No</th>
-                        <th className="p-2 sm:p-3 bg-slate-500 text-white">Tahun Ajaran</th>
-                        <th className="p-2 sm:p-3 bg-slate-500 text-white">Status</th>
+                        <th className="p-2 sm:p-3 bg-slate-500 text-white">Jurusan</th>
                         <th className="p-2 sm:p-3 bg-slate-500 rounded-r-xl text-white">Aksi</th>
                       </tr>
                     </thead>
@@ -250,16 +217,7 @@ export default function Hal() {
                         <tr key={item.no}>
                           <td className="p-3 sm:p-3 text-white border-b">{item.no}</td>
                           <td className="p-3 sm:p-3 text-white border-b">
-                            {item.tahunAjaran}
-                          </td>
-                          <td
-                            className={`p-3 sm:p-3 text-white border-b ${
-                              item.status === "Aktif"
-                                ? "text-green-500"
-                                : "text-red-500"
-                            }`}
-                          >
-                            {item.status}
+                            {item.jurusan}
                           </td>
                           <td className="p-3 sm:p-3 text-white border-b relative text-center">
                         {/* // Komponen DropdownMenu yang ditampilkan dalam tabel untuk setiap baris data.
@@ -290,23 +248,11 @@ export default function Hal() {
               <h2 className="text-xl font-bold mb-4">Edit Data</h2>
               <input
                 type="text"
-                value={tahunAjaranValue}
-                onChange={handleTahunAjaranChange}
+                value={jurusanValue}
+                onChange={handleJurusanChange}
                 className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
                 placeholder="Tahun Ajaran..."
               />
-              <select
-                value={statusValue}
-                onChange={handleStatusChange}
-                className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-4"
-              >
-                <option value="">Pilih Status...</option>
-                {statusOptions.map((option, index) => (
-                  <option key={index} value={option.value}>
-                    {option.value}
-                  </option>
-                ))}
-              </select>
               <div className="flex justify-end">
                 <button
                   onClick={handleSaveEdit}

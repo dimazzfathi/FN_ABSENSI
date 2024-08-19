@@ -1,9 +1,9 @@
-import Hal from '../kelas/hal';
+import Kelas from '../kelas/hal';
 
 export default function Home() {
   return (
     <div className=" mx-auto">
-      <Hal />
+      <Kelas />
     </div>
   );
 }
