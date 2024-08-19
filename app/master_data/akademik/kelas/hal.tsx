@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from 'react';
+import { Link } from 'lucide-react';
 
 export default function Hal() {
   // State untuk menyimpan nilai input
@@ -139,19 +140,19 @@ export default function Hal() {
           <nav>
             <ol className="flex space-x-2 text-sm text-gray-700">
               <li>
-                <a href="index.html" className="text-teal-500 hover:underline">Home</a>
+                <a href="index.html" className="text-teal-500">Home</a>
               </li>
               <li>
                 <span className="text-gray-500">/</span>
               </li>
               <li>
-                <a href="#" className="text-teal-500 hover:underline">Master Data</a>
+                <a href="#" className="text-teal-500">Master Data</a>
               </li>
               <li>
                 <span className="text-gray-500">/</span>
               </li>
               <li>
-                <a href="#" className="text-teal-500 hover:underline">Akademik</a>
+                <a href="#" className="text-teal-500">Akademik</a>
               </li>
               <li>
                 <span className="text-gray-500">/</span>

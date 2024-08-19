@@ -33,7 +33,7 @@ const DropdownMenu = () => {
           <ul className="py-1">
             <li>
               <a
-                href="/profile"
+                href="../../administrator/profile"
                 className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
               >
                 Profile
@@ -41,7 +41,7 @@ const DropdownMenu = () => {
             </li>
             <li>
               <a
-                href="/add-user"
+                href="../../administrator/add_user"
                 className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
               >
                 Add User
@@ -58,7 +58,7 @@ const DropdownMenu = () => {
             <hr />
             <li>
               <a
-                href="/logout"
+                href="../../administrator/logout"
                 className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
               >
                 Logout
