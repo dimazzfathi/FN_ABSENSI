@@ -223,7 +223,6 @@ export default function Kelas() {
 
   return (
     <>
-    
       <div className="rounded-lg max-w-full bg-slate-100">
         <div className="pt-8 ml-7">
           <h1 className="text-2xl font-bold">Kelas</h1>
@@ -480,11 +479,11 @@ export default function Kelas() {
               </div>
             </div>
           </div>
-        )}
-      </div>
-      </div>
-    </>
-  );
+         )}
+         </div>
+         </div>
+       </>
+     );
 }// Komponen DropdownMenu yang menampilkan menu aksi untuk setiap item dalam tabel.
 // isOpen: Properti boolean yang menentukan apakah menu dropdown saat ini terbuka.
 // onClick: Fungsi callback yang dipanggil saat tombol dropdown diklik, untuk membuka atau menutup menu.

@@ -381,7 +381,6 @@ export default function Kelas() {
                             onEdit={() => handleEditClick(item)}
                           />
                         </td>
-<<<<<<< HEAD
                         </tr>
                       ))}
                     </tbody>
@@ -415,12 +414,7 @@ export default function Kelas() {
               </div>
             </div>
                 
-=======
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
->>>>>>> f9f96cf727fc2ee6f57bd41894404b35829a9274
+
               </div>
 
                 
@@ -452,38 +446,6 @@ export default function Kelas() {
             </div>
             </div>
           </div>
-
-        </div>
-<<<<<<< HEAD
-
-        
-
-        {showEditModal && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-            <div className="bg-white p-6 rounded-lg shadow-lg">
-              <h2 className="text-xl font-bold mb-4">Edit Data</h2>
-              <input
-                type="text"
-                value={tahunAjaranValue}
-                onChange={handleTahunAjaranChange}
-                className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
-                placeholder="Tahun Ajaran..."
-              />
-              <select
-                value={statusValue}
-                onChange={handleStatusChange}
-                className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-4"
-              >
-                <option value="">Pilih Status...</option>
-                {statusOptions.map((option, index) => (
-                  <option key={index} value={option.value}>
-                    {option.value}
-                  </option>
-                ))}
-              </select>
-              <div className="flex justify-end">
-=======
-        <div>
         </div>
         {/* Modal untuk konfirmasi penghapusan */}
         {confirmDelete.visible && (
@@ -491,7 +453,7 @@ export default function Kelas() {
             <div className="bg-white p-4 rounded-lg shadow-lg">
               <p>Apakah Anda yakin ingin menghapus item ini?</p>
               <div className="flex justify-end mt-4">
->>>>>>> f9f96cf727fc2ee6f57bd41894404b35829a9274
+
                 <button
                   onClick={handleCancelDelete}
                   className="px-3 py-2 sm:px-4 sm:py-2 bg-gray-300 text-black rounded text-sm sm:text-base mr-2"
@@ -552,7 +514,7 @@ export default function Kelas() {
           </div>
         )}
       </div>
-      </div>
+      
     </>
   );
 }// Komponen DropdownMenu yang menampilkan menu aksi untuk setiap item dalam tabel.
