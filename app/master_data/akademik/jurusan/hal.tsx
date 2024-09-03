@@ -325,7 +325,7 @@ export default function Rombel() {
                             onEdit={() => handleEditClick(item)}
                           />
                         </td>
-<<<<<<< HEAD
+
                         </tr>
                       ))}
                     </tbody>
@@ -357,12 +357,12 @@ export default function Rombel() {
                     </button>
                   </div>
                 </div>
-=======
+
                       </tr>
                     ))}
                   </tbody>
                 </table>
->>>>>>> f9f96cf727fc2ee6f57bd41894404b35829a9274
+
               </div>
 
                 
