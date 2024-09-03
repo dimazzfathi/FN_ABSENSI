@@ -4,8 +4,9 @@ import Sidebar from '../sidebar/page';
 import Link from 'next/link';
 import Drop from "./app";
 import { HomeIcon, AcademicCapIcon, UserGroupIcon, CogIcon } from '@heroicons/react/24/solid';
-import { ClipboardDocumentIcon, ChartBarIcon, CalendarIcon, UserCircleIcon, ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
-
+import { ClipboardDocumentIcon, ChartBarIcon, CalendarIcon, UserCircleIcon, ChevronUpIcon, ChevronDownIcon, LogoutIcon } from '@heroicons/react/24/outline';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faSignOutAlt } from '@fortawesome/free-solid-svg-icons'
 
 const Navbar = ({ toggleSidebar, isOpen }: { toggleSidebar: () => void; isOpen: boolean; }) => {
 
@@ -16,8 +17,8 @@ const [isAkademikOpen, setAkademikOpen] = useState(false);
 const [isSiswaOpen, setSiswaOpen] = useState(false);
 const [isGuruOpen, setGuruOpen] = useState(false);
 const [isAdminOpen, setAdminOpen] = useState(false);
-const [activeMenu, setActiveMenu] = useState(''); // State untuk menu aktif
-
+const [activeMenu, setActiveMenu] = useState<string | null>(null); // State untuk menu aktif
+const [showPopup, setShowPopup] = useState(false);
 
 const toggleMasterData = () => {
   setMasterDataOpen(!isMasterDataOpen);
@@ -55,19 +56,25 @@ const toggleAdmin = () => {
   setSiswaOpen(false);
   setGuruOpen(false);
 };
-const handleMenuClick = (menu) => {
-  setActiveMenu(menu);
+const handleMenuClick = (menu: string) => {
+  setActiveMenu(prevMenu => prevMenu === menu ? null : menu);
 };
+
+
+  const handleLogout = () => {
+    // Tambahkan logika logout di sini
+    alert('anda telah keluar');
+    window.location.href = '../../administrator/login'; // Ganti dengan route login Anda
+  };
     return (
     <>
     <nav className="bg-teal-500 z-30 relative sticky top-0 shadow-lg">
       <div className="max-w mx-auto px-4 sm:px-6 lg:px-8 ">
-          <div className="flex items-center justify-between h-16">
-              <div className="flex items-center">
-                
-                <button
+        <div className="flex items-center justify-between h-16">
+          <div className="flex items-center">
+              <button
                     onClick={toggleSidebar}
-                    className=" justify-between focus:outline-none">
+                    className="text-white justify-between focus:outline-none">
                     <svg
                     className="w-6 h-6"
                     fill="none"
@@ -84,10 +91,10 @@ const handleMenuClick = (menu) => {
                     </svg>
                 </button>
                  <div className="flex-shrink-0 p-4">
-                  <a href="" className='text-white'>Logo</a>
+                  <img src="/image/logo smk new2.png" alt="" width={112} height={112} className='mt-1'/>
+                  {/* <a href="" className='text-white'>Logo</a> */}
                 </div>
-              </div>
-                    
+              </div>   
                 <div className="block">
                     <div className="ml-4 flex items-center space-x-4">
                     <span className="hidden text-right lg:block">
@@ -99,62 +106,11 @@ const handleMenuClick = (menu) => {
                     </span>
 
                     <Drop />
-                </div>
-                    
-                </div>
-                {/* <div className="md:hidden flex items-center">
-                    <button
-                    className='inline-flex items-center justify-center p-2 rounded-md text-white hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white ' onClick={toggleNavbar}>
-                         {isClick ? (
-                            <svg className='h-6 w-6'
-                            xmlns='http://www.w3.org/2000/svg'
-                            fill='none'
-                            viewBox='0 0 24 24'
-                            stroke='currentColor'>
-                            <path
-                            strokeLinecap='round'
-                            strokeLinejoin='round'
-                            strokeWidth={2}
-                            d='M6 18L18 6M6 6L12 12' />
-                            </svg> 
-                         ) : (
-                            <svg className='h-6 w-6'
-                            xmlns='http://www.w3.org/2000/svg'
-                            fill='none'
-                            viewBox='0 0 24 24'
-                            stroke='currentColor'>
-                            <path
-                            strokeLinecap='round'
-                            strokeLinejoin='round'
-                            strokeWidth={2}
-                            d='M4 6h16M4 12h16M4 18h16' />
-                            </svg>
-                         )}
-                    </button>
-                </div> */}
+            </div> 
           </div>
-      </div>
-        <div className={`transition-all duration-500 ease-in-out overflow-hidden ${
-                    isClick ? 'max-h-screen ' : 'max-h-0 opacity-0'}`}>
-        {isClick && (
-            <div className="md:hidden z-10">
-                <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-                    <a href="/" className='text-white block hover:bg-white hover:text-black rounded-lg p-2'>
-                    Home
-                    </a>
-                    <a href="/" className='text-white block hover:bg-white hover:text-black rounded-lg p-2'>
-                    About
-                    </a>
-                    <a href="/" className='text-white block hover:bg-white hover:text-black rounded-lg p-2'>
-                    Contact
-                    </a>
-                </div>
-            </div>
-        )}</div>
-                
+        </div> 
+      </div>   
     </nav>
-
-    
       {/* Sidebar */}
       <div
         className={`fixed top-0 left-0 z-20 bg-teal-400 text-white w-64 p-5 transform 
@@ -167,7 +123,7 @@ const handleMenuClick = (menu) => {
             <li className="mb-2">
               <Link href="/">
               <div onClick={() => handleMenuClick('dashboard')}className={`px-4 py-2 hover:bg-teal-200 rounded flex items-center cursor-pointer ${activeMenu === 'dashboard' ? 'bg-teal-500' : ''}`}>
-                <HomeIcon className="h-6 w-6 mr-2" />
+              {isMasterDataOpen ? <HomeIcon className="h-6 w-6 mr-2" /> : <HomeIcon className="h-6 w-6 mr-2" />}
                 <p>Dashboard</p>
               </div>
               </Link>
@@ -221,17 +177,20 @@ const handleMenuClick = (menu) => {
                 <ul className="pl-4 mt-2 space-y-1">
                   <li>
                     <Link href="../../master_data/akademik/thn_ajaran">
-                        <p className="block px-4 py-2 hover:bg-gray-600 rounded opacity-70">Tahun Ajaran</p>
+                    <div onClick={() => handleMenuClick('thn_ajaran')}
+                                className={`px-4 py-2 hover:bg-teal-200 rounded flex items-center cursor-pointer ${activeMenu === 'thn_ajaran' ? 'bg-teal-500' : ''}`}>
+                        <p className="block rounded opacity-70">Tahun Ajaran</p>
+                        </div>
                     </Link>
                   </li>
                   <li>
                     <Link href="../../master_data/akademik/kelas">
-                        <p className="block px-4 py-2 hover:bg-gray-600 rounded opacity-70">Kelas</p>
+                        <p className="block px-4 py-2 hover:bg-teal-200 rounded opacity-70">Kelas</p>
                     </Link>
                   </li>
                   <li>
                     <Link href="../../master_data/akademik/jurusan">
-                        <p className="block px-4 py-2 hover:bg-gray-600 rounded opacity-70">Jurusan</p>
+                        <p className="block px-4 py-2 hover:bg-teal-200 rounded opacity-70">Rombel</p>
                     </Link>
                   </li>
                 </ul>
@@ -251,14 +210,14 @@ const handleMenuClick = (menu) => {
                         <ul className="pl-4 mt-2 space-y-1">
                           <li>
                             <Link href="../../master_data/siswa/data_siswa">
-                              <p className="block px-4 py-2 hover:bg-gray-600 rounded opacity-70">
+                              <p className="block px-4 py-2 hover:bg-teal-200 rounded opacity-70">
                                 Siswa
                               </p>
                             </Link>
                           </li>
                           <li>
                             <Link href="../../master_data/siswa/rombel">
-                              <p className="block px-4 py-2 hover:bg-gray-600 rounded opacity-70">
+                              <p className="block px-4 py-2 hover:bg-teal-200 rounded opacity-70">
                                 Rombel
                               </p>
                             </Link>
@@ -280,14 +239,14 @@ const handleMenuClick = (menu) => {
                         <ul className="pl-4 mt-2 space-y-1">
                           <li>
                             <Link href="../../master_data/guru/mapel">
-                              <p className="block px-4 py-2 hover:bg-gray-600 rounded opacity-70">
+                              <p className="block px-4 py-2 hover:bg-teal-200 rounded opacity-70">
                                 Mapel
                               </p>
                             </Link>
                           </li>
                           <li>
                             <Link href="../../master_data/guru/data_guru">
-                              <p className="block px-4 py-2 hover:bg-gray-600 rounded opacity-70">
+                              <p className="block px-4 py-2 hover:bg-teal-200 rounded opacity-70">
                                 Guru
                               </p>
                             </Link>
@@ -317,22 +276,15 @@ const handleMenuClick = (menu) => {
                 <ul className="pl-4 mt-2 space-y-1">
                   <li>
                     <Link href="../../administrator/profile">
-                      <p className="block px-4 py-2 hover:bg-gray-600 rounded opacity-85">
+                      <p className="block px-4 py-2 hover:bg-teal-200 rounded opacity-85">
                         Profile
                       </p>
                     </Link>
                   </li>
                   <li>
                     <Link href="../../administrator/add_user">
-                      <p className="block px-4 py-2 hover:bg-gray-600 rounded opacity-85">
+                      <p className="block px-4 py-2 hover:bg-teal-200 rounded opacity-85">
                         Add User
-                      </p>
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="../../administrator/logout">
-                      <p className="block px-4 py-2 hover:bg-gray-600 rounded opacity-85">
-                        Logout
                       </p>
                     </Link>
                   </li>
@@ -349,12 +301,40 @@ const handleMenuClick = (menu) => {
               </div>
               </Link>
             </li>
-            
+            <li className="mb-2">
+              <Link href={""}>
+              <div onClick={() => setShowPopup(true)}
+                                className={`px-4 py-2 hover:bg-teal-200 rounded flex items-center cursor-pointer ${activeMenu === 'setting' ? 'bg-teal-500' : ''}`}>
+                <FontAwesomeIcon icon={faSignOutAlt} className="h-5 w-5 mr-2 pl-1" />
+                <p >Logout</p>
+              </div>
+              </Link>
+            </li>
             {/* Tambahkan menu lainnya di sini */}
           </ul>
         </nav>
       </div>
-    
+      {showPopup && (
+                <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-30">
+                  <div className="bg-white p-6 rounded shadow-lg">
+                    <h2 className="text-lg font-bold mb-4">Apakah Anda yakin ingin logout?</h2>
+                    <div className="flex ">
+                      <button
+                        onClick={() => setShowPopup(false)}
+                        className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded mr-2"
+                      >
+                        Batal
+                      </button>
+                      <button
+                        onClick={handleLogout}
+                        className="bg-red-500 hover:bg-red-700 text-white px-4 py-2 rounded ml-auto"
+                      >
+                        Keluar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
       {/* Main content */}
       {/* <main

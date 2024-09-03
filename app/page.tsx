@@ -1,10 +1,22 @@
-import React from 'react'
-import LoginFrom from './administrator/login/page'
+"use client";
+import React, { useState } from 'react'
+import Navbar from './components/layout/navbar/page';
+const Page = () => {
+  const [isOpen, setIsOpen] = useState(false);
 
-function page() {
+  const toggleSidebar = () => {
+      setIsOpen(!isOpen);
+  };
   return (
-    <h1>5i5rikk</h1>
+    
+    <>
+    <div className=''>
+      <Navbar isOpen={isOpen} toggleSidebar={toggleSidebar} />
+    </div>
+    </>
+
+    
   );
 }
 
-export default page
+export default Page
