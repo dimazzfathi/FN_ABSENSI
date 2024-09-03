@@ -325,7 +325,6 @@ export default function Rombel() {
                             onEdit={() => handleEditClick(item)}
                           />
                         </td>
-
                         </tr>
                       ))}
                     </tbody>
@@ -357,16 +356,6 @@ export default function Rombel() {
                     </button>
                   </div>
                 </div>
-
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-
-              </div>
-
-                
-
               <div className="mt-4 flex justify-between items-center">
               <div className="text-sm text-gray-700 text-white">
                 Halaman {currentPage} dari {totalPages}
