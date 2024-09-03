@@ -239,25 +239,32 @@ export default function Jurusan() {
                     </tbody>
                   </table>
                 </div>
-                <div className="flex justify-between items-center mt-4">
-               
-               <div>
-                 <button
-                   onClick={handlePreviousClick}
-                   className="px-3 py-2 sm:px-3 ml-3 mb-2 sm:py-2 bg-teal-400 text-white rounded-lg text-sm sm:text-base mr-2"
-                   disabled={currentPage === 1}
-                 >
-                   Previous
-                 </button>
-                 <button
-                   onClick={handleNextClick}
-                   className="px-3 py-2 sm:px-3  sm:py-2 bg-teal-400 text-white rounded-lg text-sm sm:text-base"
-                   disabled={currentPage === totalPages}
-                 >
-                   Next
-                 </button>
-               </div>
-             </div>
+                {/* Pagination */}
+                <div className="mt-4 flex justify-between items-center pb-4">
+                  <div className="text-sm text-gray-700 text-white">
+                    Halaman {currentPage} dari {totalPages}
+                  </div>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => setCurrentPage(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className={`px-2 py-1 border rounded ${
+                        currentPage === 1 ? "bg-gray-300" : "bg-teal-400 text-white"
+                      }`}
+                    >
+                      Previous
+                    </button>
+                    <button
+                      onClick={() => setCurrentPage(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className={`px-2 py-1 border rounded ${
+                        currentPage === totalPages ? "bg-gray-300" : "bg-teal-400 text-white"
+                      }`}
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

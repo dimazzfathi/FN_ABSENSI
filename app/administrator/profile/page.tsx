@@ -1,5 +1,5 @@
 "use client";
-import Adduser from './app';
+import Profile from './app';
 import React, { useState } from 'react'
 import Navbar from "../../components/layout/navbar/page"
 import Footer from "../../components/layout/footer/page"
@@ -23,7 +23,7 @@ import Footer from "../../components/layout/footer/page"
   }`}>
       <div className="flex-1 p-6">
           <div className="min-h-screen">
-            <Adduser />
+            <Profile />
           </div>
       </div>
     </main>

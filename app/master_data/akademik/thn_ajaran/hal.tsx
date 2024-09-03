@@ -278,11 +278,41 @@ export default function Hal() {
                     </tbody>
                   </table>
                 </div>
+
+                {/* Pagination */}
+          <div className="mt-4 flex justify-between items-center pb-4">
+              <div className="text-sm text-gray-700 text-white">
+                Halaman {currentPage} dari {totalPages}
+              </div>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className={`px-2 py-1 border rounded ${
+                    currentPage === 1 ? "bg-gray-300" : "bg-teal-400 text-white"
+                  }`}
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className={`px-2 py-1 border rounded ${
+                    currentPage === totalPages ? "bg-gray-300" : "bg-teal-400 text-white"
+                  }`}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
                 
               </div>
             </div>
           </div>
+
         </div>
+
+        
 
         {showEditModal && (
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">

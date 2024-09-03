@@ -1,21 +1,19 @@
+"use client";
+import React, { useState } from 'react'
 import Footer from './footer/page';
 import Navbar from './navbar/page';
 import Sidebar from './sidebar/page';
+const Page = () => {
+  const [isOpen, setIsOpen] = useState(false);
 
-export default function Home() {
+  const toggleSidebar = () => {
+      setIsOpen(!isOpen);
+  };
   return (
     
     <>
     <div className=''>
-
-    
-      {/* <Navbar /> */}
-      <div className="flex flex-col w-full">
-        
-        <main className="flex-grow p-4">
-        </main>
-        <Footer />
-    </div>
+      <Navbar isOpen={isOpen} toggleSidebar={toggleSidebar} />
     </div>
     </>
 
@@ -23,3 +21,4 @@ export default function Home() {
   );
 }
 
+export default Page
