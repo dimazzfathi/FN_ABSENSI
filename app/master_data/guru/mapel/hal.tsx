@@ -1,13 +1,16 @@
 "use client";
 import { useState, useEffect, useRef } from 'react';
 
-export default function Rombel() {
+export default function Mapel() {
   // State untuk menyimpan nilai input 
- 
+  const [mapelValue, setMapelValue] = useState("");
+  const [kelasValue, setKelasValue] = useState("");
   const [jurusanValue, setJurusanValue] = useState("");
+  const [isJurusanAktif, setIsJurusanAktif] = useState(true);
   const [isResettable, setIsResettable] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const jurusanInputRef = useRef(null);
+  const [mapelError, setMapelError] = useState(false);
+  const [kelasError, setKelasError] = useState(false);
+  const [jurusanError, setJurusanError] = useState(false);
 
   // State untuk menyimpan data tabel
   const [tableData, setTableData] = useState([]);
@@ -26,92 +29,136 @@ export default function Rombel() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
 
+  const [filterMapel, setFilterMapel] = useState("");
   const [filterKelas, setFilterKelas] = useState("");
   const [filterJurusan, setFilterJurusan] = useState("");
-  
+
   // useEffect to monitor changes and update isResettable
   useEffect(() => {
-    const savedData = JSON.parse(localStorage.getItem("tableDataJurusan")) || [];
+    const savedData = JSON.parse(localStorage.getItem("tableDataMapel")) || [];
     setTableData(savedData);
-    if (filterKelas || filterJurusan  || searchTerm) {
+    if (filterMapel || filterKelas || filterJurusan || searchTerm) {
       setIsResettable(true);
     } else {
       setIsResettable(false);
     }
-  }, [filterKelas, filterJurusan , searchTerm]);
-
+  }, [filterMapel, filterKelas, filterJurusan, searchTerm]);
 
   // Handler untuk mereset filter
   const handleResetClick = () => {
     if (isResettable) {
-    setFilterKelas('');
-    setFilterJurusan('');
-    setSearchTerm('');
+      setFilterMapel("");
+      setFilterKelas("");
+      setFilterJurusan("");
+      setSearchTerm("");
     }
   };
 
   useEffect(() => {
     // Ambil data dari Local Storage saat komponen dimuat
-    const savedData = JSON.parse(localStorage.getItem("tableDataJurusan")) || [];
+    const savedData = JSON.parse(localStorage.getItem("tableDataMapel")) || [];
     setTableData(savedData);
   }, []);
 
-  const handleJurusanChange = (event) => {
-    setJurusanValue(event.target.value);
+  const handleToggleJurusan = () => {
+    const newIsJurusanAktif = !isJurusanAktif;
+    setIsJurusanAktif(newIsJurusanAktif);
+  
+    if (!newIsJurusanAktif) {
+      setJurusanValue(""); // Mengosongkan data di input Jurusan saat toggle dimatikan
+    }
   };
+  
+
+  const handleMapelChange = (e) => setMapelValue(e.target.value);
+  const handleKelasChange = (e) => setKelasValue(e.target.value);
+  const handleJurusanChange = (e) => setJurusanValue(e.target.value);
 
   // Fungsi untuk menyimpan data baru ke dalam tabel
   const handleSaveClick = () => {
-    if (!jurusanValue) {
-      jurusanInputRef.current.focus();
-      jurusanInputRef.current.classList.add('border-red-500');
-      return; // Menghentikan eksekusi jika input kosong
+    let hasError = false;
+  
+    if (!mapelValue) {
+      setMapelError(true);
+      document.getElementById("mapelInput").focus();
+      hasError = true;
+    } else {
+      setMapelError(false);
     }
-
-    // Lanjutkan penyimpanan data jika validasi berhasil
+  
+    if (!kelasValue) {
+      setKelasError(true);
+      if (!hasError) {
+        document.getElementById("kelasInput").focus();
+        hasError = true;
+      }
+    } else {
+      setKelasError(false);
+    }
+  
+    if (!jurusanValue && isJurusanAktif) {
+      setJurusanError(true);
+      if (!hasError) {
+        document.getElementById("jurusanInput").focus();
+      }
+    } else {
+      setJurusanError(false);
+    }
+  
+    if (hasError) return; // Stop execution if there are errors
+  
     const newData = [
       ...tableData,
       {
         no: tableData.length > 0 ? Math.max(...tableData.map(item => item.no)) + 1 : 1,
-        jurusan: jurusanValue,
+        mapel: mapelValue,
+        kelas: kelasValue,
+        jurusan: jurusanValue || "-",
       },
     ];
-
-    setTableData(newData);
-    localStorage.setItem('tableDataJurusan', JSON.stringify(newData)); // Simpan ke Local Storage
-
-    // Mengosongkan input setelah disimpan
-    setJurusanValue(''); // Mengosongkan input Jurusan
-  };
   
+    setTableData(newData);
+    localStorage.setItem("tableDataMapel", JSON.stringify(newData)); // Simpan ke Local Storage
+    setMapelValue("");
+    setKelasValue(""); // Mengosongkan input Kelas setelah disimpan
+    setJurusanValue(""); // Mengosongkan dropdown Jurusan setelah disimpan
+  };
   
 
   const handleDownloadFormatClick = () => {
     // Logika untuk mengunduh file format
-    console.log('Unduh format');
+    console.log("Unduh format");
   };
 
   const handleUploadFileClick = () => {
     // Logika untuk mengunggah file
-    console.log('Upload file');
+    console.log("Upload file");
   };
-
 
   const handleEditClick = (item) => {
     setEditData(item);
+    setMapelValue(item.mapel);
+    setKelasValue(item.kelas);
     setJurusanValue(item.jurusan);
-   setShowEditModal(true);
+    setShowEditModal(true);
   };
 
   const handleSaveEdit = () => {
     const updatedData = tableData.map((item) =>
       item.no === editData.no
-        ? { ...item, jurusan: jurusanValue }
+        ? {
+            ...item,
+            mapel: mapelValue,
+            kelas: kelasValue,
+            jurusan: jurusanValue || "-",
+          }
         : item
     );
     setTableData(updatedData);
-    localStorage.setItem("tableDataJurusan", JSON.stringify(updatedData));
+    localStorage.setItem("tableDataMapel", JSON.stringify(updatedData));
     setShowEditModal(false);
+    setMapelValue("");
+    setKelasValue("");
     setJurusanValue("");
   };
 
@@ -130,7 +177,7 @@ export default function Rombel() {
     }));
     
     setTableData(updatedData);
-    localStorage.setItem("tableDataJurusan", JSON.stringify(updatedData)); // Update localStorage
+    localStorage.setItem("tableDataMapel", JSON.stringify(updatedData)); // Update localStorage
     setConfirmDelete({ visible: false, id: null });
   };
   
@@ -169,7 +216,7 @@ export default function Rombel() {
         (typeof item.kelas === 'string' && item.kelas.toLowerCase().includes(searchLowerCase)) ||
         (typeof item.jurusan === 'string' && item.jurusan.toLowerCase().includes(searchLowerCase)) ||
         (typeof item.jk === 'string' && item.jk.toLowerCase().includes(searchLowerCase)) ||
-        (typeof item.namaWali === 'string' && item.namaWali.toLowerCase().includes(searchLowerCase)) ||
+        (typeof item.mapel === 'string' && item.mapel.toLowerCase().includes(searchLowerCase)) ||
         (typeof item.noWali === 'string' && item.noWali.toLowerCase().includes(searchLowerCase))
       ) : true)
     );
@@ -182,15 +229,35 @@ export default function Rombel() {
     currentPage * itemsPerPage
   );
 
+  // List of kelasoptions
+  const kelasOptions = [
+    "10",
+    "11",
+    "12",
+    "10 & 11",
+    "10 & 12",
+    "10 11 12",
+    "11 & 12",
+];  
   
-
+  // List of jurusan options
+  const jurusanOptions = [
+    "TKJ",
+    "TKJ 1",
+    "TKJ 2",
+    "TSM",
+    "Bd",
+    "BD 1",
+    "BD 2",
+    "DKV",
+  ];
 
   return (
     <>
     
       <div className="rounded-lg max-w-full bg-slate-100">
         <div className="pt-8 ml-7">
-          <h1 className="text-2xl font-bold">Rombel</h1>
+          <h1 className="text-2xl font-bold">Mapel</h1>
           <nav>
             <ol className="flex space-x-2 text-sm text-gray-700">
               <li>
@@ -206,12 +273,12 @@ export default function Rombel() {
                 <span className="text-gray-500">/</span>
               </li>
               <li>
-                <a href="#" className="text-teal-500 hover:text-teal-600 hover:underline">Akademik</a>
+                <a href="#" className="text-teal-500 hover:text-teal-600 hover:underline">Guru</a>
               </li>
               <li>
                 <span className="text-gray-500">/</span>
               </li>
-              <li className="text-gray-500">Rombel</li>
+              <li className="text-gray-500">Mapel</li>
             </ol>
           </nav>
         </div>
@@ -220,24 +287,99 @@ export default function Rombel() {
           {/* Column 1: Input */}
           <div className="w-full lg:w-1/3 p-4 lg:p-6">
             <div className="bg-white rounded-lg shadow-md p-4 lg:p-6 border">
-            <h2 className="text-sm mb-2 sm:text-sm font-bold"> Rombel</h2>
-            <input
-                ref={jurusanInputRef}
+              <h2 className="text-sm mb-2 sm:text-sm font-bold">Mapel</h2>
+              <input
                 type="text"
+                id="mapelInput"
+                value={mapelValue}
+                onChange={handleMapelChange}
+                className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${
+                  mapelError ? "border-red-500" : "border-gray-300"
+                }`}
+                placeholder="Mapel..."
+              />
+              <h2 className="text-sm mb-2 sm:text-sm font-bold">Kelas</h2>
+              <select
+                id="kelasInput"
+                value={kelasValue}
+                onChange={handleKelasChange}
+                className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${
+                  kelasError ? "border-red-500" : "border-gray-300"
+                }`}
+              >
+                <option value="">Pilih Kelas...</option>
+                {kelasOptions.map((option, index) => (
+                  <option key={index} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+
+              {/* Tombol On/Off Geser */}
+              <label className="inline-flex mt-4 items-center mb-2">
+                <input
+                  type="checkbox"
+                  checked={isJurusanAktif}
+                  onChange={handleToggleJurusan}
+                  className="hidden"
+                />
+                <span
+                  className={`w-10 h-5 flex items-center bg-gray-300 rounded-full p-1 cursor-pointer transition-colors duration-300 ${
+                    isJurusanAktif ? "bg-teal-400" : ""
+                  }`}
+                >
+                  <span
+                    className={`bg-white w-4 h-4 rounded-full shadow-md transform duration-300 ${
+                      isJurusanAktif ? "translate-x-5" : ""
+                    }`}
+                  />
+                </span>
+                <span className="ml-2 text-sm">Aktifkan Input Jurusan</span>
+              </label>
+
+              <h2 className="text-sm mb-2 sm:text-sm font-bold">Jurusan</h2>
+              <select
+                id="jurusanInput"
                 value={jurusanValue}
                 onChange={handleJurusanChange}
-                className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
-                placeholder="Rombel..."
-              />
-              <div className="flex m-4 space-x-2">
-                <button
-                  onClick={handleSaveClick}
-                  className="ml-auto px-3 py-2 sm:px-4 sm:py-2 bg-teal-400 hover:bg-teal-500 text-white rounded text-sm sm:text-base"
-                >
-                  Simpan
-                </button>
+                className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${
+                  jurusanError ? "border-red-500" : "border-gray-300"
+                }`}
+                disabled={!isJurusanAktif}
+              >
+                <option value="">Pilih Jurusan...</option>
+                {jurusanOptions.map((option, index) => (
+                  <option key={index} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+              <div className="mt-4 flex justify-between items-center">
+                {/* Tombol Unduh Format dan Upload File */}
+                <div className="">
+                  <button
+                    onClick={handleDownloadFormatClick}
+                    className="px-4 py-2 bg-teal-700 hover:bg-teal-800 border-slate-500 text-white rounded text-sm sm:text-base"
+                  >
+                    Unduh Format
+                  </button>
+                  <button
+                    onClick={handleUploadFileClick}
+                    className="px-4 py-2 lg:ml-2 md:ml-2 bg-rose-600 hover:bg-rose-700 border-teal-400 text-white rounded text-sm sm:text-base pr-10 mt-1 text-center"
+                  >
+                    Upload File
+                  </button>
+                </div>
+                {/* Tombol Simpan */}
+                <div className="flex m-4 space-x-2">
+                  <button
+                    onClick={handleSaveClick}
+                    className="px-3 py-2 sm:px-4 sm:py-2 bg-teal-400 hover:bg-teal-500 text-white items-end-end rounded text-sm sm:text-base"
+                  >
+                    Simpan
+                  </button>
+                </div>
               </div>
-
             </div>
           </div>
           
@@ -249,7 +391,7 @@ export default function Rombel() {
               <div className="flex flex-col lg:flex-row justify-between mb-4">
                 <div className="p-2">
                   <h2 className="text-sm pt-3 sm:text-2xl text-white font-bold">
-                    Tabel Rombel
+                    Tabel Mapel
                   </h2>
                 </div>          
               </div>
@@ -298,9 +440,15 @@ export default function Rombel() {
                 <table className="w-full text-left mt-4 border-collapse">
                   <thead>
                     <tr className="ml-2">
-                      <th className="p-2 sm:p-3 rounded-l-lg  bg-slate-500 text-white">No</th>                    
+                      <th className="p-2 sm:p-3 rounded-l-lg  bg-slate-500 text-white">No</th>
                       <th className="p-2 sm:p-3 bg-slate-500 text-white">
-                        Rombel
+                        Mapel
+                      </th>
+                      <th className="p-2 sm:p-3 bg-slate-500 text-white">
+                        Kelas
+                      </th>
+                      <th className="p-2 sm:p-3 bg-slate-500 text-white">
+                        Jurusan
                       </th>
                       <th className="p-2 sm:p-3 bg-slate-500 rounded-r-xl text-white">
                         Aksi
@@ -311,6 +459,8 @@ export default function Rombel() {
                     {currentData.map((item) => (
                       <tr key={item.no}>
                         <td className="p-3 sm:p-3 text-white border-b">{item.no}</td>
+                        <td className="p-3 sm:p-3 text-white border-b">{item.mapel}</td>
+                        <td className="p-3 sm:p-3 text-white border-b">{item.kelas}</td>
                         <td className="p-3 sm:p-3 text-white border-b">{item.jurusan}</td>
                         <td className="p-3 sm:p-3 text-white  border-b "
                         style={{ left: '-500px' }}>
@@ -325,44 +475,10 @@ export default function Rombel() {
                             onEdit={() => handleEditClick(item)}
                           />
                         </td>
-<<<<<<< HEAD
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                {/* Pagination */}
-                <div className="mt-4 flex justify-between items-center pb-4">
-                  <div className="text-sm text-gray-700 text-white">
-                    Halaman {currentPage} dari {totalPages}
-                  </div>
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => setCurrentPage(currentPage - 1)}
-                      disabled={currentPage === 1}
-                      className={`px-2 py-1 border rounded ${
-                        currentPage === 1 ? "bg-gray-300" : "bg-teal-400 text-white"
-                      }`}
-                    >
-                      Previous
-                    </button>
-                    <button
-                      onClick={() => setCurrentPage(currentPage + 1)}
-                      disabled={currentPage === totalPages}
-                      className={`px-2 py-1 border rounded ${
-                        currentPage === totalPages ? "bg-gray-300" : "bg-teal-400 text-white"
-                      }`}
-                    >
-                      Next
-                    </button>
-                  </div>
-                </div>
-=======
                       </tr>
                     ))}
                   </tbody>
                 </table>
->>>>>>> f9f96cf727fc2ee6f57bd41894404b35829a9274
               </div>
 
                 
@@ -425,13 +541,59 @@ export default function Rombel() {
             <div className="bg-white p-4 rounded-lg shadow-lg">
               <h2 className="text-sm pt-3 sm:text-2xl font-bold">Edit Data</h2>
              
-              <input
+            <input
                 type="text"
+                value={mapelValue}
+                onChange={handleMapelChange}
+                className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
+                placeholder="Mapel..."
+              /> 
+              <select
+                value={kelasValue}
+                onChange={handleKelasChange}
+                className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
+              >
+                <option value="">Pilih Jurusan...</option>
+                {kelasOptions.map((option, index) => (
+                  <option key={index} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+              {/* Tombol On/Off Geser */}
+        <label className="inline-flex mt-4 items-center mb-2">
+          <input
+            type="checkbox"
+            checked={isJurusanAktif}
+            onChange={handleToggleJurusan}
+            className="hidden"
+          />
+          <span
+            className={`w-10 h-5 flex items-center bg-gray-300 rounded-full p-1 cursor-pointer transition-colors duration-300 ${
+              isJurusanAktif ? "bg-teal-400" : ""
+            }`}
+          >
+            <span
+              className={`bg-white w-4 h-4 rounded-full shadow-md transform duration-300 ${
+                isJurusanAktif ? "translate-x-5" : ""
+              }`}
+            />
+          </span>
+          <span className="ml-2 text-sm">Aktifkan Input Jurusan</span>
+        </label>
+              <select
                 value={jurusanValue}
                 onChange={handleJurusanChange}
+                disabled={!isJurusanAktif}
                 className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
-                placeholder="Kelas..."
-              />
+              >
+                <option value="">Pilih Jurusan...</option>
+                {jurusanOptions.map((option, index) => (
+                  <option key={index} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
               <div className="flex justify-end mt-4">
                 <button
                   onClick={() => setShowEditModal(false)}

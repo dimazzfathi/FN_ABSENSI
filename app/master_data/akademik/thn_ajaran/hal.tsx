@@ -1,12 +1,18 @@
 "use client";
 import { useState, useEffect, useRef } from 'react';
 
-export default function Hal() {
-  const [tahunAjaranValue, setTahunAjaranValue] = useState("");
+export default function Kelas() {
+  // State untuk menyimpan nilai input 
   const [statusValue, setStatusValue] = useState("");
+  const [thnValue, setThnValue] = useState("");
+  const [isResettable, setIsResettable] = useState(false);
+  const [errors, setErrors] = useState({ thn: false, status: false });
 
+  // State untuk menyimpan data tabel
   const [tableData, setTableData] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+
+  // State untuk dropdown dan modals
   const [openDropdown, setOpenDropdown] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState({
     visible: false,
@@ -15,89 +21,149 @@ export default function Hal() {
   const [editData, setEditData] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
 
+  // State untuk pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
 
+  const [filterStatus, setFilterStatus] = useState("");
+  const [filterThn, setFilterThn] = useState("");
   
+  // useEffect to monitor changes and update isResettable
   useEffect(() => {
-    // Hapus data untuk pengujian
-    localStorage.removeItem("tableDataTahunAjaran");
-  
-    // Muat data dari localStorage
-    const savedData = JSON.parse(localStorage.getItem("tableDataTahunAjaran")) || [];
-    const sortedData = savedData.map((item, index) => ({ ...item, no: index + 1 }));
-    setTableData(sortedData);
-  }, []);
+    const savedData = JSON.parse(localStorage.getItem("tableTahunAjaran")) || [];
+    setTableData(savedData);
+    if (filterStatus || filterThn  || searchTerm) {
+      setIsResettable(true);
+    } else {
+      setIsResettable(false);
+    }
+  }, [filterStatus, filterThn , searchTerm]);
 
-  const handleTahunAjaranChange = (e) => {
-    setTahunAjaranValue(e.target.value);
-  };
 
-  const handleStatusChange = (e) => {
-    setStatusValue(e.target.value);
-  };
-
-  const handleSaveClick = () => {
-    // Cek apakah tableData kosong
-    const newNo = tableData.length > 0 ? Math.max(...tableData.map(item => item.no)) + 1 : 1;
-  
-    const newData = [
-      ...tableData,
-      { no: newNo, tahunAjaran: tahunAjaranValue, status: statusValue },
-    ];
-  
-    setTableData(newData);
-    localStorage.setItem("tableDataTahunAjaran", JSON.stringify(newData));
-  
-    setTahunAjaranValue("");
-    setStatusValue("");
-  };
-  
-
-  const handlePreviousClick = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
+  // Handler untuk mereset filter
+  const handleResetClick = () => {
+    if (isResettable) {
+    setFilterStatus('');
+    setFilterThn('');
+    setSearchTerm('');
     }
   };
 
+  useEffect(() => {
+    // Ambil data dari Local Storage saat komponen dimuat
+    const savedData = JSON.parse(localStorage.getItem("tableTahunAjaran")) || [];
+    setTableData(savedData);
+  }, []);
+
+  const handleStatusChange = (event) => {
+    setStatusValue(event.target.value);
+  };
+  const handleThnChange = (event) => {
+    setThnValue(event.target.value);
+  };
+
+    const thnInputRef = useRef(null);
+    const statusSelectRef = useRef(null);
+
   
+  
+  // Fungsi untuk menyimpan data baru ke dalam tabel
+  const handleSaveClick = () => {
+    let hasErrors = false;
+
+    // Validasi Tahun Ajaran
+    if (!thnValue) {
+        if (thnInputRef.current) {
+            thnInputRef.current.classList.add('border-red-500');
+            thnInputRef.current.focus();
+        }
+        hasErrors = true;
+    } else {
+        if (thnInputRef.current) {
+            thnInputRef.current.classList.remove('border-red-500');
+        }
+    }
+
+    // Validasi Status
+    if (!statusValue) {
+        if (statusSelectRef.current) {
+            statusSelectRef.current.classList.add('border-red-500');
+            if (!hasErrors) statusSelectRef.current.focus();
+        }
+        hasErrors = true;
+    } else {
+        if (statusSelectRef.current) {
+            statusSelectRef.current.classList.remove('border-red-500');
+        }
+    }
+
+    if (hasErrors) return; // Hentikan eksekusi jika ada input yang kosong
+
+    // Proses penyimpanan data jika tidak ada error
+    const newData = [
+        ...tableData,
+        {
+            no: tableData.length > 0 ? Math.max(...tableData.map(item => item.no)) + 1 : 1,
+            thn: thnValue,
+            status: statusValue,
+        },
+    ];
+
+    setTableData(newData);
+    localStorage.setItem("tableTahunAjaran", JSON.stringify(newData)); // Simpan ke Local Storage
+
+    setStatusValue(""); // Mengosongkan input Status setelah disimpan
+    setThnValue(""); // Mengosongkan input Tahun Ajaran setelah disimpan
+};
+
+
+
+  const handleDownloadFormatClick = () => {
+    // Logika untuk mengunduh file format
+    console.log('Unduh format');
+  };
+
+  const handleUploadFileClick = () => {
+    // Logika untuk mengunggah file
+    console.log('Upload file');
+  };
+
 
   const handleEditClick = (item) => {
     setEditData(item);
-    setTahunAjaranValue(item.tahunAjaran);
-    setStatusValue(item.status);
-    setShowEditModal(true);
+    setStatusValue(item.status)
+    setThnValue(item.jurusan);
+   setShowEditModal(true);
   };
 
   const handleSaveEdit = () => {
     const updatedData = tableData.map((item) =>
       item.no === editData.no
-        ? { ...item, tahunAjaran: tahunAjaranValue, status: statusValue }
+        ? { ...item, thn: thnValue, status: statusValue }
         : item
     );
     setTableData(updatedData);
-    localStorage.setItem("tableDataTahunAjaran", JSON.stringify(updatedData));
+    localStorage.setItem("tableTahunAjaran", JSON.stringify(updatedData));
     setShowEditModal(false);
-    setTahunAjaranValue("");
-    setStatusValue("");
+    setThnValue("");
   };
 
   const handleDeleteClick = (id) => {
     setConfirmDelete({ visible: true, id });
-    setOpenDropdown(null);
+    setOpenDropdown(null); // Close dropdown when delete is clicked
   };
 
   const handleConfirmDelete = () => {
     const filteredData = tableData.filter(
       (item) => item.no !== confirmDelete.id
     );
-    // Menyusun ulang nomor setelah penghapusan
     const updatedData = filteredData.map((item, index) => ({
       ...item,
       no: index + 1,
     }));
+    
     setTableData(updatedData);
-    localStorage.setItem("tableDataTahunAjaran", JSON.stringify(updatedData));
+    localStorage.setItem("tableTahunAjaran", JSON.stringify(updatedData)); // Update localStorage
     setConfirmDelete({ visible: false, id: null });
   };
   
@@ -110,60 +176,75 @@ export default function Hal() {
     setOpenDropdown((prev) => (prev === id ? null : id));
   };
 
+  // Fungsi untuk menangani perubahan input pencarian
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
   };
 
-  const filteredData = tableData.filter((item) => {
-    const tahunAjaranMatch = item.tahunAjaran ? item.tahunAjaran.toLowerCase().includes(searchTerm.toLowerCase()) : false;
-    const statusMatch = item.status ? item.status.toLowerCase().includes(searchTerm.toLowerCase()) : false;
-    return tahunAjaranMatch || statusMatch;
-  });
+  
 
+  // Fungsi untuk menangani perubahan jumlah item per halaman
   const handleItemsPerPageChange = (e) => {
     setItemsPerPage(Number(e.target.value));
-    setCurrentPage(1);
+    setCurrentPage(1); // Reset halaman ke 1 setelah mengubah jumlah item per halaman
   };
 
+  // Filter dan pencarian logika
+  const filteredData = tableData.filter(item => {
+    const searchLowerCase = searchTerm.toLowerCase();
+
+    return (
+      (filterStatus ? item.status === filterStatus : true) &&
+      (filterThn ? item.thn === filterThn : true) &&
+      (searchTerm ? (
+        (typeof item.nisn === 'string' && item.nisn.toLowerCase().includes(searchLowerCase)) ||
+        (typeof item.namaSiswa === 'string' && item.namaSiswa.toLowerCase().includes(searchLowerCase)) ||
+        (typeof item.status === 'string' && item.status.toLowerCase().includes(searchLowerCase)) ||
+        (typeof item.thn === 'string' && item.thn.toLowerCase().includes(searchLowerCase)) ||
+        (typeof item.jk === 'string' && item.jk.toLowerCase().includes(searchLowerCase)) ||
+        (typeof item.namaWali === 'string' && item.namaWali.toLowerCase().includes(searchLowerCase)) ||
+        (typeof item.noWali === 'string' && item.noWali.toLowerCase().includes(searchLowerCase))
+      ) : true)
+    );
+  });
+
+  // Pagination logic
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const currentData = filteredData.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-  const statusOptions = [
-    { value: "Aktif", color: "text-green-500" },
-    { value: "Lulus", color: "text-red-500" },
+   // List of jurusan options
+   const statusOptions = [
+    "Aktif",
+    "Lulus",
+    
   ];
 
 
   return (
     <>
+    
       <div className="rounded-lg max-w-full bg-slate-100">
         <div className="pt-8 ml-7">
           <h1 className="text-2xl font-bold">Tahun Ajaran</h1>
           <nav>
             <ol className="flex space-x-2 text-sm text-gray-700">
               <li>
-                <a href="index.html" className="text-teal-500 hover:underline">
-                  Home
-                </a>
+                <a href="index.html" className="text-teal-500 hover:underline hover:text-teal-600">Home</a>
               </li>
               <li>
                 <span className="text-gray-500">/</span>
               </li>
               <li>
-                <a href="#" className="text-teal-500 hover:underline">
-                  Master Data
-                </a>
+                <a href="#" className="text-teal-500 hover:text-teal-600 hover:underline">Master Data</a>
               </li>
               <li>
                 <span className="text-gray-500">/</span>
               </li>
               <li>
-                <a href="#" className="text-teal-500 hover:underline">
-                  Akademik
-                </a>
+                <a href="#" className="text-teal-500 hover:text-teal-600 hover:underline">Akademik</a>
               </li>
               <li>
                 <span className="text-gray-500">/</span>
@@ -173,95 +254,122 @@ export default function Hal() {
           </nav>
         </div>
 
-         {/* Column 1: Input */}
         <div className="flex flex-col lg:flex-row">
+          {/* Column 1: Input */}
           <div className="w-full lg:w-1/3 p-4 lg:p-6">
             <div className="bg-white rounded-lg shadow-md p-4 lg:p-6 border">
-              <h2 className="text-xl mb-2 sm:text-xl font-bold">Input Tahun Ajaran</h2>
-              <input
+            <h2 className="text-sm mb-2 sm:text-sm font-bold"> Tahun Ajaran</h2>
+            <input
                 type="text"
-                value={tahunAjaranValue}
-                onChange={handleTahunAjaranChange}
-                className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
+                value={thnValue}
+                onChange={handleThnChange}
+                ref={thnInputRef}
+                className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${thnValue === "" ? "border-red-500" : "border-gray-300"}`}
                 placeholder="Tahun Ajaran..."
               />
-              <h2 className="text-xl mb-2 sm:text-xl font-bold mt-4">
-                Input Status
-              </h2>
-              <select
-                value={statusValue}
-                onChange={handleStatusChange}
-                className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
-              >
-                <option value="">Pilih Status...</option>
-                {statusOptions.map((option, index) => (
-                  <option key={index} value={option.value}>
-                    {option.value}
-                  </option>
-                ))}
-              </select>
+            <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold"> Status</h2>
+                <select
+                    value={statusValue}
+                    onChange={handleStatusChange}
+                    ref={statusSelectRef}
+                    className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${statusValue === "" ? "border-red-500" : "border-gray-300"}`}
+                 >
+                    <option value="">Pilih Status...</option>
+                        {statusOptions.map((option, index) => (
+                        <option key={index} value={option}>
+                            {option}
+                        </option>
+                        ))}
+                </select>
+                <div className="flex m-4 space-x-2">
+                  <button
+                    onClick={handleSaveClick}
+                    className="ml-auto px-3 py-2 sm:px-4 sm:py-2 bg-teal-400 hover:bg-teal-500 text-white rounded text-sm sm:text-base"
+                  >
+                    Simpan
+                  </button>
+                </div>
 
-              <div className="flex justify-end mt-4">
-                <button
-                  onClick={handleSaveClick}
-                  className="px-3 py-2 sm:px-4 sm:py-2 bg-teal-400 text-white rounded text-sm sm:text-base"
-                >
-                  Simpan
-                </button>
-              </div>
             </div>
           </div>
+          
+
           {/* Column 2: Table */}
-          <div className="w-full lg:w-2/3 p-4 lg:p-6">
+          <div className="w-full  lg:w-2/3 p-4 lg:p-6">
             <div className="bg-white rounded-lg shadow-md p-4 lg:p-6 border">
-              <div className="bg-slate-600 px-2 rounded-xl">
-                <div className="flex flex-col lg:flex-row justify-between mb-4">
-                  <div className="p-2">
-                    <h2 className="text-xl sm:text-2xl text-white font-bold">
-                      Tabel Tahun Ajaran
-                    </h2>
+             <div className="bg-slate-600 px-2 rounded-xl">
+              <div className="flex flex-col lg:flex-row justify-between mb-4">
+                <div className="p-2">
+                  <h2 className="text-sm pt-3 sm:text-2xl text-white font-bold">
+                    Tabel Tahun Ajaran
+                  </h2>
+                </div>          
+              </div>
+             {/* Filter Dropdown */}
+            <div className="grid grid-cols-1 sm:grid-cols-6 gap-4 mt-4">
+            <div className="lg:flex-row justify-between items-center">
+              <div className=" items-center lg:mb-0 space-x-2 mb-3 lg:order-1">
+                    <select
+                      id="itemsPerPage"
+                      value={itemsPerPage}
+                      onChange={handleItemsPerPageChange}
+                      className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base"
+                    >
+                      <option value={5}>5</option>
+                      <option value={10}>10</option>
+                      <option value={20}>20</option>
+                    </select>
+              </div>
+            </div>
+            
+              <div className=" items-center lg:mb-0 space-x-2 lg:order-1">
+                    <input
+                      type="text"
+                      placeholder="Cari..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base"
+                    />
+              </div>
+                  <div className=" items-center lg:mb-0 space-x-2 lg:order-1">
+                  <button
+              onClick={handleResetClick}
+              disabled={!isResettable}
+              className={`w-full p-2 rounded text-sm sm:text-base transition z-20 ${
+                isResettable
+                  ? "text-white bg-red-500 hover:bg-red-600 cursor-pointer"
+                  : "text-gray-400 bg-gray-300 cursor-not-allowed"
+              }`}
+            >
+              <p>Reset</p>
+            </button >
                   </div>
-                  <div className="flex lg:flex-row justify-between p-2 items-center">
-                    <div className="flex items-center pt-2 mb-2 lg:mb-0 space-x-2 lg:order-1">
-                    </div>
-                    <div className="flex pt-2 items-center space-x-2 lg:order-2">
-                      <input
-                        type="text"
-                        value={searchTerm}
-                        onChange={handleSearchChange}
-                        className="p-2 border border-gray-300 rounded-l-xl rounded-r-xl text-sm sm:text-base"
-                        placeholder="Cari Tahun Ajaran atau Status..."
-                      />
-                    </div>
-                  </div>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full text-left border-collapse">
-                    <thead>
-                      <tr ml-2>
-                        <th className="p-2 sm:p-3 rounded-l-xl  bg-slate-500 text-white">No</th>
-                        <th className="p-2 sm:p-3 bg-slate-500 text-white">Tahun Ajaran</th>
-                        <th className="p-2 sm:p-3 bg-slate-500 text-white">Status</th>
-                        <th className="p-2 sm:p-3 bg-slate-500 rounded-r-xl text-white">Aksi</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {currentData.map((item) => (
-                        <tr key={item.no}>
-                          <td className="p-3 sm:p-3 text-white border-b">{item.no}</td>
-                          <td className="p-3 sm:p-3 text-white border-b">
-                            {item.tahunAjaran}
-                          </td>
-                          <td
-                            className={`p-3 sm:p-3 text-white border-b ${
-                              item.status === "Aktif"
-                                ? "text-green-500"
-                                : "text-red-500"
-                            }`}
-                          >
-                            {item.status}
-                          </td>
-                          <td className="p-3 sm:p-3 text-white border-b relative text-center">
+            </div>
+             
+              <div className="overflow-x-auto">
+                <table className="w-full text-left mt-4 border-collapse">
+                  <thead>
+                    <tr className="ml-2">
+                      <th className="p-2 sm:p-3 rounded-l-lg  bg-slate-500 text-white">No</th>                    
+                      <th className="p-2 sm:p-3 bg-slate-500 text-white">
+                       Tahun Ajaran
+                      </th>
+                      <th className="p-2 sm:p-3 bg-slate-500 text-white">
+                        Status
+                      </th>
+                      <th className="p-2 sm:p-3 bg-slate-500 rounded-r-xl text-white">
+                        Aksi
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {currentData.map((item) => (
+                      <tr key={item.no}>
+                        <td className="p-3 sm:p-3 text-white border-b">{item.no}</td>
+                        <td className="p-3 sm:p-3 text-white border-b">{item.thn}</td>
+                        <td className="p-3 sm:p-3 text-white border-b">{item.status}</td>
+                        <td className="p-3 sm:p-3 text-white  border-b "
+                        style={{ left: '-500px' }}>
                         {/* // Komponen DropdownMenu yang ditampilkan dalam tabel untuk setiap baris data.
                         // isOpen: Menentukan apakah dropdown saat ini terbuka berdasarkan nomor item.
                         // onClick: Fungsi untuk menangani aksi klik pada dropdown untuk membuka atau menutupnya.
@@ -273,6 +381,7 @@ export default function Hal() {
                             onEdit={() => handleEditClick(item)}
                           />
                         </td>
+<<<<<<< HEAD
                         </tr>
                       ))}
                     </tbody>
@@ -306,11 +415,46 @@ export default function Hal() {
               </div>
             </div>
                 
+=======
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+>>>>>>> f9f96cf727fc2ee6f57bd41894404b35829a9274
               </div>
+
+                
+
+              <div className="mt-4 flex justify-between items-center">
+              <div className="text-sm text-gray-700 text-white">
+                Halaman {currentPage} dari {totalPages}
+              </div>
+              <div className="flex overflow-hidden m-4 space-x-2">
+                <button
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className={`px-2 py-1 border rounded ${
+                    currentPage === 1 ? "bg-gray-300" : "bg-teal-400 hover:bg-teal-600 text-white"
+                  }  `}
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className={`px-2 py-1 border rounded ${
+                    currentPage === totalPages ? "bg-gray-300" : "bg-teal-400 hover:bg-teal-600 text-white"
+                  }  `}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
             </div>
           </div>
 
         </div>
+<<<<<<< HEAD
 
         
 
@@ -338,114 +482,199 @@ export default function Hal() {
                 ))}
               </select>
               <div className="flex justify-end">
+=======
+        <div>
+        </div>
+        {/* Modal untuk konfirmasi penghapusan */}
+        {confirmDelete.visible && (
+          <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
+            <div className="bg-white p-4 rounded-lg shadow-lg">
+              <p>Apakah Anda yakin ingin menghapus item ini?</p>
+              <div className="flex justify-end mt-4">
+>>>>>>> f9f96cf727fc2ee6f57bd41894404b35829a9274
                 <button
-                  onClick={handleSaveEdit}
-                  className="px-4 py-2 bg-teal-400 text-white rounded"
-                >
-                  Simpan
-                </button>
-                <button
-                  onClick={() => setShowEditModal(false)}
-                  className="ml-2 px-4 py-2 bg-gray-300 text-gray-700 rounded"
+                  onClick={handleCancelDelete}
+                  className="px-3 py-2 sm:px-4 sm:py-2 bg-gray-300 text-black rounded text-sm sm:text-base mr-2"
                 >
                   Batal
+                </button>
+                <button
+                  onClick={handleConfirmDelete}
+                  className="px-3 py-2 sm:px-4 sm:py-2 bg-red-500 text-white rounded text-sm sm:text-base"
+                >
+                  Hapus
                 </button>
               </div>
             </div>
           </div>
         )}
-
-        {confirmDelete.visible && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-            <div className="bg-white p-6 rounded-lg shadow-lg">
-              <h2 className="text-xl font-bold mb-4">Konfirmasi Hapus</h2>
-              <p className="mb-4">
-                Apakah Anda yakin ingin menghapus data ini?
-              </p>
-              <div className="flex justify-end">
+        {/* Modal untuk mengedit data */}
+        {showEditModal && (
+          <div className="fixed z-50 inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
+            <div className="bg-white p-4 rounded-lg shadow-lg">
+              <h2 className="text-sm pt-3 sm:text-2xl font-bold">Edit Data</h2>
+             
+              <input
+                type="text"
+                value={thnValue}
+                onChange={handleThnChange}
+                className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
+                placeholder="Tahun Ajaran..."
+              />
+              <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold"> Status</h2>
+                <select
+                    value={statusValue}
+                    onChange={handleStatusChange}
+                    className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
+                 >
+                    <option value="">Pilih Status...</option>
+                        {statusOptions.map((option, index) => (
+                        <option key={index} value={option}>
+                            {option}
+                        </option>
+                        ))}
+                </select>
+              <div className="flex justify-end mt-4">
                 <button
-                  onClick={handleConfirmDelete}
-                  className="px-4 py-2 bg-red-500 text-white rounded"
-                >
-                  Hapus
-                </button>
-                <button
-                  onClick={handleCancelDelete}
-                  className="ml-2 px-4 py-2 bg-gray-300 text-gray-700 rounded"
+                  onClick={() => setShowEditModal(false)}
+                  className="px-3 py-2 sm:px-4 sm:py-2 bg-gray-300 text-black rounded text-sm sm:text-base mr-2"
                 >
                   Batal
+                </button>
+                <button
+                  onClick={handleSaveEdit}
+                  className="px-3 py-2 sm:px-4 sm:py-2 bg-teal-400 text-white rounded text-sm sm:text-base"
+                >
+                  Simpan
                 </button>
               </div>
             </div>
           </div>
         )}
       </div>
+      </div>
     </>
   );
-}
-
-// Komponen DropdownMenu yang menampilkan menu aksi untuk setiap item dalam tabel.
+}// Komponen DropdownMenu yang menampilkan menu aksi untuk setiap item dalam tabel.
 // isOpen: Properti boolean yang menentukan apakah menu dropdown saat ini terbuka.
 // onClick: Fungsi callback yang dipanggil saat tombol dropdown diklik, untuk membuka atau menutup menu.
 // onDelete: Fungsi callback yang dipanggil saat opsi 'Hapus' dipilih dari menu dropdown.
-function DropdownMenu({ isOpen, onClick, onDelete, onEdit }) {
-  const dropdownRef = useRef(null);
-
-  const handleClickOutside = (e) => {
-    if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-      onClick();
-    }
-  };
-
-  useEffect(() => {
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    } else {
-      document.removeEventListener('mousedown', handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+function DropdownMenu({ isOpen, onClick, onEdit, onDelete, onClose }) {
+    const dropdownRef = useRef(null);
+  
+    // Fungsi untuk menutup dropdown saat pengguna mengklik di luar dropdown.
+    const handleClickOutside = (event) => {
+      console.log('Clicked outside'); // Debugging
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        console.log('Outside detected'); // Debugging
+        if (typeof onClick === 'function') {
+          onClick(); // Memanggil fungsi onClose untuk menutup dropdown
+        }
+      }
     };
-  }, [isOpen]);
+  
+    useEffect(() => {
+      console.log('Effect ran', isOpen); // Debugging
+      // Menambahkan event listener untuk menangani klik di luar dropdown jika dropdown terbuka.
+      if (isOpen) {
+        document.addEventListener('mousedown', handleClickOutside);
+      } else {
+        // Menghapus event listener ketika dropdown ditutup.
+        document.removeEventListener('mousedown', handleClickOutside);
+      }
+  
+      // Cleanup function untuk menghapus event listener saat komponen di-unmount atau isOpen berubah.
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+        console.log('Cleanup'); // Debugging
+      };
+    }, [isOpen]);
+  
+    return (
+      <div className="relative" ref={dropdownRef}>
+        <button
+          onClick={onClick}
+          className="p-1 z-40  text-white text-xs sm:text-sm"
 
-  return (
-    <div className="relative flex items-center" ref={dropdownRef}>
-      <button
-        onClick={onClick}
-        className="p-1 z-50 text-white text-xs sm:text-sm"
-      >
-        &#8942;
-      </button>
-      {isOpen && (
-        <div className="top-full left-0 mt-1 w-24 sm:w-32 bg-slate-600 rounded-md shadow-lg border border-gray-200 z-50">
-          <ul>
-            <li
-              className="px-2 py-1 sm:px-4 sm:py-2 hover:bg-slate-500 cursor-pointer text-xs sm:text-sm"
+        >
+          &#8942;
+        </button>
+        {isOpen && (
+          <div
+            className="absolute z-50 mt-1 w-24 sm:w-32 bg-slate-600 border rounded-md shadow-lg"
+            style={{ left: '-62px', top: '20px' }} // Menggeser dropdown ke kiri
+          >
+            <button
+              className="block w-full px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm hover:bg-slate-500"
               onClick={() => {
                 alert('Detail clicked');
+                if (typeof onClose === 'function') {
+                  onClose(); // Menutup dropdown setelah detail diklik
+                }
               }}
             >
               Detail
-            </li>
-            <li
-              className="px-2 py-1 sm:px-4 sm:py-2 hover:bg-slate-500 cursor-pointer text-xs sm:text-sm"
+            </button>
+            <button
               onClick={() => {
                 onEdit();
+                if (typeof onClose === 'function') {
+                  onClose(); // Menutup dropdown setelah edit diklik
+                }
               }}
+              className="block w-full px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm hover:bg-slate-500"
             >
               Edit
-            </li>
-            <li
-              className="px-2 py-1 sm:px-4 sm:py-2 hover:bg-slate-500 cursor-pointer text-xs sm:text-sm"
+            </button>
+            <button
               onClick={() => {
                 onDelete();
+                if (typeof onClose === 'function') {
+                  onClose(); // Menutup dropdown setelah delete diklik
+                }
               }}
+              className="block w-full px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm hover:bg-slate-500"
             >
-              Delete
-            </li>
-          </ul>
-        </div>
-      )}
-    </div>
-  );
-}
+              Hapus
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+  
+function FileUpload() {
+    const [file, setFile] = useState(null);
+    const fileInputRef = useRef(null);
+  
+    const handleFileChange = (event) => {
+      const selectedFile = event.target.files[0];
+      setFile(selectedFile);
+    };
+  
+    const handleClearFile = () => {
+      setFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''; // Reset input file
+      }
+    };
+  
+    return (
+      <div>
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          className="w-full border border-gray-300 rounded-lg px-3 py-2"
+        />
+        {file && (
+          <img
+            src={URL.createObjectURL(file)}
+            alt="Preview"
+            className="w-full border border-gray-300 rounded-lg mt-4"
+          />
+        )}
+        <button onClick={handleClearFile}>Clear File</button>
+      </div>
+    );
+  }

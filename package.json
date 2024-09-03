@@ -12,11 +12,17 @@
     "@fortawesome/react-fontawesome": "^0.2.2",
     "@heroicons/react": "^2.1.5",
     "@nextui-org/react": "^2.4.6",
+<<<<<<< HEAD
     "axios": "^1.7.5",
     "cors": "^2.8.5",
     "datatables.net-dt": "^2.1.3",
     "dotenv": "^16.4.5",
     "js-cookie": "^3.0.5",
+=======
+    "browser-image-compression": "^2.0.2",
+    "datatables.net-dt": "^2.1.3",
+    "date-fns": "^3.6.0",
+>>>>>>> f9f96cf727fc2ee6f57bd41894404b35829a9274
     "lucide-react": "^0.427.0",
     "next": "14.2.5",
     "react": "^18.3.1",
