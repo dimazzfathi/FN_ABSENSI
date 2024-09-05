@@ -139,7 +139,21 @@ const Schedule = () => {
   return (
     <>
     <div className='bg-slate-100 min-h-screen'>
-      <div className="container mx-auto p-4">
+    <div className="pt-7 ml-7">
+        <h1 className="text-2xl font-bold">Setting</h1>
+        <nav>
+          <ol className="flex space-x-2 text-sm text-gray-700">
+            <li>
+              <a href="index.html" className="text-teal-500 hover:underline">Home</a>
+            </li>
+            <li>
+              <span className="text-gray-500">/</span>
+            </li>
+            <li className="text-gray-500">Setting</li>
+          </ol>
+        </nav>
+      </div>
+      <div className="  mx-auto p-4">
         <div className="flex flex-col space-y-4">
           {/* Kolom 1 */}
           <div className='bg-white p-4 rounded-lg shadow-md'> 

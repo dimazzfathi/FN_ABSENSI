@@ -555,7 +555,7 @@ const [existingData, setExistingData] = useState([]);
                 ref={mapelRef}
                 className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${isInputsActive ? "bg-gray-200" : "bg-white"} ${errors.jurusan ? "border-red-500" : "border-gray-300"}`}
                 >
-                <option value="">Pilih Jurusan...</option>
+                <option value="">Pilih Mapel...</option>
                 {mapelOptions.map((option, index) => (
                     <option key={index} value={option}>
                     {option}
