@@ -356,7 +356,6 @@ export default function Rombel() {
                     </button>
                   </div>
                 </div>
-                  
               <div className="mt-4 flex justify-between items-center">
               <div className="text-sm text-gray-700 text-white">
                 Halaman {currentPage} dari {totalPages}
