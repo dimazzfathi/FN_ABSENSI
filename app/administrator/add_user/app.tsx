@@ -583,7 +583,7 @@ export default function DataSiswa() {
             </div>
             </div>
           </div>
-        </div>
+          </div>
         </div>
         {/* Modal untuk konfirmasi penghapusan */}
         {confirmDelete.visible && (
@@ -726,7 +726,7 @@ export default function DataSiswa() {
 function DropdownMenu({ isOpen, onClick, onEdit, onDelete, onClose }) {
     const dropdownRef = useRef(null);
   
-    // Fungsi untuk menutup dropdown saat pengguna mengklik di luar dropdown.
+    Fungsi untuk menutup dropdown saat pengguna mengklik di luar dropdown.
     const handleClickOutside = (event) => {
       console.log('Clicked outside'); // Debugging
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -736,7 +736,7 @@ function DropdownMenu({ isOpen, onClick, onEdit, onDelete, onClose }) {
         }
       }
     };
-    //untuk detail
+    untuk detail
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [confirmedPassword, setConfirmedPassword] = useState('');
 

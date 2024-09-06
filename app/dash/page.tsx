@@ -1,60 +1,36 @@
 "use client";
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import axios from 'axios';
-import Cookies from 'js-cookie'; // Import js-cookie
+import Dash from './app';
+import React, { useState } from 'react'
+import Navbar from "../components/layout/navbar/page"
+import Footer from "../components/layout/footer/page"
 
-const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const Page = () => {
+    const [isOpen, setIsOpen] = useState(false);
 
-type Admin = {
-  id: number;
-  nama: string;
-  email: string;
-  // Tambahkan properti lain yang sesuai dengan struktur data di tabel 'admin'
-};
-
-const AdminPage = () => {
-  const [admins, setAdmins] = useState<Admin[]>([]);
-  const router = useRouter();
-
-  useEffect(() => {
-    const token = Cookies.get('token'); // atau dari cookies
-    
-    if (!token) {
-      // Jika token tidak ada, redirect ke halaman login
-      router.push('../../administrator/login');
-      return;
-    }
-
-    // Menambahkan token ke header axios tanpa Bearer
-    axios.defaults.headers.common['Authorization'] = token;
-
-    const fetchAdmins = async () => {
-      try {
-        const res = await axios.get(`${baseUrl}/admin/all-Admin`);
-        const data: Admin[] = res.data;
-        setAdmins(data);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      }
+    const toggleSidebar = () => {
+        setIsOpen(!isOpen);
     };
 
-    fetchAdmins();
-  }, [router]);
 
   return (
+    <>
     <div>
-      <h1>Admin List</h1>
-      <ul>
-        {admins.map((admin) => (
-          <li key={admin.id_admin}>
-            <ol>{admin.nama_admin}</ol>
-            <ol>{admin.alamat}</ol>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-};
+    <Navbar isOpen={isOpen} toggleSidebar={toggleSidebar} />
+    
+    {/* Main Content */}
+    <main className={`px-30 transition-transform relative duration-300 z-10 ${
+    isOpen ? 'ml-0 md:ml-64' : 'ml-0'
+  }`}>
+      <div className="flex-1 p-6">
+          <div className="min-h-screen">
+            <Dash />
+          </div>
+      </div>
+    </main>
+    <Footer />
+  </div>
+  </>
+  )
+}
 
-export default AdminPage;
+export default Page

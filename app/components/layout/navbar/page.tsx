@@ -8,8 +8,10 @@ import { ClipboardDocumentIcon, ChartBarIcon, CalendarIcon, UserCircleIcon, Chev
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSignOutAlt } from '@fortawesome/free-solid-svg-icons'
 
-const Navbar = ({ toggleSidebar, isOpen }: { toggleSidebar: () => void; isOpen: boolean; }) => {
+const Navbar = ({ toggleSidebar, isOpen }: { toggleSidebar: () => void; isOpen: false; }) => {
 
+const [isToggleSidebar, setToggleSidebar] = useState(false);
+// const [isOpen, setIsOpen] = useState(false);
 const [isClick, setisClick] = useState(false);
 const toggleNavbar = () => {setisClick(!isClick);};
 const [isMasterDataOpen, setMasterDataOpen] = useState(false);
@@ -56,8 +58,11 @@ const toggleAdmin = () => {
   setSiswaOpen(false);
   setGuruOpen(false);
 };
-const handleMenuClick = (menu: string) => {
-  setActiveMenu(prevMenu => prevMenu === menu ? null : menu);
+const handleMenuClick = (menu) => {
+  setActiveMenu(menu);
+  // Remove or modify any logic that changes `isOpen` to false
+  // Example:
+  // setIsOpen(false); // Remove this if present
 };
 
 
@@ -121,7 +126,7 @@ const handleMenuClick = (menu: string) => {
           <h2 className='px-4 opacity-75'>Menu</h2>
           <ul>
             <li className="mb-2">
-              <Link href="/">
+              <Link href="../../dash">
               <div onClick={() => handleMenuClick('dashboard')}className={`px-4 py-2 hover:bg-teal-200 rounded flex items-center cursor-pointer ${activeMenu === 'dashboard' ? 'bg-teal-500' : ''}`}>
               {isMasterDataOpen ? <HomeIcon className="h-6 w-6 mr-2" /> : <HomeIcon className="h-6 w-6 mr-2" />}
                 <p>Dashboard</p>
