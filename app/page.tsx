@@ -30,8 +30,6 @@ const Page = () => {
     visible: false,
     id: null,
   });
-  const [editData, setEditData] = useState(null);
-  const [showEditModal, setShowEditModal] = useState(false);
 
   // State untuk pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -68,17 +66,6 @@ const Page = () => {
     }
   };
 
-  useEffect(() => {
-    // Ambil data dari Local Storage saat komponen dimuat
-    const savedData = JSON.parse(localStorage.getItem("tableDataSiswa")) || [];
-    setTableData(savedData);
-
-    const savedImage = localStorage.getItem('profileImage');
-  if (savedImage) {
-    setImagePreview(savedImage);
-  }
-  }, []);
-
   const handleTtlChange = (e) => setTtlValue(e.target.value);
   const handleNamaSiswaChange = (e) => setNamaSiswaValue(e.target.value);
   const handleJkChange = (e) => setJkValue(e.target.value);
@@ -92,126 +79,6 @@ const Page = () => {
   };
   const handleNoWaliChange = (e) => setNoWaliValue(e.target.value);
   const handlePeranChange = (e) => setPeranValue(e.target.value);
-  
-  // Fungsi untuk menangani perubahan gambar profil
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setImagePreview(reader.result); // Menyimpan data URL gambar untuk pratayang
-          setFotoValue(reader.result); // Menyimpan data URL gambar untuk digunakan nanti
-        };
-        reader.readAsDataURL(file);
-    }
-};
-  // Fungsi untuk menyimpan data baru ke dalam tabel
-  const handleSaveClick = () => {
-    const newData = [
-      ...tableData,
-      { no: tableData.length > 0 ? Math.max(...tableData.map(item => item.no)) + 1 : 1,
-        namaSiswa: namaSiswaValue,
-        ttl: ttlValue,
-        jk: jkValue,
-        alamat: alamatValue,
-        email: emailValue,
-        username: usernameValue,
-        password: passwordValue,
-        noWali: noWaliValue,
-        foto: fotoValue || "", // Handle file URL
-        peran: peranValue,
-        },
-    ];
-
-    setTableData(newData);
-    localStorage.setItem("tableDataSiswa", JSON.stringify(newData)); // Simpan ke Local Storage
-  
-    setPeranValue(""); // Mengosongkan input peran setelah disimpan
-    setNoWaliValue("");
-    setUsernameValue("");
-    setPasswordValue("");
-    setFotoValue(null);
-    setAlamatValue("");
-    setEmailValue("");
-    setJkValue("");
-    setNamaSiswaValue("");
-    setTtlValue("");
-  };
-
-  const handleEditClick = (item) => {
-    setEditData(item);
-    setPeranValue(item.peran);
-    setNoWaliValue(item.noWali);
-    setUsernameValue(item.username);
-    setPasswordValue(item.password);
-    setPreviewURL(item.imagePreview); // Set preview URL for the edit modal
-    setAlamatValue(item.alamat);
-    setEmailValue(item.email);
-    setJkValue(item.jk);
-    setNamaSiswaValue(item.namaSiswa);
-    setTtlValue(item.ttl);
-    setShowEditModal(true);
-  };
-
-  const handleSaveEdit = () => {
-    const updatedData = tableData.map((item) =>
-      item.no === editData.no
-        ? { ...item,
-            namaSiswa: namaSiswaValue,
-            ttl: ttlValue,
-            jk: jkValue,
-            alamat: alamatValue,
-            email: emailValue,
-            username: usernameValue,
-            password: passwordValue,
-            noWali: noWaliValue,
-            foto: fotoValue || "", // Handle file URL
-            peran: peranValue,
-             }
-        : item
-    );
-    setTableData(updatedData);
-    localStorage.setItem("tableDataSiswa", JSON.stringify(updatedData));
-
-    setShowEditModal(false);
-    setPeranValue("");
-    setNoWaliValue("");
-    setUsernameValue("");
-    setPasswordValue("");
-    setFotoValue(null);
-    setAlamatValue("");
-    setJkValue("");
-    setNamaSiswaValue("");
-    setTtlValue("");
-  };
-
-  const handleDeleteClick = (id) => {
-    setConfirmDelete({ visible: true, id });
-    setOpenDropdown(null); // Close dropdown when delete is clicked
-  };
-
-  const handleConfirmDelete = () => {
-    const filteredData = tableData.filter(
-      (item) => item.no !== confirmDelete.id
-    );
-    const updatedData = filteredData.map((item, index) => ({
-      ...item,
-      no: index + 1,
-    }));
-    
-    setTableData(updatedData);
-    localStorage.setItem("tableDataSiswa", JSON.stringify(updatedData)); // Update localStorage
-    setConfirmDelete({ visible: false, id: null });
-  };
-  
-
-  const handleCancelDelete = () => {
-    setConfirmDelete({ visible: false, id: null });
-  };
-
-  const handleDropdownClick = (id) => {
-    setOpenDropdown((prev) => (prev === id ? null : id));
-  };
 
   // Fungsi untuk menangani perubahan input pencarian
   const handleSearchChange = (e) => {
@@ -226,13 +93,14 @@ const Page = () => {
       (filterPeran ? item.peran === filterPeran : true) &&
       (filterJurusan ? item.jurusan === filterJurusan : true) &&
       (searchTerm ? (
-        (typeof item.ttl === 'string' && item.ttl.toLowerCase().includes(searchLowerCase)) ||
-        (typeof item.namaSiswa === 'string' && item.namaSiswa.toLowerCase().includes(searchLowerCase)) ||
-        (typeof item.peran === 'string' && item.peran.toLowerCase().includes(searchLowerCase)) ||
-        (typeof item.jurusan === 'string' && item.jurusan.toLowerCase().includes(searchLowerCase)) ||
-        (typeof item.jk === 'string' && item.jk.toLowerCase().includes(searchLowerCase)) ||
-        (typeof item.email === 'string' && item.email.toLowerCase().includes(searchLowerCase)) ||
-        (typeof item.noWali === 'string' && item.noWali.toLowerCase().includes(searchLowerCase))
+        (typeof item.kelas === 'string' && item.kelas.toLowerCase().includes(searchLowerCase)) ||
+        (typeof item.jumlah === 'string' && item.jumlah.toLowerCase().includes(searchLowerCase)) ||
+        (typeof item.hadir === 'string' && item.hadir.toLowerCase().includes(searchLowerCase)) ||
+        (typeof item.sakit === 'string' && item.sakit.toLowerCase().includes(searchLowerCase)) ||
+        (typeof item.izin === 'string' && item.izin.toLowerCase().includes(searchLowerCase)) ||
+        (typeof item.alpha === 'string' && item.alpha.toLowerCase().includes(searchLowerCase)) ||
+        (typeof item.terlambat === 'string' && item.terlambat.toLowerCase().includes(searchLowerCase)) ||
+        (typeof item.walas === 'string' && item.walas.toLowerCase().includes(searchLowerCase))
       ) : true)
     );
   });
@@ -250,7 +118,7 @@ const Page = () => {
     currentPage * itemsPerPage
   );
 
-  //baru
+  //baru##############################
   const [showButtons, setShowButtons] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [showTable, setShowTable] = useState(false);
@@ -258,6 +126,25 @@ const Page = () => {
   const [dataAbsensi, setDataAbsensi] = useState<any[]>([]);
   // Data untuk tabel kedua (data yang sudah dikirim)
   const [dataTerkirim, setDataTerkirim] = useState<any[]>([]);
+  // Fungsi untuk menyimpan data ke localStorage
+  const saveDataToLocalStorage = (key, data) => {
+    localStorage.setItem(key, JSON.stringify(data));
+  };
+  const dropdownRef = useRef(null); // Referensi untuk dropdown
+
+  const [editItem, setEditItem] = useState(null);
+  const [newData, setNewData] = useState({
+    nama: '',
+    keterangan: '',
+    kelas: '',
+    jumlah: 0,
+    hadir: 0,
+    sakit: 0,
+    izin: 0,
+    alpha: 0,
+    terlambat: 0,
+    walas: ''
+  });
 
   const handleIzinClick = () => {
     setShowButtons(!showButtons);
@@ -285,43 +172,150 @@ const Page = () => {
     localStorage.setItem('dataAbsensi', JSON.stringify(updatedData));
   };
 
-  // Fungsi untuk menangani pengiriman data
+  // Memuat data dari localStorage saat pertama kali komponen di-mount
+  useEffect(() => {
+    const savedAbsensi = localStorage.getItem('dataAbsensi');
+    const savedTerkirim = localStorage.getItem('dataTerkirim');
+    
+    if (savedAbsensi) {
+      setDataAbsensi(JSON.parse(savedAbsensi));
+    }
+    if (savedTerkirim) {
+      setDataTerkirim(JSON.parse(savedTerkirim));
+    }
+  }, []);
+
+  // Fungsi yang dijalankan saat tombol "Kirim" diklik
   const handleKirim = (item) => {
+    // Pindahkan item ke dataTerkirim
+    const newDataTerkirim = [...dataTerkirim, item];
+    setDataTerkirim(newDataTerkirim);
+
     // Hapus item dari dataAbsensi
-    const updatedDataAbsensi = dataAbsensi.filter(data => data.id !== item.id);
-    setDataAbsensi(updatedDataAbsensi);
+    const newDataAbsensi = dataAbsensi.filter((absensi) => absensi !== item);
+    setDataAbsensi(newDataAbsensi);
 
-    // Tambahkan item ke dataTerkirim
-    const updatedDataTerkirim = [...dataTerkirim, item];
+    // Simpan perubahan ke localStorage
+    saveDataToLocalStorage('dataAbsensi', newDataAbsensi);
+    saveDataToLocalStorage('dataTerkirim', newDataTerkirim);
+
+    // Menutup dropdown
+    setOpenDropdown(null);
+  };
+  //untuk hapus
+  const handleDeleteClick = (id) => {
+    console.log("ID yang akan dihapus: ", id); // Debugging
+    setConfirmDelete({ visible: true, id });
+    setOpenDropdown(null);
+  };
+  
+  const handleConfirmDelete = () => {
+    console.log("Confirm Delete ID:", confirmDelete.id);
+    
+    const filteredDataTerkirim = dataTerkirim.filter((item) => item.id !== confirmDelete.id);
+    console.log("Filtered Data Terkirim:", filteredDataTerkirim);
+  
+    const updatedDataTerkirim = filteredDataTerkirim.map((item, index) => ({
+      ...item,
+      id: index + 1,
+    }));
+  
     setDataTerkirim(updatedDataTerkirim);
+    saveDataToLocalStorage("dataTerkirim", updatedDataTerkirim);
+    
+    // Simpan juga ke dataAbsensi jika perlu
+    const filteredDataAbsensi = dataAbsensi.filter((item) => item.id !== confirmDelete.id);
+    setDataAbsensi(filteredDataAbsensi);
+    saveDataToLocalStorage("dataAbsensi", filteredDataAbsensi);
+  
+    setConfirmDelete({ visible: false, id: null });
+  };
 
-    // Update local storage
-    localStorage.setItem('dataAbsensi', JSON.stringify(updatedDataAbsensi));
-    localStorage.setItem('dataTerkirim', JSON.stringify(updatedDataTerkirim));
+  const handleCancelDelete = () => {
+    setConfirmDelete({ visible: false, id: null });
+  };
+
+  const handleDropdownClick = (id) => {
+    setOpenDropdown((prev) => (prev === id ? null : id)); // Jika dropdown yang sama diklik, tutup
+  };
+  //untuk edit
+  const handleEditClick = (id) => {
+    console.log("Edit Clicked ID:", id); // Pastikan ID diklik
+    const itemToEdit = dataTerkirim.find((item) => item.id === id);
+    console.log("Item to Edit:", itemToEdit); // Pastikan item ditemukan
+    
+    if (itemToEdit) {
+      setEditItem(itemToEdit); // Set item yang akan diedit
+      setNewData({
+        nama: itemToEdit.nama,
+        keterangan: itemToEdit.keterangan,
+        kelas: itemToEdit.kelas, 
+        jumlah: itemToEdit.jumlah, 
+        hadir: itemToEdit.hadir, 
+        sakit: itemToEdit.sakit, 
+        izin: itemToEdit.izin, 
+        alpha: itemToEdit.alpha, 
+        terlambat: itemToEdit.terlambat,
+        walas: itemToEdit.walas
+      });
+      console.log("Edit Item Set:", itemToEdit); // Pastikan item sudah di-set
+    } else {
+      console.error("Item tidak ditemukan untuk ID:", id); // Debug jika tidak ditemukan
+    }
+  };
+
+  const handleEdit = (id, newData) => {
+    console.log("Data yang diedit untuk ID", id, ":", newData); // Debug data yang akan di-update
+  
+    const updatedDataTerkirim = dataTerkirim.map((item) =>
+      item.id === id ? { ...item, ...newData } : item
+    );
+    
+    setDataTerkirim(updatedDataTerkirim); // Update state
+    console.log("Data Terkirim setelah update:", updatedDataTerkirim); // Debug data setelah update
+  
+    saveDataToLocalStorage("dataTerkirim", updatedDataTerkirim); // Simpan ke localStorage
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setNewData((prev) => ({ ...prev, [name]: value }));
+  };
+  
+  const handleEditSubmit = () => {
+    if (editItem) {
+      handleEdit(editItem.id, newData);
+      console.log("Data yang diedit:", newData); // Debug data yang akan di-update
+      console.log("Data Terkirim setelah diedit:", dataTerkirim); // Debug data setelah update
+      setEditItem(null); // Tutup form
+      setNewData({
+        nama: '',
+        keterangan: '',
+        kelas: '',
+        jumlah: 0,
+        hadir: 0,
+        sakit: 0,
+        izin: 0,
+        alpha: 0,
+        terlambat: 0,
+        walas: ''
+      });
+    }
   };
 
   useEffect(() => {
-    const savedData = localStorage.getItem('dataAbsensi');
-    const parsedData = savedData ? JSON.parse(savedData) : [];
-    setDataAbsensi(parsedData);
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setOpenDropdown(null); // Tutup dropdown jika klik di luar
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
   }, []);
-
-  useEffect(() => {
-  if (typeof window !== 'undefined') {
-    const savedData = localStorage.getItem('dataAbsensi');
-    const parsedData = savedData ? JSON.parse(savedData) : [];
-    setDataAbsensi(parsedData);
-  }
-}, []);
-
-  useEffect(() => {
-    localStorage.setItem('dataAbsensi', JSON.stringify(dataAbsensi));
-  }, [dataAbsensi]);
-  
-  useEffect(() => {
-    localStorage.setItem('dataTerkirim', JSON.stringify(dataTerkirim));
-  }, [dataTerkirim]);
-  
   
   return (
     <>
@@ -375,7 +369,7 @@ const Page = () => {
                 <table className="min-w-full bg-white mt-4">
                 <thead>
                   <tr>
-                    <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">NO</th>
+                    <th className="px-3 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">NO</th>
                     <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">NAMA</th>
                     <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">KELAS</th>
                     <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">KETERANGAN</th>
@@ -385,7 +379,7 @@ const Page = () => {
                 <tbody>
                 {dataAbsensi.map((item, index) => (
                   <tr key={index}>
-                    <td className="px-6 py-4 border-b border-gray-300 text-sm">{index.id}</td>
+                    <td className="p-3 sm:p-3 ml-5 text-black border-b">{index + 1}</td> {/* Nomor urut yang dinamis */}
                     <td className="px-6 py-4 border-b border-gray-300 text-sm">{item.nama}</td>
                     <td className="px-6 py-4 border-b border-gray-300 text-sm">{item.kelas}</td>
                     <td className="px-6 py-4 border-b border-gray-300 text-sm">{item.keterangan}</td>
@@ -443,14 +437,14 @@ const Page = () => {
               </div>
                   <div className=" items-center lg:mb-0 space-x-2 lg:order-1">
                   <button
-              onClick={handleResetClick}
-              disabled={!isResettable}
-              className={`w-full p-2 rounded text-sm sm:text-base transition z-20 ${
-                isResettable
-                  ? "text-white bg-red-500 hover:bg-red-600 cursor-pointer"
-                  : "text-gray-400 bg-gray-300 cursor-not-allowed"
-              }`}
-            >
+                    onClick={handleResetClick}
+                    disabled={!isResettable}
+                    className={`w-full p-2 rounded text-sm sm:text-base transition z-20 ${
+                      isResettable
+                        ? "text-white bg-red-500 hover:bg-red-600 cursor-pointer"
+                        : "text-gray-400 bg-gray-300 cursor-not-allowed"
+                    }`}
+                  >
               <p>Reset</p>
             </button >
                   </div>
@@ -493,25 +487,25 @@ const Page = () => {
                   <tbody>
                   {dataTerkirim.map((item, index) => (
                       <tr key={index}>
-                        <td className="p-3 sm:p-3 text-white border-b">{item.id}</td>
+                        <td className="p-3 sm:p-3 text-white border-b">{index + 1}</td> {/* Nomor urut yang dinamis */}
                         <td className="p-3 sm:p-3 text-white border-b">{item.kelas}</td>
                         <td className="p-3 sm:p-3 text-white border-b">{item.jumlah}</td>
-                        <td className="p-3 sm:p-3 text-white border-b">{item.H}</td>
-                        <td className="p-2 sm:p-3 border-b border-gray-300">{item.keterangan === 'Sakit' ? '1' : '-'}</td>
-                        <td className="p-3 sm:p-3 text-white border-b">{item.I}</td>
-                        <td className="p-3 sm:p-3 text-white border-b">{item.A}</td>
-                        <td className="p-3 sm:p-3 text-white border-b">{item.T}</td>
+                        <td className="p-3 sm:p-3 text-white border-b">{item.hadir}</td>
+                        <td className="p-2 sm:p-3 border-b border-gray-300">{item.sakit}</td>
+                        <td className="p-3 sm:p-3 text-white border-b">{item.izin}</td>
+                        <td className="p-3 sm:p-3 text-white border-b">{item.alpha}</td>
+                        <td className="p-3 sm:p-3 text-white border-b">{item.terlambat}</td>
                         <td className="p-3 sm:p-3 text-white border-b">{item.walas}</td>
                         <td className="p-3 sm:p-3 text-white border-b text-center">
                         {/* // Komponen DropdownMenu yang ditampilkan dalam tabel untuk setiap baris data.
                         // isOpen: Menentukan apakah dropdown saat ini terbuka berdasarkan nomor item.
                         // onClick: Fungsi untuk menangani aksi klik pada dropdown untuk membuka atau menutupnya.
                         // onDelete: Fungsi untuk memicu proses penghapusan data ketika opsi 'Hapus' dalam dropdown diklik. */}
-                         {/* <DropdownMenu
+                         <DropdownMenu
                             isOpen={openDropdown === item.id}
                             onClick={() => handleDropdownClick(item.id)}
                             onDelete={() => handleDeleteClick(item.id)}
-                            onEdit={() => handleEditClick(item.id)} /> */}
+                            onEdit={() => handleEditClick(item.id)} />
                         </td>
                       </tr>
                     ))}
@@ -546,6 +540,195 @@ const Page = () => {
             </div>
           </div>
           </div>
+          {/* Modal untuk konfirmasi penghapusan */}
+        {confirmDelete.visible && (
+          <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
+            <div className="bg-white p-4 rounded-lg shadow-lg">
+              <p>Apakah Anda yakin ingin menghapus item ini?</p>
+              <div className="flex justify-end mt-4">
+                <button
+                  onClick={handleCancelDelete}
+                  className="px-3 py-2 sm:px-4 sm:py-2 bg-gray-300 text-black rounded text-sm sm:text-base mr-2"
+                >
+                  Batal
+                </button>
+                <button 
+                onClick={() => handleConfirmDelete()}
+                className="px-3 py-2 sm:px-4 sm:py-2 bg-red-500 text-white rounded text-sm sm:text-base"
+                >
+                  Hapus
+                  </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {/* Modal untuk mengedit data */}
+        {editItem && (
+          <div className="fixed z-50 inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
+            <div className="bg-white p-4 rounded shadow-lg z-50">
+              {/* Input Nama */}
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="nama">
+                  Nama
+                </label>
+                <input
+                  id="nama"
+                  type="text"
+                  name="nama"
+                  value={newData.nama}
+                  onChange={handleInputChange}
+                  placeholder="Nama"
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                />
+              </div>
+
+              {/* Input Kelas */}
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="kelas">
+                  Kelas
+                </label>
+                <input
+                  id="kelas"
+                  type="text"
+                  name="kelas"
+                  value={newData.kelas}
+                  onChange={handleInputChange}
+                  placeholder="Kelas"
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                />
+              </div>
+
+              {/* Input Jumlah */}
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="jumlah">
+                  Jumlah
+                </label>
+                <input
+                  id="jumlah"
+                  type="number"
+                  name="jumlah"
+                  value={newData.jumlah}
+                  onChange={handleInputChange}
+                  placeholder="Jumlah"
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                />
+              </div>
+
+              {/* Input Hadir (H) */}
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="hadir">
+                  Hadir
+                </label>
+                <input
+                  id="hadir"
+                  type="number"
+                  name="hadir"
+                  value={newData.hadir}
+                  onChange={handleInputChange}
+                  placeholder="Hadir"
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                />
+              </div>
+
+              {/* Input Sakit */}
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="sakit">
+                  Sakit
+                </label>
+                <input
+                  id="sakit"
+                  type="number"
+                  name="sakit"
+                  value={newData.sakit}
+                  onChange={handleInputChange}
+                  placeholder="Sakit"
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                />
+              </div>
+
+              {/* Input Izin */}
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="izin">
+                  Izin
+                </label>
+                <input
+                  id="izin"
+                  type="number"
+                  name="izin"
+                  value={newData.izin}
+                  onChange={handleInputChange}
+                  placeholder="Izin"
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                />
+              </div>
+
+              {/* Input Alpha (A) */}
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="alpha">
+                  Alpha
+                </label>
+                <input
+                  id="alpha"
+                  type="number"
+                  name="alpha"
+                  value={newData.alpha}
+                  onChange={handleInputChange}
+                  placeholder="Alpha"
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                />
+              </div>
+
+              {/* Input Terlambat (T) */}
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="terlambat">
+                  Terlambat
+                </label>
+                <input
+                  id="terlambat"
+                  type="number"
+                  name="terlambat"
+                  value={newData.terlambat}
+                  onChange={handleInputChange}
+                  placeholder="Terlambat"
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                />
+              </div>
+
+              {/* Input Walas */}
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="walas">
+                  Wali Kelas (Walas)
+                </label>
+                <input
+                  id="walas"
+                  type="text"
+                  name="walas"
+                  value={newData.walas}
+                  onChange={handleInputChange}
+                  placeholder="Wali Kelas"
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                />
+              </div>
+
+              {/* Buttons */}
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={handleEditSubmit}
+                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                >
+                  Simpan
+                </button>
+                <button
+                  onClick={() => setEditItem(null)}
+                  className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                >
+                  Batal
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
     </div>
     </>
 
@@ -555,97 +738,97 @@ const Page = () => {
 // isOpen: Properti boolean yang menentukan apakah menu dropdown saat ini terbuka.
 // onClick: Fungsi callback yang dipanggil saat tombol dropdown diklik, untuk membuka atau menutup menu.
 // onDelete: Fungsi callback yang dipanggil saat opsi 'Hapus' dipilih dari menu dropdown.
-// function DropdownMenu({ isOpen, onClick, onEdit, onDelete, onClose }) {
-//   const dropdownRef = useRef(null);
+function DropdownMenu({ isOpen, onClick, onEdit, onDelete, onClose }) {
+  const dropdownRef = useRef(null);
 
-//   // Fungsi untuk menutup dropdown saat pengguna mengklik di luar dropdown.
-//   const handleClickOutside = (event) => {
-//     console.log('Clicked outside'); // Debugging
-//     if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-//       console.log('Outside detected'); // Debugging
-//       if (typeof onClose === 'function') {
-//         onClose(); // Memanggil fungsi onClose untuk menutup dropdown
-//       }
-//     }
-//   };
-//   //untuk detail
-//   const [isModalOpen, setIsModalOpen] = useState(false);
-//   const [confirmedPassword, setConfirmedPassword] = useState('');
+  // Fungsi untuk menutup dropdown saat pengguna mengklik di luar dropdown.
+  const handleClickOutside = (event) => {
+    console.log('Clicked outside'); // Debugging
+    if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      console.log('Outside detected'); // Debugging
+      if (typeof onClose === 'function') {
+        onClose(); // Memanggil fungsi onClose untuk menutup dropdown
+      }
+    }
+  };
+  //untuk detail
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [confirmedPassword, setConfirmedPassword] = useState('');
 
-//   const handleDetailClick = () => {
-//     setIsModalOpen(true);
-//     if (typeof onClose === 'function') {
-//       onClose(); // Menutup dropdown setelah detail diklik
-//     }
-//   };
-//   const handleConfirm = (password) => {
-//     setConfirmedPassword(password); // Menyimpan password di state
-//   };
-//   //detail end
+  const handleDetailClick = () => {
+    setIsModalOpen(true);
+    if (typeof onClose === 'function') {
+      onClose(); // Menutup dropdown setelah detail diklik
+    }
+  };
+  const handleConfirm = (password) => {
+    setConfirmedPassword(password); // Menyimpan password di state
+  };
+  //detail end
 
-//   useEffect(() => {
-//     console.log('Effect ran', isOpen); // Debugging
-//     // Menambahkan event listener untuk menangani klik di luar dropdown jika dropdown terbuka.
-//     if (isOpen) {
-//       document.addEventListener('mousedown', handleClickOutside);
-//     } else {
-//       // Menghapus event listener ketika dropdown ditutup.
-//       document.removeEventListener('mousedown', handleClickOutside);
-//     }
+  useEffect(() => {
+    console.log('Effect ran', isOpen); // Debugging
+    // Menambahkan event listener untuk menangani klik di luar dropdown jika dropdown terbuka.
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      // Menghapus event listener ketika dropdown ditutup.
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
 
-//     // Cleanup function untuk menghapus event listener saat komponen di-unmount atau isOpen berubah.
-//     return () => {
-//       document.removeEventListener('mousedown', handleClickOutside);
-//       console.log('Cleanup'); // Debugging
-//     };
-//   }, [isOpen]);
+    // Cleanup function untuk menghapus event listener saat komponen di-unmount atau isOpen berubah.
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      console.log('Cleanup'); // Debugging
+    };
+  }, [isOpen]);
 
-//   return (
-//     <div className="relative" ref={dropdownRef}>
-//       <button
-//         onClick={onClick}
-//         className="p-1 z-40 text-white text-xs sm:text-sm"
-//       >
-//         &#8942;
-//       </button>
-//       {isOpen && (
-//         <div
-//           className="absolute z-50 mt-1 w-24 sm:w-32 bg-slate-600 border rounded-md shadow-lg"
-//           style={{ left: '-62px', top: '20px' }} // Menggeser dropdown ke kiri
-//         >
-//           <button
-//             className="block w-full px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm hover:bg-slate-500"
-//             onClick={handleDetailClick}
-//           >
-//             Detail
-//           </button>
-//           <Pw isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onConfirm={handleConfirm} />
-//           <button
-//             onClick={() => {
-//               onEdit();
-//               if (typeof onClose === 'function') {
-//                 onClose(); // Menutup dropdown setelah edit diklik
-//               }
-//             }}
-//             className="block w-full px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm hover:bg-slate-500"
-//           >
-//             Edit
-//           </button>
-//           <button
-//             onClick={() => {
-//               onDelete();
-//               if (typeof onClose === 'function') {
-//                 onClose(); // Menutup dropdown setelah delete diklik
-//               }
-//             }}
-//             className="block w-full px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm hover:bg-slate-500"
-//           >
-//             Hapus
-//           </button>
-//         </div>
-//       )}
-//     </div>
-//   );
-// }
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        onClick={onClick}
+        className="p-1 z-40 text-white text-xs sm:text-sm"
+      >
+        &#8942;
+      </button>
+      {isOpen && (
+        <div
+          className="absolute z-50 mt-1 w-24 sm:w-32 bg-slate-600 border rounded-md shadow-lg"
+          style={{ left: '-62px', top: '20px' }} // Menggeser dropdown ke kiri
+        >
+          <button
+            className="block w-full px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm hover:bg-slate-500"
+            onClick={handleDetailClick}
+          >
+            Detail
+          </button>
+          <Pw isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onConfirm={handleConfirm} />
+          <button
+            onClick={() => {
+              onEdit();
+              if (typeof onClose === 'function') {
+                onClose(); // Menutup dropdown setelah edit diklik
+              }
+            }}
+            className="block w-full px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm hover:bg-slate-500"
+          >
+            Edit
+          </button>
+          <button
+            onClick={() => {
+              onDelete();
+              if (typeof onClose === 'function') {
+                onClose(); // Menutup dropdown setelah delete diklik
+              }
+            }}
+            className="block w-full px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm hover:bg-slate-500"
+          >
+            Hapus
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default Page
