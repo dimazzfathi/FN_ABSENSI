@@ -288,7 +288,7 @@ const Page = () => {
                     onClick={() => handleClick('Sakit')}>
                       Sakit
                     </button>
-                    <button className="bg-yellow w-44 text-white px-4 py-2 rounded"
+                    <button className="bg-orange-500 text-white w-44  px-4 py-2 rounded"
                     onClick={() => handleClick('Keterangan Lain')}>
                       Keterangan Lain
                     </button>
