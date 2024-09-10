@@ -81,6 +81,8 @@ export default function Kelas() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [kelasValue, setKelasValue] = useState("");
   const [jurusanValue, setJurusanValue] = useState("");
+  const [selectedJurusan, setSelectedJurusan] = useState('');
+  const [jurusanOptions, setJurusanOptions] = useState([]);
   const [thnValue, setThnValue] = useState("");
   const [jmlsiswaValue, setJmlSiswaValue] = useState("");
   const [walasValue, setWalasValue] = useState("");
@@ -101,6 +103,18 @@ export default function Kelas() {
   const [itemsPerPage, setItemsPerPage] = useState(5);
   const [isResettable, setIsResettable] = useState(false);
   
+  useEffect(() => {
+    const storedJurusan = localStorage.getItem('tableDataJurusan');
+    
+    // Pastikan data ada di localStorage dan mengonversinya menjadi array
+    if (storedJurusan) {
+      // Jika data berupa array objek, pastikan akses nilai `jurusan` di setiap objek
+      const parsedData = JSON.parse(storedJurusan);
+      const jurusanList = parsedData.map((item) => item.jurusan); // Mengambil hanya properti `jurusan`
+      setJurusanOptions(jurusanList);
+    }
+  }, []);
+
    // useEffect to monitor changes and update isResettable
    useEffect(() => {
     const savedData = JSON.parse(localStorage.getItem("tableDataKelas")) || [];
@@ -259,7 +273,7 @@ export default function Kelas() {
     currentPage * itemsPerPage
   );
 
-  const jurusanOptions = ["Teknik Informatika", "Sistem Informasi", "Teknik Komputer", "Manajemen"];
+  
   const kelasOptions = Array.isArray(tableData) && tableData.length > 0
   ? [...new Set(tableData.map((item) => item.kelas))]
   : [];

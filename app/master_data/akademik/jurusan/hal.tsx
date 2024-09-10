@@ -5,6 +5,7 @@ export default function Rombel() {
   // State untuk menyimpan nilai input 
  
   const [jurusanValue, setJurusanValue] = useState("");
+  const [editJurusanValue, setEditJurusanValue] = useState("");
   const [isResettable, setIsResettable] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const jurusanInputRef = useRef(null);
@@ -31,14 +32,28 @@ export default function Rombel() {
   
   // useEffect to monitor changes and update isResettable
   useEffect(() => {
-    const savedData = JSON.parse(localStorage.getItem("tableDataJurusan")) || [];
+    // Ambil data dari localStorage
+    const storedData = localStorage.getItem("tableDataJurusan");
+  
+    // Lakukan parsing hanya jika storedData ada dan bukan nilai kosong
+    let savedData = [];
+    try {
+      savedData = storedData ? JSON.parse(storedData) : [];
+    } catch (error) {
+      console.error("Error parsing JSON from localStorage:", error);
+      savedData = []; // Jika terjadi error parsing, tetap gunakan array kosong
+    }
+  
+    // Set data ke state
     setTableData(savedData);
-    if (filterKelas || filterJurusan  || searchTerm) {
+  
+    // Cek kondisi filter untuk menentukan apakah tombol reset bisa diaktifkan
+    if (filterKelas || filterJurusan || searchTerm) {
       setIsResettable(true);
     } else {
       setIsResettable(false);
     }
-  }, [filterKelas, filterJurusan , searchTerm]);
+  }, [filterKelas, filterJurusan, searchTerm]);
 
 
   // Handler untuk mereset filter
@@ -99,14 +114,14 @@ export default function Rombel() {
 
   const handleEditClick = (item) => {
     setEditData(item);
-    setJurusanValue(item.jurusan);
+    setEditJurusanValue(item.jurusan);
    setShowEditModal(true);
   };
 
   const handleSaveEdit = () => {
     const updatedData = tableData.map((item) =>
       item.no === editData.no
-        ? { ...item, jurusan: jurusanValue }
+        ? { ...item, editjurusan: editjurusanValue }
         : item
     );
     setTableData(updatedData);
@@ -357,29 +372,7 @@ export default function Rombel() {
                   </div>
                 </div>
               <div className="mt-4 flex justify-between items-center">
-              <div className="text-sm text-gray-700 text-white">
-                Halaman {currentPage} dari {totalPages}
-              </div>
-              <div className="flex overflow-hidden m-4 space-x-2">
-                <button
-                  onClick={() => setCurrentPage(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className={`px-2 py-1 border rounded ${
-                    currentPage === 1 ? "bg-gray-300" : "bg-teal-400 hover:bg-teal-600 text-white"
-                  }  `}
-                >
-                  Previous
-                </button>
-                <button
-                  onClick={() => setCurrentPage(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className={`px-2 py-1 border rounded ${
-                    currentPage === totalPages ? "bg-gray-300" : "bg-teal-400 hover:bg-teal-600 text-white"
-                  }  `}
-                >
-                  Next
-                </button>
-              </div>
+              
             </div>
             </div>
           </div>
@@ -416,8 +409,8 @@ export default function Rombel() {
              
               <input
                 type="text"
-                value={jurusanValue}
-                onChange={handleJurusanChange}
+                value={editJurusanValue}
+                onChange={(e) => setEditJurusanValue(e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
                 placeholder="Kelas..."
               />

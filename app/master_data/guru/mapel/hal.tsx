@@ -6,6 +6,8 @@ export default function Mapel() {
   const [mapelValue, setMapelValue] = useState("");
   const [kelasValue, setKelasValue] = useState("");
   const [jurusanValue, setJurusanValue] = useState("");
+  const [selectedJurusan, setSelectedJurusan] = useState('');
+  const [jurusanOptions, setJurusanOptions] = useState([]);
   const [isJurusanAktif, setIsJurusanAktif] = useState(true);
   const [isResettable, setIsResettable] = useState(false);
   const [mapelError, setMapelError] = useState(false);
@@ -32,6 +34,18 @@ export default function Mapel() {
   const [filterMapel, setFilterMapel] = useState("");
   const [filterKelas, setFilterKelas] = useState("");
   const [filterJurusan, setFilterJurusan] = useState("");
+
+  useEffect(() => {
+    const storedJurusan = localStorage.getItem('tableDataJurusan');
+    
+    // Pastikan data ada di localStorage dan mengonversinya menjadi array
+    if (storedJurusan) {
+      // Jika data berupa array objek, pastikan akses nilai `jurusan` di setiap objek
+      const parsedData = JSON.parse(storedJurusan);
+      const jurusanList = parsedData.map((item) => item.jurusan); // Mengambil hanya properti `jurusan`
+      setJurusanOptions(jurusanList);
+    }
+  }, []);
 
   // useEffect to monitor changes and update isResettable
   useEffect(() => {
@@ -240,17 +254,7 @@ export default function Mapel() {
     "11 & 12",
 ];  
   
-  // List of jurusan options
-  const jurusanOptions = [
-    "TKJ",
-    "TKJ 1",
-    "TKJ 2",
-    "TSM",
-    "Bd",
-    "BD 1",
-    "BD 2",
-    "DKV",
-  ];
+  
 
   return (
     <>
