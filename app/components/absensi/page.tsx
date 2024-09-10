@@ -1,5 +1,5 @@
 "use client";
-import Absensi from '../absensi/hal';
+import Absensi from '../absensi/app';
 import React, { useState } from 'react'
 import Layout from "../../../components/layout/page"
 import Navbar from "../layout/navbar/page"

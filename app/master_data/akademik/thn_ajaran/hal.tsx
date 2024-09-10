@@ -1,10 +1,13 @@
 "use client";
 import { useState, useEffect, useRef } from 'react';
 
-export default function Kelas() {
+export default function TahunAjaran() {
   // State untuk menyimpan nilai input 
   const [statusValue, setStatusValue] = useState("");
   const [thnValue, setThnValue] = useState("");
+  const [editThnValue, setEditThnValue] = useState("");
+  const [editStatusValue, setEditStatusValue] = useState("");
+
   const [isResettable, setIsResettable] = useState(false);
   const [errors, setErrors] = useState({ thn: false, status: false });
 
@@ -30,14 +33,29 @@ export default function Kelas() {
   
   // useEffect to monitor changes and update isResettable
   useEffect(() => {
-    const savedData = JSON.parse(localStorage.getItem("tableTahunAjaran")) || [];
+    // Ambil data dari localStorage
+    const storedData = localStorage.getItem("tableTahunAjaran");
+  
+    // Lakukan parsing hanya jika storedData ada dan bukan nilai kosong
+    let savedData = [];
+    try {
+      savedData = storedData ? JSON.parse(storedData) : [];
+    } catch (error) {
+      console.error("Error parsing JSON from localStorage:", error);
+      savedData = []; // Jika terjadi error parsing, tetap gunakan array kosong
+    }
+  
+    // Set data ke state
     setTableData(savedData);
-    if (filterStatus || filterThn  || searchTerm) {
+  
+    // Cek kondisi filter untuk menentukan apakah tombol reset bisa diaktifkan
+    if (filterStatus || filterThn || searchTerm) {
       setIsResettable(true);
     } else {
       setIsResettable(false);
     }
-  }, [filterStatus, filterThn , searchTerm]);
+  }, [filterStatus, filterThn, searchTerm]);
+  
 
 
   // Handler untuk mereset filter
@@ -130,16 +148,28 @@ export default function Kelas() {
 
 
   const handleEditClick = (item) => {
+    // Kosongkan data sebelum mengisi dengan data yang akan diedit
+    clearEditData();
+
+    // Setelah itu, set data yang akan diedit
     setEditData(item);
-    setStatusValue(item.status)
-    setThnValue(item.jurusan);
-   setShowEditModal(true);
-  };
+    setEditStatusValue(item.status);
+    setEditThnValue(item.thn);
+    setShowEditModal(true);
+};
+
+// Fungsi untuk mengosongkan state
+const clearEditData = () => {
+    setEditData(null);
+    setEditStatusValue("");
+    setEditThnValue("");
+};
+
 
   const handleSaveEdit = () => {
     const updatedData = tableData.map((item) =>
       item.no === editData.no
-        ? { ...item, thn: thnValue, status: statusValue }
+        ? { ...item, thn: editThnValue, status: editStatusValue }
         : item
     );
     setTableData(updatedData);
@@ -414,62 +444,11 @@ export default function Kelas() {
               </div>
             </div>
 
-              <div className="mt-4 flex justify-between items-center">
-              <div className="text-sm text-gray-700 text-white">
-                Halaman {currentPage} dari {totalPages}
-              </div>
-              <div className="flex overflow-hidden m-4 space-x-2">
-                <button
-                  onClick={() => setCurrentPage(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className={`px-2 py-1 border rounded ${
-                    currentPage === 1 ? "bg-gray-300" : "bg-teal-400 hover:bg-teal-600 text-white"
-                  }  `}
-                >
-                  Previous
-                </button>
-                <button
-                  onClick={() => setCurrentPage(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className={`px-2 py-1 border rounded ${
-                    currentPage === totalPages ? "bg-gray-300" : "bg-teal-400 hover:bg-teal-600 text-white"
-                  }  `}
-                >
-                  Next
-                </button>
-              </div>
-            </div>
+              
             </div>
           </div>
 
           </div>
-        </div>
-
-        {showEditModal && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-            <div className="bg-white p-6 rounded-lg shadow-lg">
-              <h2 className="text-xl font-bold mb-4">Edit Data</h2>
-              <input
-                type="text"
-                value={tahunAjaranValue}
-                onChange={handleTahunAjaranChange}
-                className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
-                placeholder="Tahun Ajaran..."
-              />
-              <select
-                value={statusValue}
-                onChange={handleStatusChange}
-                className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-4"
-              >
-                <option value="">Pilih Status...</option>
-                {statusOptions.map((option, index) => (
-                  <option key={index} value={option.value}>
-                    {option.value}
-                  </option>
-                ))}
-              </select>
-              <div className="flex justify-end">
-        <div>
         </div>
         {/* Modal untuk konfirmasi penghapusan */}
         {confirmDelete.visible && (
@@ -492,33 +471,30 @@ export default function Kelas() {
               </div>
             </div>
           </div>
-        )}
-        {/* Modal untuk mengedit data */}
+        )}            
         {showEditModal && (
-          <div className="fixed z-50 inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
-            <div className="bg-white p-4 rounded-lg shadow-lg">
-              <h2 className="text-sm pt-3 sm:text-2xl font-bold">Edit Data</h2>
-             
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="bg-white p-6 rounded-lg shadow-lg">
+              <h2 className="text-xl font-bold mb-4">Edit Data</h2>
               <input
                 type="text"
-                value={thnValue}
-                onChange={handleThnChange}
+                value={editThnValue}
+                onChange={(e) => setEditThnValue(e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
                 placeholder="Tahun Ajaran..."
               />
-              <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold"> Status</h2>
-                <select
-                    value={statusValue}
-                    onChange={handleStatusChange}
-                    className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
-                 >
-                    <option value="">Pilih Status...</option>
-                        {statusOptions.map((option, index) => (
-                        <option key={index} value={option}>
-                            {option}
-                        </option>
-                        ))}
-                </select>
+              <select
+                value={editStatusValue}
+                onChange={(e) => setEditStatusValue(e.target.value)}
+                className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-4"
+              >
+                <option value="">Pilih Status...</option>
+                {statusOptions.map((option, index) => (
+                  <option key={index} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
               <div className="flex justify-end mt-4">
                 <button
                   onClick={() => setShowEditModal(false)}
@@ -536,11 +512,7 @@ export default function Kelas() {
             </div>
           </div>
         )}
-        </div>
-      </div>
-      </div>
-    
-        )}
+
       </div>
   </>
   )

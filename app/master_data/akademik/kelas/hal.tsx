@@ -4,7 +4,10 @@ import { useState, useEffect, useRef } from 'react';
 export default function Kelas() {
   // State untuk menyimpan nilai input 
   const [kelasValue, setKelasValue] = useState("");
+  const [editKelasValue, setEditKelasValue] = useState("");
   const [jurusanValue, setJurusanValue] = useState("");
+  const [jurusanOptions, setJurusanOptions] = useState([]);
+  const [editJurusanOptions, setEditJurusanOptions] = useState([]);
   const [isResettable, setIsResettable] = useState(false);
   const [isKelasValid, setIsKelasValid] = useState(true);
   const [isJurusanValid, setIsJurusanValid] = useState(true);
@@ -29,17 +32,51 @@ export default function Kelas() {
 
   const [filterKelas, setFilterKelas] = useState("");
   const [filterJurusan, setFilterJurusan] = useState("");
+
+  
   
   // useEffect to monitor changes and update isResettable
   useEffect(() => {
-    const savedData = JSON.parse(localStorage.getItem("tableDataKelas")) || [];
+    // Ambil data dari localStorage
+    const storedData = localStorage.getItem("tableDataKelas");
+  
+    // Lakukan parsing hanya jika storedData ada dan bukan nilai kosong
+    let savedData = [];
+    try {
+      savedData = storedData ? JSON.parse(storedData) : [];
+    } catch (error) {
+      console.error("Error parsing JSON from localStorage:", error);
+      savedData = []; // Jika terjadi error parsing, tetap gunakan array kosong
+    }
+  
+    // Set data ke state
     setTableData(savedData);
-    if (filterKelas || filterJurusan  || searchTerm) {
+  
+    // Cek kondisi filter untuk menentukan apakah tombol reset bisa diaktifkan
+    if (filterKelas || filterJurusan || searchTerm) {
       setIsResettable(true);
     } else {
       setIsResettable(false);
     }
-  }, [filterKelas, filterJurusan , searchTerm]);
+  }, [filterKelas, filterJurusan, searchTerm]);
+  
+  useEffect(() => {
+    const storedJurusan = localStorage.getItem('tableDataJurusan');
+  
+    if (storedJurusan) {
+      try {
+        const parsedData = JSON.parse(storedJurusan);
+        if (Array.isArray(parsedData)) {
+          const jurusanList = parsedData.map((item) => item.jurusan); // Ambil properti `jurusan`
+          setJurusanOptions(jurusanList);
+        } else {
+          console.error("Parsed data is not an array:", parsedData);
+        }
+      } catch (error) {
+        console.error("Error parsing tableDataJurusan:", error);
+      }
+    }
+  }, []);
 
 
   // Handler untuk mereset filter
@@ -122,22 +159,22 @@ export default function Kelas() {
 
   const handleEditClick = (item) => {
     setEditData(item);
-    setKelasValue(item.kelas);
-    setJurusanValue(item.jurusan);
+    setEditKelasValue(item.kelas);
+    setEditJurusanOptions(item.jurusan);
    setShowEditModal(true);
   };
 
   const handleSaveEdit = () => {
     const updatedData = tableData.map((item) =>
       item.no === editData.no
-        ? { ...item, kelas: kelasValue, jurusan: jurusanValue }
+        ? { ...item, kelas: editKelasValue, jurusan: editJurusanOptions }
         : item
     );
     setTableData(updatedData);
     localStorage.setItem("tableDataKelas", JSON.stringify(updatedData));
     setShowEditModal(false);
-    setKelasValue("");
-    setJurusanValue("");
+    setEditKelasValue("");
+    setEditJurusanOptions("");
   };
 
   const handleDeleteClick = (id) => {
@@ -209,17 +246,8 @@ export default function Kelas() {
 
   
   
-  // List of jurusan options
-  const jurusanOptions = [
-    "TKJ",
-    "TKJ 1",
-    "TKJ 2",
-    "TSM",
-    "Bd",
-    "BD 1",
-    "BD 2",
-    "DKV",
-  ];
+  
+  
 
   return (
     <>
@@ -447,14 +475,14 @@ export default function Kelas() {
              
               <input
                 type="text"
-                value={kelasValue}
-                onChange={handleKelasChange}
+                value={editKelasValue}
+                onChange={(e) => setEditKelasValue(e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
                 placeholder="Kelas..."
               />
               <select
-                value={jurusanValue}
-                onChange={handleJurusanChange}
+                value={editJurusanOptions}
+                onChange={(e) => setEditJurusanOptions(e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
               >
                 <option value="">Pilih Jurusan...</option>

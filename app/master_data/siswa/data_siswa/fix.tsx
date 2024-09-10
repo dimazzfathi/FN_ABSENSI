@@ -30,6 +30,18 @@ export default function DataSiswa() {
   const [previewURL, setPreviewURL] = useState(""); // State untuk URL preview foto
   const [isResettable, setIsResettable] = useState(false);
 
+    const [editNisnValue, setEditNisnValue] = useState('');
+    const [editNamaSiswaValue, setEditNamaSiswaValue] = useState('');
+    const [editJkValue, setEditJkValue] = useState('');
+    const [editEmailValue, setEditEmailValue] = useState('');
+    const [editNamaWaliValue, setEditNamaWaliValue] = useState('');
+    const [editNoWaliValue, setEditNoWaliValue] = useState('');
+    const [editTahunAjaranValue, setEditTahunAjaranValue] = useState('');
+    const [editKelasValue, setEditKelasValue] = useState('');
+    const [editJurusanValue, setEditJurusanValue] = useState('');
+    const [editFotoValue, setEditFotoValue] = useState(null);
+    const [editImagePreview, setEditImagePreview] = useState(null);
+
   // State untuk menyimpan data tabel
   const [tableData, setTableData] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -104,6 +116,17 @@ export default function DataSiswa() {
         };
         reader.readAsDataURL(file);
     }
+};
+const handleEditImageChange = (e) => {
+  const file = e.target.files[0];
+  if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+          setEditImagePreview(reader.result); // Menyimpan pratinjau gambar baru
+          setEditFotoValue(file); // Menyimpan file gambar baru
+      };
+      reader.readAsDataURL(file);
+  }
 };
   
      // Referensi untuk input
@@ -205,69 +228,70 @@ export default function DataSiswa() {
 
   const handleEditClick = (item) => {
     setEditData(item);
-    setKelasValue(item.kelas);
-    setJurusanValue(item.jurusan);
-    setTahunAjaranValue(item.tahunAjaran);
-    setNoWaliValue(item.noWali);
-    setNamaWaliValue(item.namaWali);
-    setPreviewURL(item.foto); // Set preview URL for the edit modal
-    setEmailValue(item.email);
-    setJkValue(item.jk);
-    setNamaSiswaValue(item.namaSiswa);
-    setNisnValue(item.nisn);
+    setEditKelasValue(item.kelas);
+    setEditJurusanValue(item.jurusan);
+    setEditTahunAjaranValue(item.tahunAjaran);
+    setEditNoWaliValue(item.noWali);
+    setEditNamaWaliValue(item.namaWali);
+    setEditImagePreview(item.foto); // Tampilkan foto yang sudah ada
+    setEditEmailValue(item.email);
+    setEditJkValue(item.jk);
+    setEditNamaSiswaValue(item.namaSiswa);
+    setEditNisnValue(item.nisn);
     setShowEditModal(true);
-  };
-
-  const handleSaveEdit = () => {
-    // Revoke previous URL if available
-    if (editData.foto && editData.foto.startsWith('blob:')) {
-        URL.revokeObjectURL(editData.foto);
-    }
-
-    // Handle the new photo URL
-    const newFotoURL = fotoValue instanceof File
-        ? URL.createObjectURL(fotoValue) // Create a new URL for the file if it's an instance of File
-        : editData.foto;
-
-    const updatedData = tableData.map((item) =>
-        item.no === editData.no
-            ? {
-                ...item,
-                kelas: kelasValue,
-                jurusan: jurusanValue,
-                tahunAjaran: tahunAjaranValue,
-                noWali: noWaliValue,
-                namaWali: namaWaliValue,
-                foto: fotoValue || "", // Handle file URL
-                jk: jkValue,
-                namaSiswa: namaSiswaValue,
-                nisn: nisnValue,
-            }
-            : item
-    );
-
-    // Update state and local storage
-    setTableData(updatedData);
-    localStorage.setItem("tableDataSiswa", JSON.stringify(updatedData));
-
-    // Reset input fields if needed
-    setShowEditModal(false);
-    setKelasValue("");
-    setJurusanValue("");
-    setTahunAjaranValue("");
-    setNoWaliValue("");
-    setNamaWaliValue("");
-    setFotoValue(null); // Reset photo value
-    setEmailValue("");
-    setJkValue("");
-    setNamaSiswaValue("");
-    setNisnValue("");
-
-    // Revoke the new URL if it was created
-    if (fotoValue instanceof File) {
-        URL.revokeObjectURL(newFotoURL);
-    }
 };
+
+const handleSaveEdit = () => {
+  // Revoke previous URL if available
+  if (editData.foto && editData.foto.startsWith('blob:')) {
+      URL.revokeObjectURL(editData.foto);
+  }
+
+  // Handle the new photo URL
+  const newFotoURL = editFotoValue instanceof File
+      ? URL.createObjectURL(editFotoValue) // Create a new URL for the file if it's an instance of File
+      : editData.foto;
+
+  const updatedData = tableData.map((item) =>
+      item.no === editData.no
+          ? {
+              ...item,
+              kelas: editKelasValue,
+              jurusan: editJurusanValue,
+              tahunAjaran: editTahunAjaranValue,
+              noWali: editNoWaliValue,
+              namaWali: editNamaWaliValue,
+              foto: newFotoURL, // Use the new URL for the photo
+              jk: editJkValue,
+              namaSiswa: editNamaSiswaValue,
+              nisn: editNisnValue,
+          }
+          : item
+  );
+
+  // Update state and local storage
+  setTableData(updatedData);
+  localStorage.setItem("tableDataSiswa", JSON.stringify(updatedData));
+
+  // Reset input fields
+  setShowEditModal(false);
+  setEditKelasValue("");
+  setEditJurusanValue("");
+  setEditTahunAjaranValue("");
+  setEditNoWaliValue("");
+  setEditNamaWaliValue("");
+  setEditImagePreview(null); // Reset photo preview
+  setEditFotoValue(null); // Reset file input
+  setEditJkValue("");
+  setEditNamaSiswaValue("");
+  setEditNisnValue("");
+
+  // Revoke the new URL if it was created
+  if (editFotoValue instanceof File) {
+      URL.revokeObjectURL(newFotoURL);
+  }
+};
+
 
 
 
@@ -414,23 +438,21 @@ export default function DataSiswa() {
           <div className="w-full lg:w-1/3 p-4 lg:p-6">
             <div className="bg-white rounded-lg shadow-md p-4 lg:p-6 border">
             <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold"> Nisn Siswa</h2>
-                <input
-                    type="text"
-                    value={nisnValue}
-                    onChange={handleNisnChange}
-                    ref={nisnRef}
-                    className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${validationErrors.nisn ? 'border-red-500' : 'border-gray-300'}`}
-                    placeholder="Nisn..."
-                />
-            <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold"> Nama Siswa</h2>
-                <input
-                    type="text"
-                    value={namaSiswaValue}
-                    onChange={handleNamaSiswaChange}
-                    ref={namaSiswaRef}
-                    className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${validationErrors.namaSiswa ? 'border-red-500' : 'border-gray-300'}`}
-                    placeholder="Nama Siswa..."
-                />
+              <input
+              value={nisnValue}
+              onChange={handleNisnChange}
+              ref={nisnRef}
+              className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${validationErrors.nisn ? 'border-red-500' : 'border-gray-300'}`}
+              placeholder="Nisn..."
+            />
+              <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold"> Nama Siswa</h2>
+              <input
+              value={namaSiswaValue}
+              onChange={handleNamaSiswaChange}
+              ref={namaSiswaRef}
+              className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${validationErrors.namaSiswa ? 'border-red-500' : 'border-gray-300'}`}
+              placeholder="Nama Siswa..."
+            />
             <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold"> Jenis Kelamin</h2>
                 <select
                     value={jkValue}
@@ -523,14 +545,6 @@ export default function DataSiswa() {
                   </option>
                 ))}
               </select>
-
-              
-                
-                 
-                
-                
-             
-
               <div className="mt-4 flex justify-between items-center">
                 
                 {/* Tombol Unduh Format dan Upload File */}
@@ -558,9 +572,7 @@ export default function DataSiswa() {
                   Simpan
                 </button>
                 </div>
-              </div>
-              
-                
+              </div>                
             </div>
           </div>
 
@@ -787,26 +799,26 @@ export default function DataSiswa() {
               <h2 className="text-sm pt-3 sm:text-2xl font-bold">Edit Data</h2>
               {/* Input untuk mengedit foto */}
               <input type="file"
-               onChange={handleImageChange} 
+               onChange={(e) => setEditFotoValue(e.target.value)} 
                 className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
                />
               <input
                 type="text"
-                value={nisnValue}
-                onChange={handleNisnChange}
+                value={editNisnValue}
+                onChange={(e) => setEditNisnValue(e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
                 placeholder="Nisn..."
               />
               <input
                 type="text"
-                value={namaSiswaValue}
-                onChange={handleNamaSiswaChange}
+                value={editNamaSiswaValue}
+                onChange={(e) => setEditNamaSiswaValue(e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
                 placeholder="Nama..."
               />
               <select
-                value={kelasValue}
-                onChange={handleKelasChange}
+                value={editKelasValue}
+                onChange={(e) => setEditKelasValue(e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
               >
                 <option value="">Pilih Kelas...</option>
@@ -817,8 +829,8 @@ export default function DataSiswa() {
                 ))}
               </select>
               <select
-                value={jurusanValue}
-                onChange={handleJurusanChange}
+                value={editJurusanValue}
+                onChange={(e) => setEditJurusanValue(e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
               >
                 <option value="">Pilih Jurusan...</option>
@@ -829,8 +841,8 @@ export default function DataSiswa() {
                 ))}
               </select>
               <select
-                value={jkValue}
-                onChange={handleJkChange}
+                value={editJkValue}
+                onChange={(e) => setEditJkValue(e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
               >
                 <option value="">Pilih Jk...</option>
@@ -842,15 +854,15 @@ export default function DataSiswa() {
               </select>
               <input
                 type="text"
-                value={namaWaliValue}
-                onChange={handleNamaWaliChange}
+                value={editNamaWaliValue}
+                onChange={(e) => setEditNamaWaliValue(e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
                 placeholder="NamaWali..."
               />
               <input
                 type="text"
-                value={noWaliValue}
-                onChange={handleNoWaliChange}
+                value={editNoWaliValue}
+                onChange={(e) => setEditNoWaliValue(e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
                 placeholder="No Wali..."
               />
@@ -994,5 +1006,5 @@ function FileUpload() {
         )}
         <button onClick={handleClearFile}>Clear File</button>
       </div>
-    );
-  }
+    );
+  }

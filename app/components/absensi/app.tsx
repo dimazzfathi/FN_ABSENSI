@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import '@fortawesome/fontawesome-free/css/all.min.css';
 
 const Filters = () => {
   const [selectedMonthYear, setSelectedMonthYear] = useState('');
@@ -9,7 +10,6 @@ const Filters = () => {
   const [endTime, setEndTime] = useState('08:00');
   const [activeDay, setActiveDay] = useState(null);
   const [inactiveDays, setInactiveDays] = useState([]); 
-
 
   useEffect(() => {
     const today = new Date();
@@ -29,8 +29,6 @@ const Filters = () => {
   
     generateTableHeaders(today.getMonth(), today.getFullYear(), today.getDate());
   }, []);
-  
-  
 
   const handleMonthYearChange = (e) => {
     const [selectedMonth, selectedYear] = e.target.value.split(' ');
@@ -110,11 +108,11 @@ const Filters = () => {
 
   // Example students data with attendance for current date
   const students = [
-    { id: 1, name: 'Dimaz Fathi Fikri', attendance: { 1: 'H', 2: 'H', 3: 'I', 4: 'A', 5:'H', 6:'H'} },
-    { id: 2, name: 'Bima Suluk Wibisono', attendance: { 1: 'H', 2: 'I', 3: 'H', 4: 'H', 5:'H', 6:'A'} },
-    { id: 3, name: 'Anggra Meisya Nur Isnaini', attendance: { 1: 'H', 2: 'H', 3: 'H', 4: 'S', 5:'H', 6:'T'} },
-    { id: 4, name: 'Abdul Rohman', attendance: { 1: 'A', 2: 'H', 3: 'S', 4: 'H', 5:'H', 6:'I'} },
-    { id: 5, name: 'Ali Musitofa', attendance: { 1: 'H', 2: 'H', 3: 'H', 4: 'I', 5:'T', 6:'H'} }
+    { id: 1, name: 'Dimaz Fathi Fikri', attendance: { 1: 'H', 2: 'H', 3: 'I', 4: 'A', 5:'H', 6:'H'}, phoneNumber: '+6283897650528' },
+    { id: 2, name: 'Bima Suluk Wibisono', attendance: { 1: 'H', 2: 'I', 3: 'H', 4: 'H', 5:'H', 6:'A'}, phoneNumber: '+6285895459230' },
+    { id: 3, name: 'Anggra Meisya Nur Isnaini', attendance: { 1: 'H', 2: 'H', 3: 'H', 4: 'S', 5:'H', 6:'T'}, phoneNumber: '+6283851799450' },
+    { id: 4, name: 'Abdul Rohman', attendance: { 1: 'A', 2: 'H', 3: 'S', 4: 'H', 5:'H', 6:'I'}, phoneNumber: '+6288991755499' },
+    { id: 5, name: 'Ali Musitofa', attendance: { 1: 'H', 2: 'H', 3: 'H', 4: 'I', 5:'T', 6:'H'}, phoneNumber: '+6281259356633' }
   ];
 
   const getStatusClass = (status) => {
@@ -153,6 +151,7 @@ const Filters = () => {
   const handleExportJPG = () => {
     // Logika untuk ekspor JPG
   };
+
 
   return (
     <div className="rounded-lg max-w-full p-3 bg-slate-100">
@@ -291,7 +290,11 @@ const Filters = () => {
                         <td className="border-b text-white p-2 text-xs sm:text-xs text-center">{Object.values(student.attendance).filter(status => status === 'S').length}</td>
                         <td className="border-b text-white p-2 text-xs sm:text-xs text-center">{Object.values(student.attendance).filter(status => status === 'I').length}</td>
                         <td className="border-b text-white p-2 text-xs sm:text-xs text-center">{Object.values(student.attendance).filter(status => status === 'T').length}</td>
-                        <td className="border-b text-white text-xs sm:text-xs p-2 text-center">084645</td>
+                        <td className="border-b text-white text-xs sm:text-xs p-2 text-center">
+                        <a href={`https://wa.me/${student.phoneNumber}`} target="_blank" rel="noopener noreferrer">   
+                          <i className="fab fa-whatsapp fa-lg"></i> {/* Ikon WhatsApp */}
+                        </a>
+                        </td>
                       </tr>
                     ))}
               </tbody>
@@ -304,11 +307,11 @@ const Filters = () => {
                 <div className="bg-white p-6 rounded-md shadow-md">
                   <h2 className="text-xl font-semibold mb-4">Atur Waktu Pulang Pagi</h2>
                   <div className="mb-4">
-                    <label className="block mb-2">Jam Datang:</label>
+                    <label className="block mb-2">Dari</label>
                     <input type="time" value={startTime} onChange={handleStartTimeChange} className="w-full p-2 border rounded" />
                   </div>
                   <div className="mb-4">
-                    <label className="block mb-2">Jam Pulang:</label>
+                    <label className="block mb-2">Sampai</label>
                     <input type="time" value={endTime} onChange={handleEndTimeChange} className="w-full p-2 border rounded" />
                   </div>
                   <div className="flex justify-end">
