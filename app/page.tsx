@@ -4,58 +4,13 @@ import Navbar from './components/layout/navbar/page';
 import Pw from "../app/administrator/add_user/pass";
 
 const Page = () => {
-  // State untuk menyimpan nilai input
-  const [ttlValue, setTtlValue] = useState(""); 
-  const [namaSiswaValue, setNamaSiswaValue] = useState("");
-  const [jkValue, setJkValue] = useState("");
-  const [emailValue, setEmailValue] = useState("");
-  const [alamatValue, setAlamatValue] = useState("");
-  const [usernameValue, setUsernameValue] = useState("");
-  const [passwordValue, setPasswordValue] = useState("");
-  const [passwordVisible, setPasswordVisible] = useState(false);
-  const [noWaliValue, setNoWaliValue] = useState("");
-  const [peranValue, setPeranValue] = useState("");
-  const [fotoValue, setFotoValue] = useState(null); // State untuk foto
-  const [previewURL, setPreviewURL] = useState(""); // State untuk URL preview foto
   const [isResettable, setIsResettable] = useState(false);
-  const [imagePreview, setImagePreview] = useState(null);// Untuk pratinjau gambar
-  
-  // State untuk menyimpan data tabel
-  const [tableData, setTableData] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
-
   // State untuk dropdown dan modals
   const [openDropdown, setOpenDropdown] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState({
     visible: false,
     id: null,
   });
-
-  // State untuk pagination
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(5);
-
-  const [filterPeran, setFilterperan] = useState("");
-  const [filterJurusan, setFilterJurusan] = useState("");
-  
-  // useEffect to monitor changes and update isResettable
-  useEffect(() => {
-    const savedData = JSON.parse(localStorage.getItem("tableDataSiswa")) || [];
-    setTableData(savedData);
-    if (filterPeran || filterJurusan  || searchTerm) {
-      setIsResettable(true);
-    } else {
-      setIsResettable(false);
-    }
-  }, [filterPeran, filterJurusan , searchTerm]);
-
-  const handleFilterChange = (setter) => (e) => {
-    setter(e.target.value);
-    setCurrentPage(1);
-  };
-  const togglePasswordVisibility = () => {
-    setPasswordVisible(!passwordVisible);
-  };
 
   // Handler untuk mereset filter
   const handleResetClick = () => {
@@ -66,67 +21,18 @@ const Page = () => {
     }
   };
 
-  const handleTtlChange = (e) => setTtlValue(e.target.value);
-  const handleNamaSiswaChange = (e) => setNamaSiswaValue(e.target.value);
-  const handleJkChange = (e) => setJkValue(e.target.value);
-  const handleEmailChange = (e) => setEmailValue(e.target.value);
-  const handleAlamatChange = (e) => setAlamatValue(e.target.value);
-  const handleUsernameChange = (e) => setUsernameValue(e.target.value);
-  const handlePasswordChange = (e) => setPasswordValue(e.target.value);
-  // Fungsi untuk mengganti password dengan simbol asterisk
-  const maskPassword = (password) => {
-    return '*'.repeat(password.length);
-  };
-  const handleNoWaliChange = (e) => setNoWaliValue(e.target.value);
-  const handlePeranChange = (e) => setPeranValue(e.target.value);
-
-  // Fungsi untuk menangani perubahan input pencarian
-  const handleSearchChange = (e) => {
-    setSearchTerm(e.target.value);
-  };
-
-  // Filter dan pencarian logika
-  const filteredData = tableData.filter(item => {
-    const searchLowerCase = searchTerm.toLowerCase();
-
-    return (
-      (filterPeran ? item.peran === filterPeran : true) &&
-      (filterJurusan ? item.jurusan === filterJurusan : true) &&
-      (searchTerm ? (
-        (typeof item.kelas === 'string' && item.kelas.toLowerCase().includes(searchLowerCase)) ||
-        (typeof item.jumlah === 'string' && item.jumlah.toLowerCase().includes(searchLowerCase)) ||
-        (typeof item.hadir === 'string' && item.hadir.toLowerCase().includes(searchLowerCase)) ||
-        (typeof item.sakit === 'string' && item.sakit.toLowerCase().includes(searchLowerCase)) ||
-        (typeof item.izin === 'string' && item.izin.toLowerCase().includes(searchLowerCase)) ||
-        (typeof item.alpha === 'string' && item.alpha.toLowerCase().includes(searchLowerCase)) ||
-        (typeof item.terlambat === 'string' && item.terlambat.toLowerCase().includes(searchLowerCase)) ||
-        (typeof item.walas === 'string' && item.walas.toLowerCase().includes(searchLowerCase))
-      ) : true)
-    );
-  });
-
-  // Fungsi untuk menangani perubahan jumlah item per halaman
-  const handleItemsPerPageChange = (e) => {
-    setItemsPerPage(Number(e.target.value));
-    setCurrentPage(1); // Reset halaman ke 1 setelah mengubah jumlah item per halaman
-  };
-
-  // Pagination logic
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-  const currentData1 = filteredData.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
   //baru##############################
   const [showButtons, setShowButtons] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [showTable, setShowTable] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1); // Halaman saat ini
+  const [rowsPerPage, setRowsPerPage] = useState(5); // Jumlah data per halaman
+  const [currentData, setCurrentData] = useState([]); // Data keseluruhan
+  const [searchTerm, setSearchTerm] = useState(''); // Kata kunci pencarian
   // Ambil data dari local storage saat pertama kali komponen dimuat
   const [dataAbsensi, setDataAbsensi] = useState<any[]>([]);
   // Data untuk tabel kedua (data yang sudah dikirim)
   const [dataTerkirim, setDataTerkirim] = useState<any[]>([]);
-  const [currentData, setCurrentData] = useState([]);
   // Fungsi untuk menyimpan data ke localStorage
   const saveDataToLocalStorage = (key, data) => {
     localStorage.setItem(key, JSON.stringify(data));
@@ -315,19 +221,52 @@ const Page = () => {
     };
   }, []);
 
-  const [rowsPerPage, setRowsPerPage] = useState(5); // Default 5 baris
-
-  // Mengambil data dari localStorage saat komponen pertama kali di-render
   useEffect(() => {
+    // Mengambil data dari localStorage saat komponen pertama kali di-render
     const storedData = localStorage.getItem('dataKey'); // 'dataKey' adalah kunci penyimpanan di localStorage
     if (storedData) {
       setCurrentData(JSON.parse(storedData)); // Parsing data dari localStorage ke array JavaScript
     }
-  }, []); // Hanya dijalankan sekali saat komponen pertama kali dimuat
+  }, []);
 
   const handleRowsChange = (event) => {
     setRowsPerPage(parseInt(event.target.value)); // Mengubah jumlah baris sesuai pilihan
+    setCurrentPage(1); // Reset halaman ke 1 saat jumlah baris berubah
   };
+
+  const handleNextPage = () => {
+    setCurrentPage(prevPage => prevPage + 1);
+  };
+
+  const handlePreviousPage = () => {
+    setCurrentPage(prevPage => prevPage - 1);
+  };
+  
+  const handleSearchChange = (event) => {
+    setSearchTerm(event.target.value.toLowerCase()); // Mengubah kata kunci pencarian
+    setCurrentPage(1); // Reset halaman ke 1 saat kata kunci berubah
+  };
+
+  // Filter data berdasarkan kata kunci pencarian
+  const filteredData = currentData.filter(item => {
+    console.log('Search Term:', searchTerm); // Memeriksa nilai search term
+    console.log('Item:', item); // Memeriksa setiap item data
+    return (
+      (item.kelas && item.kelas.toLowerCase().includes(searchTerm)) ||
+      (item.walas && item.walas.toLowerCase().includes(searchTerm))
+    );
+  });
+
+  // Hitung total halaman berdasarkan data yang difilter
+  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+
+  // Hitung data yang ditampilkan berdasarkan halaman saat ini
+  const startIndex = (currentPage - 1) * rowsPerPage;
+  const endIndex = startIndex + rowsPerPage;
+  const paginatedData = currentData.slice(startIndex, endIndex);
+
+  // Mengecek apakah ada halaman selanjutnya
+  const hasNextPage = currentPage * rowsPerPage < currentData.length;
   
   return (
     <>
@@ -437,12 +376,12 @@ const Page = () => {
                     </select>
               </div>
             </div>
-              <div className=" items-center lg:mb-0 space-x-2 lg:order-1">
+              {/* <div className=" items-center lg:mb-0 space-x-2 lg:order-1">
                     <input
                       type="text"
                       placeholder="Cari..."
                       value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
+                      onChange={handleSearchChange}
                       className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base"
                     />
               </div>
@@ -458,7 +397,7 @@ const Page = () => {
                   >
               <p>Reset</p>
             </button >
-                  </div>
+                  </div> */}
             </div>
             {/* tabel */}
               <div className="overflow-x-auto">
@@ -496,13 +435,13 @@ const Page = () => {
                     </tr>
                   </thead>
                   <tbody>
-                  {currentData.slice(0, rowsPerPage).map((item, index) => (
+                  {paginatedData.map((item, index) => (
                       <tr key={index}>
-                        <td className="p-3 sm:p-3 text-white border-b">{index + 1}</td> {/* Nomor urut yang dinamis */}
+                        <td className="p-3 sm:p-3 text-white border-b">{startIndex + index + 1}</td> {/* Nomor urut yang dinamis */}
                         <td className="p-3 sm:p-3 text-white border-b">{item.kelas}</td>
                         <td className="p-3 sm:p-3 text-white border-b">{item.jumlah}</td>
                         <td className="p-3 sm:p-3 text-white border-b">{item.hadir}</td>
-                        <td className="p-2 sm:p-3 border-b border-gray-300">{item.sakit}</td>
+                        <td className="p-2 sm:p-3 text-white border-b">{item.sakit}</td>
                         <td className="p-3 sm:p-3 text-white border-b">{item.izin}</td>
                         <td className="p-3 sm:p-3 text-white border-b">{item.alpha}</td>
                         <td className="p-3 sm:p-3 text-white border-b">{item.terlambat}</td>
@@ -529,7 +468,7 @@ const Page = () => {
               </div>
               <div className="flex m-4 space-x-2">
                 <button
-                  onClick={() => setCurrentPage(currentPage - 1)}
+                  onClick={handlePreviousPage}
                   disabled={currentPage === 1}
                   className={`px-2 py-1 border rounded ${
                     currentPage === 1 ? "bg-gray-300" : "bg-teal-400 hover:bg-teal-600 text-white"
@@ -538,10 +477,10 @@ const Page = () => {
                   Previous
                 </button>
                 <button
-                  onClick={() => setCurrentPage(currentPage + 1)}
-                  disabled={currentPage === totalPages}
+                  onClick={handleNextPage}
+                  disabled={!hasNextPage}
                   className={`px-2 py-1 border rounded ${
-                    currentPage === totalPages ? "bg-gray-300" : "bg-teal-400 hover:bg-teal-600 text-white"
+                    !hasNextPage ? "bg-gray-300" : "bg-teal-400 hover:bg-teal-600 text-white"
                   }`}
                 >
                   Next
