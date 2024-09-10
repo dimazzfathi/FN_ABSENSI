@@ -87,8 +87,11 @@ export default function DataSiswa() {
   const handleUsernameChange = (e) => setUsernameValue(e.target.value);
   const handlePasswordChange = (e) => setPasswordValue(e.target.value);
   // Fungsi untuk mengganti password dengan simbol asterisk
-  const maskPassword = (password) => {
-    return '*'.repeat(password.length);
+  const maskPassword = (password: string | undefined) => {
+    if (password) {
+      return '*'.repeat(password.length);
+    }
+    return '';
   };
   const handleNoWaliChange = (e) => setNoWaliValue(e.target.value);
   const handlePeranChange = (e) => setPeranValue(e.target.value);
@@ -726,7 +729,7 @@ export default function DataSiswa() {
 function DropdownMenu({ isOpen, onClick, onEdit, onDelete, onClose }) {
     const dropdownRef = useRef(null);
   
-    Fungsi untuk menutup dropdown saat pengguna mengklik di luar dropdown.
+    //Fungsi untuk menutup dropdown saat pengguna mengklik di luar dropdown.
     const handleClickOutside = (event) => {
       console.log('Clicked outside'); // Debugging
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -736,7 +739,7 @@ function DropdownMenu({ isOpen, onClick, onEdit, onDelete, onClose }) {
         }
       }
     };
-    untuk detail
+    //untuk detail
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [confirmedPassword, setConfirmedPassword] = useState('');
 
