@@ -113,7 +113,7 @@ const Page = () => {
 
   // Pagination logic
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-  const currentData = filteredData.slice(
+  const currentData1 = filteredData.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
@@ -126,9 +126,15 @@ const Page = () => {
   const [dataAbsensi, setDataAbsensi] = useState<any[]>([]);
   // Data untuk tabel kedua (data yang sudah dikirim)
   const [dataTerkirim, setDataTerkirim] = useState<any[]>([]);
+  const [currentData, setCurrentData] = useState([]);
   // Fungsi untuk menyimpan data ke localStorage
   const saveDataToLocalStorage = (key, data) => {
     localStorage.setItem(key, JSON.stringify(data));
+  };
+  // Fungsi untuk memuat data dari localStorage
+  const loadDataFromLocalStorage = (key) => {
+    const savedData = localStorage.getItem(key);
+    return savedData ? JSON.parse(savedData) : [];
   };
   const dropdownRef = useRef(null); // Referensi untuk dropdown
 
@@ -172,24 +178,19 @@ const Page = () => {
     localStorage.setItem('dataAbsensi', JSON.stringify(updatedData));
   };
 
-  // Memuat data dari localStorage saat pertama kali komponen di-mount
+  // Memuat data dari localStorage saat komponen pertama kali di-mount
   useEffect(() => {
-    const savedAbsensi = localStorage.getItem('dataAbsensi');
-    const savedTerkirim = localStorage.getItem('dataTerkirim');
-    
-    if (savedAbsensi) {
-      setDataAbsensi(JSON.parse(savedAbsensi));
-    }
-    if (savedTerkirim) {
-      setDataTerkirim(JSON.parse(savedTerkirim));
-    }
+    const savedDataAbsensi = loadDataFromLocalStorage('dataAbsensi');
+    const savedCurrentData = loadDataFromLocalStorage('currentData');
+    setDataAbsensi(savedDataAbsensi);
+    setCurrentData(savedCurrentData);
   }, []);
 
   // Fungsi yang dijalankan saat tombol "Kirim" diklik
   const handleKirim = (item) => {
-    // Pindahkan item ke dataTerkirim
-    const newDataTerkirim = [...dataTerkirim, item];
-    setDataTerkirim(newDataTerkirim);
+    // Pindahkan item ke currentData
+    const newCurrentData = [...currentData, item];
+    setCurrentData(newCurrentData);
 
     // Hapus item dari dataAbsensi
     const newDataAbsensi = dataAbsensi.filter((absensi) => absensi !== item);
@@ -197,7 +198,7 @@ const Page = () => {
 
     // Simpan perubahan ke localStorage
     saveDataToLocalStorage('dataAbsensi', newDataAbsensi);
-    saveDataToLocalStorage('dataTerkirim', newDataTerkirim);
+    saveDataToLocalStorage('currentData', newCurrentData);
 
     // Menutup dropdown
     setOpenDropdown(null);
@@ -211,24 +212,20 @@ const Page = () => {
   
   const handleConfirmDelete = () => {
     console.log("Confirm Delete ID:", confirmDelete.id);
-    
-    const filteredDataTerkirim = dataTerkirim.filter((item) => item.id !== confirmDelete.id);
-    console.log("Filtered Data Terkirim:", filteredDataTerkirim);
-  
-    const updatedDataTerkirim = filteredDataTerkirim.map((item, index) => ({
+
+    // Filter currentData berdasarkan ID yang tidak sesuai dengan confirmDelete.id
+    const filteredCurrentData = currentData.filter((item) => item.id !== confirmDelete.id);
+    console.log("Filtered Current Data:", filteredCurrentData);
+
+    // Update ID pada currentData agar tetap berurutan setelah penghapusan
+    const updatedCurrentData = filteredCurrentData.map((item, index) => ({
       ...item,
       id: index + 1,
     }));
-  
-    setDataTerkirim(updatedDataTerkirim);
-    saveDataToLocalStorage("dataTerkirim", updatedDataTerkirim);
-    
-    // Simpan juga ke dataAbsensi jika perlu
-    const filteredDataAbsensi = dataAbsensi.filter((item) => item.id !== confirmDelete.id);
-    setDataAbsensi(filteredDataAbsensi);
-    saveDataToLocalStorage("dataAbsensi", filteredDataAbsensi);
-  
-    setConfirmDelete({ visible: false, id: null });
+
+    // Simpan perubahan ke state dan localStorage
+    setCurrentData(updatedCurrentData);
+    saveDataToLocalStorage("currentData", updatedCurrentData);
   };
 
   const handleCancelDelete = () => {
@@ -241,7 +238,7 @@ const Page = () => {
   //untuk edit
   const handleEditClick = (id) => {
     console.log("Edit Clicked ID:", id); // Pastikan ID diklik
-    const itemToEdit = dataTerkirim.find((item) => item.id === id);
+    const itemToEdit = currentData.find((item) => item.id === id);
     console.log("Item to Edit:", itemToEdit); // Pastikan item ditemukan
     
     if (itemToEdit) {
@@ -267,14 +264,15 @@ const Page = () => {
   const handleEdit = (id, newData) => {
     console.log("Data yang diedit untuk ID", id, ":", newData); // Debug data yang akan di-update
   
-    const updatedDataTerkirim = dataTerkirim.map((item) =>
+    // Update currentData dengan data baru berdasarkan ID
+    const updatedCurrentData = currentData.map((item) =>
       item.id === id ? { ...item, ...newData } : item
     );
     
-    setDataTerkirim(updatedDataTerkirim); // Update state
-    console.log("Data Terkirim setelah update:", updatedDataTerkirim); // Debug data setelah update
+    setCurrentData(updatedCurrentData); // Update state dengan data terbaru
+    console.log("Current Data setelah update:", updatedCurrentData); // Debug data setelah update
   
-    saveDataToLocalStorage("dataTerkirim", updatedDataTerkirim); // Simpan ke localStorage
+    saveDataToLocalStorage("currentData", updatedCurrentData); // Simpan ke localStorage
   };
 
   const handleInputChange = (e) => {
@@ -316,6 +314,20 @@ const Page = () => {
       document.removeEventListener('click', handleClickOutside);
     };
   }, []);
+
+  const [rowsPerPage, setRowsPerPage] = useState(5); // Default 5 baris
+
+  // Mengambil data dari localStorage saat komponen pertama kali di-render
+  useEffect(() => {
+    const storedData = localStorage.getItem('dataKey'); // 'dataKey' adalah kunci penyimpanan di localStorage
+    if (storedData) {
+      setCurrentData(JSON.parse(storedData)); // Parsing data dari localStorage ke array JavaScript
+    }
+  }, []); // Hanya dijalankan sekali saat komponen pertama kali dimuat
+
+  const handleRowsChange = (event) => {
+    setRowsPerPage(parseInt(event.target.value)); // Mengubah jumlah baris sesuai pilihan
+  };
   
   return (
     <>
@@ -415,9 +427,8 @@ const Page = () => {
             <div className="lg:flex-row justify-between items-center">
               <div className=" items-center lg:mb-0 space-x-2 mb-3 lg:order-1">
                     <select
-                      id="itemsPerPage"
-                      value={itemsPerPage}
-                      onChange={handleItemsPerPageChange}
+                      onChange={handleRowsChange}
+                      value={rowsPerPage}
                       className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base"
                     >
                       <option value={5}>5</option>
@@ -485,7 +496,7 @@ const Page = () => {
                     </tr>
                   </thead>
                   <tbody>
-                  {dataTerkirim.map((item, index) => (
+                  {currentData.slice(0, rowsPerPage).map((item, index) => (
                       <tr key={index}>
                         <td className="p-3 sm:p-3 text-white border-b">{index + 1}</td> {/* Nomor urut yang dinamis */}
                         <td className="p-3 sm:p-3 text-white border-b">{item.kelas}</td>
