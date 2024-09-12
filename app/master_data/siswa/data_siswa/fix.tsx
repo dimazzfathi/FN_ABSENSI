@@ -1,9 +1,11 @@
 "use client";
 import { useState, useEffect, useRef } from 'react';
+import * as XLSX from 'xlsx';
 import imageCompression from 'browser-image-compression';
 
 export default function DataSiswa() {
   // State untuk menyimpan nilai input
+    const [idSiswaValue, setIdSiswaValue] = useState('');
     const [nisnValue, setNisnValue] = useState('');
     const [namaSiswaValue, setNamaSiswaValue] = useState('');
     const [jkValue, setJkValue] = useState('');
@@ -16,6 +18,7 @@ export default function DataSiswa() {
     const [fotoValue, setFotoValue] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);// Untuk pratinjau gambar
     const [validationErrors, setValidationErrors] = useState({
+        idSiswa: false,
         nisn: false,
         namaSiswa: false,
         jk: false,
@@ -30,6 +33,7 @@ export default function DataSiswa() {
   const [previewURL, setPreviewURL] = useState(""); // State untuk URL preview foto
   const [isResettable, setIsResettable] = useState(false);
 
+    const [editIdSiswaValue, setEditIdSiswaValue] = useState('');
     const [editNisnValue, setEditNisnValue] = useState('');
     const [editNamaSiswaValue, setEditNamaSiswaValue] = useState('');
     const [editJkValue, setEditJkValue] = useState('');
@@ -94,6 +98,7 @@ export default function DataSiswa() {
     setTableData(savedData);
   }, []);
 
+  const handleIdSiswaChange = (e) => setIdSiswaValue(e.target.value);
   const handleNisnChange = (e) => setNisnValue(e.target.value);
   const handleNamaSiswaChange = (e) => setNamaSiswaValue(e.target.value);
   const handleJkChange = (e) => setJkValue(e.target.value);
@@ -130,6 +135,7 @@ const handleEditImageChange = (e) => {
 };
   
      // Referensi untuk input
+     const idSiswaRef = useRef(null)
      const nisnRef = useRef(null);
      const namaSiswaRef = useRef(null);
      const jkRef = useRef(null);
@@ -144,6 +150,7 @@ const handleEditImageChange = (e) => {
   // Fungsi untuk menyimpan data baru ke dalam tabel
   const handleSaveClick = () => {
     const inputs = [
+        { value: idSiswaValue, ref: idSiswaRef, key: 'idSiswa' },
         { value: nisnValue, ref: nisnRef, key: 'nisn' },
         { value: namaSiswaValue, ref: namaSiswaRef, key: 'namaSiswa' },
         { value: jkValue, ref: jkRef, key: 'jk' },
@@ -192,6 +199,7 @@ const handleEditImageChange = (e) => {
             jk: jkValue,
             namaSiswa: namaSiswaValue,
             nisn: nisnValue,
+            idSiswa: idSiswaValue,
         },
     ];
 
@@ -209,16 +217,69 @@ const handleEditImageChange = (e) => {
     setJkValue("");
     setNamaSiswaValue("");
     setNisnValue("");
+    setIdSiswaValue("");
 
     // Reset validasi
     setValidationErrors({});
 };
 
 
-  const handleDownloadFormatClick = () => {
-    // Logika untuk mengunduh file format
-    console.log('Unduh format');
-  };
+const handleDownloadFormatClick = () => {
+  // Data yang akan diisikan ke dalam file Excel
+  const data = [
+      {
+          id_siswa: "",
+          nis: "",
+          nama_siswa: "",
+          jenis_kelamin: "",
+          id_tahun_pelajaran: "",
+          id_kelas: "",
+          id_rombel: "",
+          email: "",
+          pass: "",
+          foto: "",
+          barcode: "",
+          nama_wali: "",
+          nomor_wali: ""
+      }
+  ];
+
+  // Definisikan header file Excel
+  const headers = [
+      "id_siswa", 
+      "nis", 
+      "nama_siswa", 
+      "jenis_kelamin", 
+      "id_tahun_pelajaran", 
+      "id_kelas", 
+      "id_rombel", 
+      "email", 
+      "pass", 
+      "foto", 
+      "barcode", 
+      "nama_wali", 
+      "nomor_wali"
+  ];
+
+  // Membuat worksheet
+  const worksheet = XLSX.utils.json_to_sheet(data, { header: headers });
+
+  // Membuat workbook
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Siswa");
+
+  // Menghasilkan file Excel
+  const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+
+  // Membuat Blob untuk mengunduh
+  const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+  // Membuat link download
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'format_siswa.xlsx'; // Nama file yang diunduh
+  link.click();
+};
 
   const handleUploadFileClick = () => {
     // Logika untuk mengunggah file
@@ -238,6 +299,7 @@ const handleEditImageChange = (e) => {
     setEditJkValue(item.jk);
     setEditNamaSiswaValue(item.namaSiswa);
     setEditNisnValue(item.nisn);
+    setEditIdSiswaValue(item.idSiswa);
     setShowEditModal(true);
 };
 
@@ -265,6 +327,7 @@ const handleSaveEdit = () => {
               jk: editJkValue,
               namaSiswa: editNamaSiswaValue,
               nisn: editNisnValue,
+              idSiswa: editIdSiswaValue,
           }
           : item
   );
@@ -285,6 +348,7 @@ const handleSaveEdit = () => {
   setEditJkValue("");
   setEditNamaSiswaValue("");
   setEditNisnValue("");
+  setEditIdSiswaValue("");
 
   // Revoke the new URL if it was created
   if (editFotoValue instanceof File) {
@@ -339,6 +403,7 @@ const handleSaveEdit = () => {
       (filterKelas ? item.kelas === filterKelas : true) &&
       (filterJurusan ? item.jurusan === filterJurusan : true) &&
       (searchTerm ? (
+        (typeof item.idSiswa === 'string' && item.idSiswa.toLowerCase().includes(searchLowerCase)) ||
         (typeof item.nisn === 'string' && item.nisn.toLowerCase().includes(searchLowerCase)) ||
         (typeof item.namaSiswa === 'string' && item.namaSiswa.toLowerCase().includes(searchLowerCase)) ||
         (typeof item.kelas === 'string' && item.kelas.toLowerCase().includes(searchLowerCase)) ||
@@ -437,6 +502,14 @@ const handleSaveEdit = () => {
           {/* Column 1: Input */}
           <div className="w-full lg:w-1/3 p-4 lg:p-6">
             <div className="bg-white rounded-lg shadow-md p-4 lg:p-6 border">
+            <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold"> Id Siswa</h2>
+              <input
+              value={idSiswaValue}
+              onChange={handleIdSiswaChange}
+              ref={idSiswaRef}
+              className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${validationErrors.nisn ? 'border-red-500' : 'border-gray-300'}`}
+              placeholder="Id Siswa..."
+            />
             <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold"> Nisn Siswa</h2>
               <input
               value={nisnValue}
@@ -677,7 +750,7 @@ const handleSaveEdit = () => {
                         Foto
                       </th>
                       <th className="p-2 sm:p-3 bg-slate-500 text-white">
-                        Nisn
+                        Nisn / Id
                       </th>
                       <th className="p-2 sm:p-3 bg-slate-500 text-white">
                         Nama
@@ -713,7 +786,7 @@ const handleSaveEdit = () => {
                             ""
                             )}
                         </td>
-                        <td className="p-3 sm:p-3 text-white border-b">{item.nisn}</td>
+                        <td className="p-3 sm:p-3 text-white border-b">{item.nisn} / {item.idSiswa}</td>
                         <td className="p-3 sm:p-3 text-white border-b">{item.namaSiswa}</td>
                         <td className="p-3 sm:p-3 text-white border-b">{item.kelas}</td>
                         <td className="p-3 sm:p-3 text-white border-b">{item.jurusan}</td>
@@ -802,6 +875,13 @@ const handleSaveEdit = () => {
                onChange={(e) => setEditFotoValue(e.target.value)} 
                 className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
                />
+               <input
+                type="text"
+                value={editIdSiswaValue}
+                onChange={(e) => setEditIdSiswaValue(e.target.value)}
+                className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
+                placeholder="Id SIswa..."
+              />
               <input
                 type="text"
                 value={editNisnValue}

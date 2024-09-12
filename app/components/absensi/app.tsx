@@ -120,7 +120,7 @@ const Filters = () => {
       case 'H':
         return 'bg-green-500 text-white';
       case 'I':
-        return 'bg-yellow text-dark';
+        return 'bg-orange-500 text-white';
       case 'A':
         return 'bg-red-500 text-white';
       case 'S':
@@ -163,7 +163,7 @@ const Filters = () => {
               <a href="index.html" className="text-teal-500 hover:underline">Home</a>
             </li>
             <li>
-              <span className="text-gray-500">/</span>
+              <span className="text-gray-500 ">/</span>
             </li>
             <li className="text-gray-500">Absensi</li>
           </ol>

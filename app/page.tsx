@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from 'react';
-import Navbar from './components/layout/navbar/page';
+import Navbar from '../app/header';
 import Pw from "../app/administrator/add_user/pass";
 
 const Page = () => {
@@ -33,6 +33,38 @@ const Page = () => {
   const [dataAbsensi, setDataAbsensi] = useState<any[]>([]);
   // Data untuk tabel kedua (data yang sudah dikirim)
   const [dataTerkirim, setDataTerkirim] = useState<any[]>([]);
+  //khusus untuk input barcode
+  const [barcode, setBarcode] = useState('');
+  const handleChange = (event) => {
+    const value = event.target.value;
+    setBarcode(value);
+
+    // Jika karakter enter atau tab terdeteksi, proses data
+    if (event.key === 'Enter') {
+      handleBarcodeSubmit(value);
+    }
+  };
+  const handleBarcodeSubmit = (barcode) => {
+    // Kirim data barcode ke backend atau proses sesuai kebutuhan
+    console.log('Data barcode:', barcode);
+
+    // Contoh pengiriman data ke backend
+    fetch('/api/absensi', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ barcode }),
+    })
+      .then((response) => response.json())
+      .then((data) => console.log('Response:', data))
+      .catch((error) => console.error('Error:', error));
+
+    // Kosongkan input setelah mengirim
+    setBarcode('');
+  };
+
+
   // Fungsi untuk menyimpan data ke localStorage
   const saveDataToLocalStorage = (key, data) => {
     localStorage.setItem(key, JSON.stringify(data));
@@ -43,20 +75,68 @@ const Page = () => {
     return savedData ? JSON.parse(savedData) : [];
   };
   const dropdownRef = useRef(null); // Referensi untuk dropdown
-
+  
   const [editItem, setEditItem] = useState(null);
   const [newData, setNewData] = useState({
     nama: '',
     keterangan: '',
     kelas: '',
-    jumlah: 0,
-    hadir: 0,
-    sakit: 0,
-    izin: 0,
-    alpha: 0,
-    terlambat: 0,
+    jumlah: '',
+    hadir: '',
+    sakit: '',
+    keteranganLain: '',
+    alpha: '',
+    terlambat: '',
     walas: ''
   });
+
+  useEffect(() => {
+    const loadedDataAbsensi = loadDataFromLocalStorage('dataAbsensi');
+    const loadedCurrentData = loadDataFromLocalStorage('currentData');
+    
+    setDataAbsensi(loadedDataAbsensi);
+    setCurrentData(loadedCurrentData);
+  }, []);
+
+  // Fungsi untuk cek apakah hari sudah berganti atau akhir bulan
+const isNewDay = (lastSaveDate) => {
+  const today = new Date().toISOString().slice(0, 10); // Format YYYY-MM-DD
+  return today !== lastSaveDate; // Jika tanggal hari ini tidak sama dengan tanggal penyimpanan terakhir
+};
+
+const isEndOfMonth = () => {
+  const today = new Date();
+  const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  return today.getDate() === lastDayOfMonth.getDate();
+};
+
+const savePreviousData = (currentData) => {
+  const today = new Date().toISOString().slice(0, 10); // Format YYYY-MM-DD
+  saveDataToLocalStorage(`previousData_${today}`, currentData);
+};
+
+const resetData = (currentData) => {
+  savePreviousData(currentData); // Simpan data sebelumnya
+  setCurrentData([]); // Reset data saat ini
+  saveDataToLocalStorage('currentData', []); // Simpan data kosong ke localStorage
+};
+
+useEffect(() => {
+  const today = new Date().toISOString().slice(0, 10); // Format YYYY-MM-DD
+  const lastSaveDate = loadDataFromLocalStorage('lastSaveDate'); // Tanggal terakhir data disimpan
+  
+  if (isNewDay(lastSaveDate) || isEndOfMonth()) {
+    // Jika hari baru atau akhir bulan, reset data
+    const currentData = loadDataFromLocalStorage('currentData'); // Ambil data saat ini sebelum reset
+    resetData(currentData); // Reset dan simpan data
+    saveDataToLocalStorage('lastSaveDate', today); // Simpan tanggal terakhir
+  } else {
+    // Jika tidak perlu reset, muat data dari localStorage
+    setCurrentData(loadDataFromLocalStorage('currentData'));
+  }
+}, []);
+
+  
 
   const handleIzinClick = () => {
     setShowButtons(!showButtons);
@@ -77,6 +157,8 @@ const Page = () => {
       nama: 'John Doe', // Nama contoh, bisa diganti dengan input dinamis
       kelas: 'XII IPA 1', // Kelas contoh, bisa diganti dengan input dinamis
       keterangan: status,
+      jumlah: '12',// jumlah contoh, bisa diganti dengan input dinamis
+      walas: 'pak lukim', // walas contoh, bisa diganti dengan input dinamis
     };
 
     const updatedData = [...dataAbsensi, newEntry];
@@ -94,21 +176,82 @@ const Page = () => {
 
   // Fungsi yang dijalankan saat tombol "Kirim" diklik
   const handleKirim = (item) => {
-    // Pindahkan item ke currentData
-    const newCurrentData = [...currentData, item];
-    setCurrentData(newCurrentData);
-
-    // Hapus item dari dataAbsensi
-    const newDataAbsensi = dataAbsensi.filter((absensi) => absensi !== item);
+    // Tentukan nilai default untuk semua kolom jika item belum ada di currentData
+    const updatedItem = {
+      sakit: 0,
+      keteranganLain: 0,
+      hadir: 0,
+      alpha: 0,
+      terlambat: 0,
+    };
+  
+    // Tentukan nilai berdasarkan keterangan
+    if (item.keterangan === 'sakit') {
+      updatedItem.sakit = 1;
+    } else if (item.keterangan === 'keteranganLain') {
+      updatedItem.keteranganLain = 1;
+    } else if (item.keterangan === 'alpha') {
+      updatedItem.alpha = 1;
+    } else if (item.keterangan === 'terlambat') {
+      updatedItem.terlambat = 1;
+    }
+  
+    // Perbarui atau tambahkan item di currentData
+    const newCurrentData = currentData.map((data) => {
+      if (data.id === item.id) {
+        // Hitung nilai hadir berdasarkan total dikurangi sakit, keterangan lain, dan alpha
+        const totalJumlah = item.jumlah || data.jumlah || 0;
+        const sakit = data.sakit + updatedItem.sakit;
+        const keteranganLain = data.keteranganLain + updatedItem.keteranganLain;
+        const alpha = data.alpha + updatedItem.alpha;
+        const hadir = totalJumlah - sakit - keteranganLain - alpha;
+  
+        return {
+          ...data,
+          sakit: sakit,
+          keteranganLain: keteranganLain,
+          hadir: hadir,
+          alpha: alpha,
+          terlambat: data.terlambat + updatedItem.terlambat,
+        };
+      }
+      return data;
+    });
+  
+    // Jika item tidak ada di currentData, tambahkan item baru
+    if (!currentData.some(data => data.id === item.id)) {
+      const totalJumlah = item.jumlah || 0;
+      const sakit = updatedItem.sakit;
+      const keteranganLain = updatedItem.keteranganLain;
+      const alpha = updatedItem.alpha;
+      const hadir = totalJumlah - sakit - keteranganLain - alpha;
+  
+      newCurrentData.push({
+        ...item,
+        sakit: sakit,
+        keteranganLain: keteranganLain,
+        hadir: hadir,
+        alpha: alpha,
+        terlambat: updatedItem.terlambat
+      });
+    }
+  
+    // Hapus item dari tabel pertama
+    const newDataAbsensi = dataAbsensi.filter((absensi) => absensi.id !== item.id);
     setDataAbsensi(newDataAbsensi);
-
+  
     // Simpan perubahan ke localStorage
+    setCurrentData(newCurrentData);
     saveDataToLocalStorage('dataAbsensi', newDataAbsensi);
     saveDataToLocalStorage('currentData', newCurrentData);
-
-    // Menutup dropdown
+  
+    // Tutup dropdown
     setOpenDropdown(null);
   };
+  
+  
+
+
   //untuk hapus
   const handleDeleteClick = (id) => {
     console.log("ID yang akan dihapus: ", id); // Debugging
@@ -132,6 +275,7 @@ const Page = () => {
     // Simpan perubahan ke state dan localStorage
     setCurrentData(updatedCurrentData);
     saveDataToLocalStorage("currentData", updatedCurrentData);
+    setConfirmDelete("")
   };
 
   const handleCancelDelete = () => {
@@ -156,7 +300,7 @@ const Page = () => {
         jumlah: itemToEdit.jumlah, 
         hadir: itemToEdit.hadir, 
         sakit: itemToEdit.sakit, 
-        izin: itemToEdit.izin, 
+        keteranganLain: itemToEdit.keteranganLain, 
         alpha: itemToEdit.alpha, 
         terlambat: itemToEdit.terlambat,
         walas: itemToEdit.walas
@@ -188,9 +332,27 @@ const Page = () => {
   
   const handleEditSubmit = () => {
     if (editItem) {
-      handleEdit(editItem.id, newData);
-      console.log("Data yang diedit:", newData); // Debug data yang akan di-update
+      // Hitung nilai hadir berdasarkan total dikurangi sakit, keterangan lain, dan alpha
+      const totalJumlah = newData.jumlah || 0;
+      const sakit = newData.sakit || 0;
+      const keteranganLain = newData.keteranganLain || 0;
+      const alpha = newData.alpha || 0;
+      const hadir = totalJumlah - sakit - keteranganLain - alpha;
+  
+      // Update newData dengan nilai hadir yang baru dihitung
+      const updatedData = {
+        ...newData,
+        hadir: hadir,
+      };
+  
+      // Panggil fungsi handleEdit untuk memperbarui data
+      handleEdit(editItem.id, updatedData);
+  
+      // Debug data yang telah diupdate
+      console.log("Data yang diedit:", updatedData); // Debug data yang akan di-update
       console.log("Data Terkirim setelah diedit:", dataTerkirim); // Debug data setelah update
+  
+      // Reset form
       setEditItem(null); // Tutup form
       setNewData({
         nama: '',
@@ -199,13 +361,14 @@ const Page = () => {
         jumlah: 0,
         hadir: 0,
         sakit: 0,
-        izin: 0,
+        keteranganLain: 0,
         alpha: 0,
         terlambat: 0,
         walas: ''
       });
     }
   };
+  
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -270,6 +433,9 @@ const Page = () => {
   
   return (
     <>
+    <div>
+      <Navbar />
+    </div>
     <div className="flex flex-col lg:flex-row">
           {/* Column 1: Input */}
           <div className="w-full lg:w-1/3 p-4 lg:p-6">
@@ -285,11 +451,11 @@ const Page = () => {
                 {showButtons && (
                   <div className="mt-4">
                     <button className="bg-green-500 w-44 text-white px-4 py-2 mr-2 rounded"
-                    onClick={() => handleClick('Sakit')}>
+                    onClick={() => handleClick('sakit')}>
                       Sakit
                     </button>
                     <button className="bg-orange-500 text-white w-44  px-4 py-2 rounded"
-                    onClick={() => handleClick('Keterangan Lain')}>
+                    onClick={() => handleClick('keteranganLain')}>
                       Keterangan Lain
                     </button>
                   </div>
@@ -318,37 +484,37 @@ const Page = () => {
               <div>
                 <h1>Absen untuk yang pulang dulu</h1>
                 <table className="min-w-full bg-white mt-4">
-                <thead>
-                  <tr>
-                    <th className="px-3 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">NO</th>
-                    <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">NAMA</th>
-                    <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">KELAS</th>
-                    <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">KETERANGAN</th>
-                    <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                {dataAbsensi.map((item, index) => (
-                  <tr key={index}>
-                    <td className="p-3 sm:p-3 ml-5 text-black border-b">{index + 1}</td> {/* Nomor urut yang dinamis */}
-                    <td className="px-6 py-4 border-b border-gray-300 text-sm">{item.nama}</td>
-                    <td className="px-6 py-4 border-b border-gray-300 text-sm">{item.kelas}</td>
-                    <td className="px-6 py-4 border-b border-gray-300 text-sm">{item.keterangan}</td>
-                    <td className="px-6 py-4 border-b border-gray-300 text-sm">
-                    <button
-                      className="bg-blue-500 text-white px-2 py-1 rounded"
-                      onClick={() => handleKirim(item)}
-                    >
-                      Kirim
-                    </button>
-                    </td>
-                  </tr>
-                ))}
-                  {/* Tambahkan baris lain sesuai kebutuhan */}
-                </tbody>
-              </table>
+                  <thead>
+                    <tr>
+                      <th className="px-3 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">NO</th>
+                      <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">NAMA</th>
+                      <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">KELAS</th>
+                      <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">KETERANGAN</th>
+                      <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dataAbsensi.map((item, index) => (
+                      <tr key={index}>
+                        <td className="p-3 sm:p-3 ml-5 text-black border-b">{index + 1}</td> {/* Nomor urut yang dinamis */}
+                        <td className="px-6 py-4 border-b border-gray-300 text-sm">{item.nama}</td>
+                        <td className="px-6 py-4 border-b border-gray-300 text-sm">{item.kelas}</td>
+                        <td className="px-6 py-4 border-b border-gray-300 text-sm">{item.keterangan}</td>
+                        <td className="px-6 py-4 border-b border-gray-300 text-sm">
+                          <button
+                            className="bg-blue-500 text-white px-2 py-1 rounded"
+                            onClick={() => handleKirim(item)}
+                          >
+                            Kirim
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
+
           </div>
           {/* Column 2: Table */}
           <div className="w-full  lg:w-2/3 p-4 lg:p-6">
@@ -400,68 +566,48 @@ const Page = () => {
                   </div> */}
             </div>
             {/* tabel */}
-              <div className="overflow-x-auto">
-                <table className="w-full text-left mt-4 border-collapse">
-                  <thead>
-                    <tr className="ml-2">
-                      <th className="p-2 sm:p-3 rounded-l-lg  bg-slate-500 text-white">No</th>
-                      <th className="p-2 sm:p-3 bg-slate-500 text-white">
-                        Kelas
-                      </th>
-                      <th className="p-2 sm:p-3 bg-slate-500 text-white">
-                        Jumlah
-                      </th>
-                      <th className="p-2 sm:p-3 bg-slate-500 text-white">
-                        H
-                      </th>
-                      <th className="p-2 sm:p-3 bg-slate-500 text-white">
-                        S
-                      </th>
-                      <th className="p-2 sm:p-3 bg-slate-500 text-white">
-                        I
-                      </th>
-                      <th className="p-2 sm:p-3 bg-slate-500 text-white">
-                        A
-                      </th>
-                      <th className="p-2 sm:p-3 bg-slate-500 text-white">
-                        T
-                      </th>
-                      <th className="p-2 sm:p-3 bg-slate-500 text-white">
-                        Walas
-                      </th>
-                      <th className="p-2 sm:p-3 rounded-r-lg bg-slate-500 text-white">
-                        Aksi
-                      </th>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left mt-4 border-collapse">
+                <thead>
+                  <tr className="ml-2">
+                    <th className="p-2 sm:p-3 rounded-l-lg bg-slate-500 text-white">No</th>
+                    <th className="p-2 sm:p-3 bg-slate-500 text-white">Kelas</th>
+                    <th className="p-2 sm:p-3 bg-slate-500 text-white">Jumlah</th>
+                    <th className="p-2 sm:p-3 bg-slate-500 text-white">H</th>
+                    <th className="p-2 sm:p-3 bg-slate-500 text-white">S</th>
+                    <th className="p-2 sm:p-3 bg-slate-500 text-white">I</th>
+                    <th className="p-2 sm:p-3 bg-slate-500 text-white">A</th>
+                    <th className="p-2 sm:p-3 bg-slate-500 text-white">T</th>
+                    <th className="p-2 sm:p-3 bg-slate-500 text-white">Walas</th>
+                    <th className="p-2 sm:p-3 rounded-r-lg bg-slate-500 text-white">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {currentData.map((item, index) => (
+                    <tr key={index}>
+                      <td className="p-3 sm:p-3 text-white border-b">{startIndex + index + 1}</td> {/* Nomor urut yang dinamis */}
+                      <td className="p-3 sm:p-3 text-white border-b">{item.kelas}</td>
+                      <td className="p-3 sm:p-3 text-white border-b">{item.jumlah}</td>
+                      <td className="p-3 sm:p-3 text-white border-b">{item.hadir}</td>
+                      <td className="p-2 sm:p-3 text-white border-b">{item.sakit}</td> {/* Kolom sakit */}
+                      <td className="p-3 sm:p-3 text-white border-b">{item.keteranganLain}</td> {/* Kolom izin */}
+                      <td className="p-3 sm:p-3 text-white border-b">{item.alpha}</td>
+                      <td className="p-3 sm:p-3 text-white border-b">{item.terlambat}</td>
+                      <td className="p-3 sm:p-3 text-white border-b">{item.walas}</td>
+                      <td className="p-3 sm:p-3 text-white border-b text-center">
+                        <DropdownMenu
+                          isOpen={openDropdown === item.id}
+                          onClick={() => handleDropdownClick(item.id)}
+                          onDelete={() => handleDeleteClick(item.id)}
+                          onEdit={() => handleEditClick(item.id)}
+                        />
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                  {paginatedData.map((item, index) => (
-                      <tr key={index}>
-                        <td className="p-3 sm:p-3 text-white border-b">{startIndex + index + 1}</td> {/* Nomor urut yang dinamis */}
-                        <td className="p-3 sm:p-3 text-white border-b">{item.kelas}</td>
-                        <td className="p-3 sm:p-3 text-white border-b">{item.jumlah}</td>
-                        <td className="p-3 sm:p-3 text-white border-b">{item.hadir}</td>
-                        <td className="p-2 sm:p-3 text-white border-b">{item.sakit}</td>
-                        <td className="p-3 sm:p-3 text-white border-b">{item.izin}</td>
-                        <td className="p-3 sm:p-3 text-white border-b">{item.alpha}</td>
-                        <td className="p-3 sm:p-3 text-white border-b">{item.terlambat}</td>
-                        <td className="p-3 sm:p-3 text-white border-b">{item.walas}</td>
-                        <td className="p-3 sm:p-3 text-white border-b text-center">
-                        {/* // Komponen DropdownMenu yang ditampilkan dalam tabel untuk setiap baris data.
-                        // isOpen: Menentukan apakah dropdown saat ini terbuka berdasarkan nomor item.
-                        // onClick: Fungsi untuk menangani aksi klik pada dropdown untuk membuka atau menutupnya.
-                        // onDelete: Fungsi untuk memicu proses penghapusan data ketika opsi 'Hapus' dalam dropdown diklik. */}
-                         <DropdownMenu
-                            isOpen={openDropdown === item.id}
-                            onClick={() => handleDropdownClick(item.id)}
-                            onDelete={() => handleDeleteClick(item.id)}
-                            onEdit={() => handleEditClick(item.id)} />
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
               <div className="mt-4 flex justify-between items-center">
               <div className="text-sm text-gray-700 text-white">
                 Halaman {currentPage} dari {totalPages}
@@ -602,10 +748,10 @@ const Page = () => {
                   Izin
                 </label>
                 <input
-                  id="izin"
+                  id="keteranganLain"
                   type="number"
-                  name="izin"
-                  value={newData.izin}
+                  name="keteranganLain"
+                  value={newData.keteranganLain}
                   onChange={handleInputChange}
                   placeholder="Izin"
                   className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
@@ -679,6 +825,19 @@ const Page = () => {
           </div>
         )}
 
+        
+
+    </div>
+    <div> 
+  
+    <input
+      type="text"
+      value={barcode}
+      onChange={handleChange}
+      onKeyDown={handleChange}
+      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+      placeholder="Scan barcode here"
+    />
     </div>
     </>
 
