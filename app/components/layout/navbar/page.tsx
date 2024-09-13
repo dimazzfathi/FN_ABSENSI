@@ -1,12 +1,15 @@
 "use client";
 import React, { useState } from 'react'
-import Sidebar from '../sidebar/page';
+import Cookies from 'js-cookie';
+import axios from 'axios';
 import Link from 'next/link';
 import Drop from "./app";
 import { HomeIcon, AcademicCapIcon, UserGroupIcon, CogIcon } from '@heroicons/react/24/solid';
 import { ClipboardDocumentIcon, ChartBarIcon, CalendarIcon, UserCircleIcon, ChevronUpIcon, ChevronDownIcon, LogoutIcon } from '@heroicons/react/24/outline';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSignOutAlt } from '@fortawesome/free-solid-svg-icons'
+
+const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 const Navbar = ({ toggleSidebar, isOpen }: { toggleSidebar: () => void; isOpen: false; }) => {
 
@@ -58,6 +61,7 @@ const toggleAdmin = () => {
   setSiswaOpen(false);
   setGuruOpen(false);
 };
+
 const handleMenuClick = (menu) => {
   setActiveMenu(menu);
   // Remove or modify any logic that changes `isOpen` to false
@@ -65,12 +69,25 @@ const handleMenuClick = (menu) => {
   // setIsOpen(false); // Remove this if present
 };
 
+const handleLogout = async () => {
+  // Hapus token dari cookie
+  Cookies.remove('token');
+  try {
+    // Panggil endpoint logout di backend
+    const response = await axios.post(`${baseUrl}/api/logout`, {
+      withCredentials: true, // Pastikan cookies dikirim dengan permintaan
+    });
 
-  const handleLogout = () => {
-    // Tambahkan logika logout di sini
-    alert('anda telah keluar');
-    window.location.href = '../../administrator/login'; // Ganti dengan route login Anda
-  };
+    console.log('Logout response:', response);
+
+    if (response.status === 200) {
+      // Redirect ke halaman login setelah logout
+      window.location.href = '../../administrator/login';
+    }
+  } catch (error) {
+    console.error('Error during logout:', error);
+  }
+};
     return (
     <>
     <nav className="bg-teal-500 z-30 relative sticky top-0 shadow-lg">
