@@ -9,15 +9,15 @@ export function middleware(req: NextRequest) {
   console.log('Token:', token);
 
     // Jika pengguna mencoba mengakses halaman login tapi sudah memiliki token, redirect ke halaman tujuan
-    if (req.nextUrl.pathname === '/administrator/login' && token) {
+    if (req.nextUrl.pathname === '/login' && token) {
       console.log('Pengguna sudah memiliki token, dialihkan ke dasbor.');
       return NextResponse.redirect(new URL('/dash', req.url))
     }
 
     // Jika tidak ada token dan pengguna mencoba mengakses halaman yang dilindungi
-    if (!token && (req.nextUrl.pathname.startsWith('/administrator/profile') || req.nextUrl.pathname.startsWith('/dash'))) {
+    if (!token && (req.nextUrl.pathname.startsWith('/profile') || req.nextUrl.pathname.startsWith('/dash'))) {
       console.log('No token found, redirecting to login.');
-      return NextResponse.redirect(new URL('/administrator/login', req.url));
+      return NextResponse.redirect(new URL('/login', req.url));
     }
   
 
@@ -25,5 +25,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dash/:path*', '/administrator/profile/:path*', '/administrator/login'],
+  matcher: ['/dash/:path*', '/profile/:path*', '/login'],
 };

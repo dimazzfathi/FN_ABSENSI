@@ -25,7 +25,7 @@ const LoginForm = () => {
         const expireDate = new Date();
         expireDate.setTime(expireDate.getTime() + (5 * 60 * 1000)); // 5 menit dalam milidetik
         Cookies.set('token', response.data.token, { expires: expireDate });
-        window.location.href = '../../dash';
+        window.location.href = '../dash';
       }
     } catch (error) {
         if (error.response) {
