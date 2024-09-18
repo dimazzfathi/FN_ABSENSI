@@ -23,7 +23,7 @@ const Navbar = () => {
             href="https://www.smkbudimuliapakisaji.sch.id/"
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-teal-500 text-white text-sm font-medium px-4 py-2 rounded-full hover:bg-teal-600 hover:text-white transition duration-300"
+            className="bg-teal-400 text-white text-sm font-medium px-4 py-2 rounded-3xl hover:bg-teal-600 hover:text-white transition duration-300"
           >
             WEB SMK BUDI MULIA PAKISAJI
           </a>

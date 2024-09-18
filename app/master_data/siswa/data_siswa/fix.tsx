@@ -32,6 +32,16 @@ export default function DataSiswa() {
     });
   const [previewURL, setPreviewURL] = useState(""); // State untuk URL preview foto
   const [isResettable, setIsResettable] = useState(false);
+  const [fileData, setFileData] = useState([]);
+  const [dataSiswa, setDataSiswa] = useState([]);
+  const [currentDataa, setCurrentDataa] = useState([]);
+  useEffect(() => {
+    setCurrentDataa(dataSiswa);
+  }, [dataSiswa]);
+
+
+  
+
 
     const [editIdSiswaValue, setEditIdSiswaValue] = useState('');
     const [editNisnValue, setEditNisnValue] = useState('');
@@ -48,6 +58,7 @@ export default function DataSiswa() {
 
   // State untuk menyimpan data tabel
   const [tableData, setTableData] = useState([]);
+  const [tableDataTabelKedua, setTableDataTabelKedua] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
 
   // State untuk dropdown dan modals
@@ -58,9 +69,7 @@ export default function DataSiswa() {
   });
   const [editData, setEditData] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
-
- 
-
+  // State Untuk filter 
   const [filterKelas, setFilterKelas] = useState("");
   const [filterJurusan, setFilterJurusan] = useState("");
   
@@ -74,9 +83,6 @@ export default function DataSiswa() {
       setIsResettable(false);
     }
   }, [filterKelas, filterJurusan , searchTerm]);
-
-
-
 
   const handleFilterChange = (setter) => (e) => {
     setter(e.target.value);
@@ -108,8 +114,6 @@ export default function DataSiswa() {
   const handleTahunAjaranChange = (e) => setTahunAjaranValue(e.target.value);
   const handleKelasChange = (e) => setKelasValue(e.target.value);
   const handleJurusanChange = (e) => setJurusanValue(e.target.value);
-
-
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -146,67 +150,82 @@ const handleEditImageChange = (e) => {
      const kelasRef = useRef(null);
      const jurusanRef = useRef(null);
      const fotoRef = useRef(null);
+     const fileInputRef =useRef(null);
   
   // Fungsi untuk menyimpan data baru ke dalam tabel
+  const saveToLocalStorage = (key, data) => {
+    localStorage.setItem(key, JSON.stringify(data));
+  };
+  
   const handleSaveClick = () => {
     const inputs = [
-        { value: idSiswaValue, ref: idSiswaRef, key: 'idSiswa' },
-        { value: nisnValue, ref: nisnRef, key: 'nisn' },
-        { value: namaSiswaValue, ref: namaSiswaRef, key: 'namaSiswa' },
-        { value: jkValue, ref: jkRef, key: 'jk' },
-        { value: emailValue, ref: emailRef, key: 'email' },
-        { value: namaWaliValue, ref: namaWaliRef, key: 'namaWali' },
-        { value: noWaliValue, ref: noWaliRef, key: 'noWali' },
-        { value: tahunAjaranValue, ref: tahunAjaranRef, key: 'tahunAjaran' },
-        { value: kelasValue, ref: kelasRef, key: 'kelas' },
-        { value: jurusanValue, ref: jurusanRef, key: 'jurusan' },
-        { value: fotoValue, ref: fotoRef, key: 'foto' },
+      { value: idSiswaValue, ref: idSiswaRef, key: 'idSiswa' },
+      { value: nisnValue, ref: nisnRef, key: 'nisn' },
+      { value: namaSiswaValue, ref: namaSiswaRef, key: 'namaSiswa' },
+      { value: jkValue, ref: jkRef, key: 'jk' },
+      { value: emailValue, ref: emailRef, key: 'email' },
+      { value: namaWaliValue, ref: namaWaliRef, key: 'namaWali' },
+      { value: noWaliValue, ref: noWaliRef, key: 'noWali' },
+      { value: tahunAjaranValue, ref: tahunAjaranRef, key: 'tahunAjaran' },
+      { value: kelasValue, ref: kelasRef, key: 'kelas' },
+      { value: jurusanValue, ref: jurusanRef, key: 'jurusan' },
+      { value: fotoValue, ref: fotoRef, key: 'foto' },
     ];
-
+  
     const errors = {};
     let firstEmptyInput = null;
-
+  
     inputs.forEach(input => {
-        if (!input.value) {
-            errors[input.key] = true;
-            if (!firstEmptyInput) {
-                firstEmptyInput = input.ref;
-            }
-        } else {
-            errors[input.key] = false;
+      if (!input.value) {
+        errors[input.key] = true;
+        if (!firstEmptyInput) {
+          firstEmptyInput = input.ref;
         }
+      } else {
+        errors[input.key] = false;
+      }
     });
-
+  
     setValidationErrors(errors);
-
+  
     if (firstEmptyInput) {
-        firstEmptyInput.current.focus();
-        return;
+      firstEmptyInput.current.focus();
+      return;
     }
-
+  
     // Jika semua input valid, lanjutkan dengan menyimpan data
-    const newData = [
-        ...tableData,
-        {
-            no: tableData.length > 0 ? Math.max(...tableData.map(item => item.no)) + 1 : 1,
-            kelas: kelasValue,
-            jurusan: jurusanValue,
-            tahunAjaran: tahunAjaranValue,
-            noWali: noWaliValue,
-            namaWali: namaWaliValue,
-            foto: fotoValue || "", // Handle file URL
-            email: emailValue,
-            jk: jkValue,
-            namaSiswa: namaSiswaValue,
-            nisn: nisnValue,
-            idSiswa: idSiswaValue,
-        },
-    ];
-
-    setTableData(newData);
-    localStorage.setItem("tableDataSiswa", JSON.stringify(newData)); // Simpan ke Local Storage
-
+    const newEntry = {
+      no: tableData.length > 0 ? Math.max(...tableData.map(item => item.no)) + 1 : 1,
+      kelas: kelasValue,
+      jurusan: jurusanValue,
+      tahunAjaran: tahunAjaranValue,
+      noWali: noWaliValue,
+      namaWali: namaWaliValue,
+      foto: fotoValue || "", // Handle file URL
+      email: emailValue,
+      jk: jkValue,
+      namaSiswa: namaSiswaValue,
+      nisn: nisnValue,
+      idSiswa: idSiswaValue,
+    };
+  
+    const updatedTableData = [...tableData, newEntry];
+    const updatedTableDataKedua = [...tableDataTabelKedua, newEntry];
+  
+    // Simpan ke local storage menggunakan fungsi reusable
+    saveToLocalStorage("tableDataSiswa", updatedTableData);
+    saveToLocalStorage("tableDataSiswaKedua", updatedTableDataKedua);
+  
+    setTableData(updatedTableData);
+    setTableDataTabelKedua(updatedTableDataKedua);
+  
     // Mengosongkan input setelah disimpan
+    resetFormFields();
+    setValidationErrors({});
+  };
+  
+  // Fungsi untuk mereset semua input form
+  const resetFormFields = () => {
     setKelasValue("");
     setJurusanValue("");
     setTahunAjaranValue("");
@@ -218,10 +237,8 @@ const handleEditImageChange = (e) => {
     setNamaSiswaValue("");
     setNisnValue("");
     setIdSiswaValue("");
-
-    // Reset validasi
-    setValidationErrors({});
-};
+  };
+  
 
 
 const handleDownloadFormatClick = () => {
@@ -232,9 +249,9 @@ const handleDownloadFormatClick = () => {
           nis: "",
           nama_siswa: "",
           jenis_kelamin: "",
-          id_tahun_pelajaran: "",
-          id_kelas: "",
-          id_rombel: "",
+          tahun_pelajaran: "",
+          kelas: "",
+          rombel: "",
           email: "",
           pass: "",
           foto: "",
@@ -250,9 +267,9 @@ const handleDownloadFormatClick = () => {
       "nis", 
       "nama_siswa", 
       "jenis_kelamin", 
-      "id_tahun_pelajaran", 
-      "id_kelas", 
-      "id_rombel", 
+      "tahun_pelajaran", 
+      "kelas", 
+      "rombel", 
       "email", 
       "pass", 
       "foto", 
@@ -281,11 +298,54 @@ const handleDownloadFormatClick = () => {
   link.click();
 };
 
-  const handleUploadFileClick = () => {
-    // Logika untuk mengunggah file
-    console.log('Upload file');
-  };
+const handleUploadFileClick = () => {
+  // Memicu klik pada elemen input file
+  fileInputRef.current.click();
+};
 
+const handleFileChange = (event) => {
+  const file = event.target.files[0];
+  
+  if (file) {
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+
+      // Mengubah sheet ke format JSON
+      const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+
+      // Mengonversi JSON ke bentuk yang sesuai dengan struktur tabel
+      const formattedData = jsonData.slice(1).map((row, index) => ({
+        no: currentDataa.length + index + 1,
+        foto: '',
+        idSiswa: row[0] || '',  // Kolom ID Siswa
+        nisn: row[1] || '',     // Kolom NISN
+        namaSiswa: row[2] || '',// Kolom Nama Siswa
+        jk: row[3] || '',       // Kolom Jenis Kelamin
+        kelas: row[5] || '',    // Kolom Kelas
+        jurusan: row[6] || '',  // Kolom Jurusan
+        namaWali: row[11] || '',// Kolom Nama Wali
+        noWali: row[12] || ''   // Kolom No Wali
+      }))
+      // Filter untuk baris yang memiliki setidaknya satu kolom yang tidak kosong
+      .filter(item => {
+        // Hanya masukkan baris yang memiliki data valid (tidak semuanya kosong)
+        return Object.values(item).some(value => typeof value === 'string' && value.trim() !== '');
+      });
+      // Menyimpan data ke state jika ada data yang valid
+      if (formattedData.length > 0) {
+        setCurrentDataa((prevData) => [...prevData, ...formattedData]);
+      } else {
+        console.log("Tidak ada data valid yang dimasukkan.");
+      }
+    };
+
+    reader.readAsArrayBuffer(file);
+  }
+};
 
   const handleEditClick = (item) => {
     setEditData(item);
@@ -356,10 +416,6 @@ const handleSaveEdit = () => {
   }
 };
 
-
-
-
-
   const handleDeleteClick = (id) => {
     setConfirmDelete({ visible: true, id });
     setOpenDropdown(null); // Close dropdown when delete is clicked
@@ -378,7 +434,6 @@ const handleSaveEdit = () => {
     localStorage.setItem("tableDataSiswa", JSON.stringify(updatedData)); // Update localStorage
     setConfirmDelete({ visible: false, id: null });
   };
-  
 
   const handleCancelDelete = () => {
     setConfirmDelete({ visible: false, id: null });
@@ -392,8 +447,6 @@ const handleSaveEdit = () => {
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
   };
-
-  
 
   // Filter dan pencarian logika
   const filteredData = tableData.filter(item => {
@@ -418,7 +471,38 @@ const handleSaveEdit = () => {
    // State untuk pagination
    const [currentPage, setCurrentPage] = useState(1);
    const [itemsPerPage, setItemsPerPage] = useState(5);
+   const [rowsPerPage, setRowsPerPage] = useState(5); 
 
+   // Fungsi untuk mendapatkan data yang ditampilkan pada halaman saat ini
+  const getPaginatedData = () => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return currentDataa.slice(startIndex, endIndex);
+  };
+
+   const handleRowsChange = (event) => {
+    setRowsPerPage(parseInt(event.target.value)); // Mengubah jumlah baris sesuai pilihan
+    setCurrentPage(1); // Reset halaman ke 1 saat jumlah baris berubah
+  };
+   const handlePreviousPage = () => {
+    setCurrentPage(prevPage => prevPage - 1);
+  };
+
+  // Fungsi untuk mengubah halaman
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+  
+  // Hitung total halaman berdasarkan data yang difilter
+  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+
+  // Hitung data yang ditampilkan berdasarkan halaman saat ini
+  // const startIndex = (currentPage - 1) * rowsPerPage;
+  // const endIndex = startIndex + rowsPerPage;
+  // const paginatedData = currentDataa.slice(startIndex, endIndex);
+
+  const hasNextPage = currentPage * itemsPerPage < currentDataa.length;
+  
   // Fungsi untuk menangani perubahan jumlah item per halaman
   const handleItemsPerPageChange = (e) => {
     setItemsPerPage(Number(e.target.value));
@@ -426,11 +510,11 @@ const handleSaveEdit = () => {
   };
 
   // Pagination logic
-  const totalPages = itemsPerPage > 0 ? Math.ceil(filteredData.length / itemsPerPage) : 0;
-  const currentData = filteredData.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  // const totalPages = itemsPerPage > 0 ? Math.ceil(filteredData.length / itemsPerPage) : 0;
+  // const currentData = filteredData.slice(
+  //   (currentPage - 1) * itemsPerPage,
+  //   currentPage * itemsPerPage
+  // );
 
   const isPreviousDisabled = currentPage === 1 || totalPages === 0;
   const isNextDisabled = currentPage >= totalPages || totalPages === 0;
@@ -618,8 +702,7 @@ const handleSaveEdit = () => {
                   </option>
                 ))}
               </select>
-              <div className="mt-4 flex justify-between items-center">
-                
+              <div className="mt-4 flex justify-between items-center">               
                 {/* Tombol Unduh Format dan Upload File */}
                 <div className="">
                 <button
@@ -628,13 +711,21 @@ const handleSaveEdit = () => {
                 >
                     Unduh Format
                 </button>
+                
                 <button
-                    onClick={handleUploadFileClick}
-                    className="px-4 py-2 lg:ml-2 md:ml-2 bg-rose-600 hover:bg-rose-700 border-teal-400 text-white  rounded text-sm sm:text-base pr-10 mt-1 text-center"
+                onClick={handleUploadFileClick}
+                className="px-4 py-2 lg:ml-2 md:ml-2 bg-rose-600 hover:bg-rose-700 border-teal-400 text-white rounded text-sm sm:text-base pr-10 mt-1 text-center"
                 >
                     Upload File
                 </button>
 
+                {/* Input file yang disembunyikan */}
+                <input
+                    type="file"
+                    ref={fileInputRef}
+                    style={{ display: "none" }}
+                    onChange={handleFileChange}
+                />
                 </div>
                 {/* Tombol Simpan */}
                 <div className="flex m-4 space-x-2">
@@ -665,9 +756,8 @@ const handleSaveEdit = () => {
             <div className="lg:flex-row justify-between items-center">
               <div className=" items-center lg:mb-0 space-x-2 mb-3 lg:order-1">
                     <select
-                      id="itemsPerPage"
-                      value={itemsPerPage}
-                      onChange={handleItemsPerPageChange}
+                      value={itemsPerPage} 
+                      onChange={(e) => setItemsPerPage(Number(e.target.value))}
                       className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base"
                     >
                       <option value={1}>1</option>
@@ -695,7 +785,6 @@ const handleSaveEdit = () => {
                   ))}
                 </select>
               </div>
-
               <div>
                 <label htmlFor="filterJurusan" className="block text-sm font-medium text-gray-700">
                   {/* Filter Jurusan */}
@@ -714,9 +803,6 @@ const handleSaveEdit = () => {
                   ))}
                 </select>
               </div>
-
-            
-
               <div className=" items-center lg:mb-0 space-x-2 lg:order-1">
                     <input
                       type="text"
@@ -776,9 +862,9 @@ const handleSaveEdit = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {currentData.map((item) => (
-                      <tr key={item.no}>
-                        <td className="p-3 sm:p-3 text-white border-b">{item.no}</td>
+                    {getPaginatedData().map((item, index) => (
+                      <tr key={index}>
+                        <td className="p-3 sm:p-3 text-white border-b">{(currentPage - 1) * itemsPerPage + index + 1}</td>
                         <td className='border-b'>
                             {item.foto ? (
                             <img src={item.foto} alt="Foto" width={50} height={50} />
@@ -786,7 +872,7 @@ const handleSaveEdit = () => {
                             ""
                             )}
                         </td>
-                        <td className="p-3 sm:p-3 text-white border-b">{item.nisn} / {item.idSiswa}</td>
+                        <td className="p-3 sm:p-3 text-white border-b">{item.nisn}{item.idSiswa}</td>
                         <td className="p-3 sm:p-3 text-white border-b">{item.namaSiswa}</td>
                         <td className="p-3 sm:p-3 text-white border-b">{item.kelas}</td>
                         <td className="p-3 sm:p-3 text-white border-b">{item.jurusan}</td>
@@ -818,29 +904,30 @@ const handleSaveEdit = () => {
           Halaman {currentPage} dari {totalPages > 0 ? totalPages : 1}
         </div>
         <div className="flex m-4 space-x-2">
-          <button
-            onClick={() => setCurrentPage(currentPage - 1)}
-            disabled={isPreviousDisabled}
-            className={`px-2 py-1 border rounded ${
-              isPreviousDisabled ? "bg-gray-300" : "bg-teal-400 hover:bg-teal-600 text-white"
-            }`}
+          
+       <button
+            onClick={() => handlePageChange(currentPage - 1)} 
+            disabled={currentPage === 1}
+            // className={`px-2 py-1 border rounded ${
+            //   currentPage === 1 ? "bg-gray-300" : "bg-teal-400 hover:bg-teal-600 text-white"
+            // }`}
           >
             Previous
           </button>
           <button
-            onClick={() => setCurrentPage(currentPage + 1)}
-            disabled={isNextDisabled}
-            className={`px-2 py-1 border rounded ${
-              isNextDisabled ? "bg-gray-300" : "bg-teal-400 hover:bg-teal-600 text-white"
-            }`}
+            onClick={() => handlePageChange(currentPage + 1)} 
+            disabled={currentPage === totalPages}
+            // className={`px-2 py-1 border rounded ${
+            //   !hasNextPage ? "bg-gray-300" : "bg-teal-400 hover:bg-teal-600 text-white"
+            // }`}
           >
             Next
-          </button>
+          </button>   
         </div>
       </div>
             </div>
           </div>
-        </div>
+          </div>
         </div>
         {/* Modal untuk konfirmasi penghapusan */}
         {confirmDelete.visible && (
