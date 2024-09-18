@@ -1,12 +1,15 @@
 "use client";
 import React, { useState } from 'react'
-import Sidebar from '../sidebar/page';
+import Cookies from 'js-cookie';
+import axios from 'axios';
 import Link from 'next/link';
 import Drop from "./app";
 import { HomeIcon, AcademicCapIcon, UserGroupIcon, CogIcon } from '@heroicons/react/24/solid';
 import { ClipboardDocumentIcon, ChartBarIcon, CalendarIcon, UserCircleIcon, ChevronUpIcon, ChevronDownIcon, LogoutIcon } from '@heroicons/react/24/outline';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSignOutAlt } from '@fortawesome/free-solid-svg-icons'
+
+const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 const Navbar = ({ toggleSidebar, isOpen }: { toggleSidebar: () => void; isOpen: false; }) => {
 
@@ -58,6 +61,7 @@ const toggleAdmin = () => {
   setSiswaOpen(false);
   setGuruOpen(false);
 };
+
 const handleMenuClick = (menu) => {
   setActiveMenu(menu);
   // Remove or modify any logic that changes `isOpen` to false
@@ -65,12 +69,25 @@ const handleMenuClick = (menu) => {
   // setIsOpen(false); // Remove this if present
 };
 
+const handleLogout = async () => {
+  // Hapus token dari cookie
+  Cookies.remove('token');
+  try {
+    // Panggil endpoint logout di backend
+    const response = await axios.post(`${baseUrl}/api/logout`, {
+      withCredentials: true, // Pastikan cookies dikirim dengan permintaan
+    });
 
-  const handleLogout = () => {
-    // Tambahkan logika logout di sini
-    alert('anda telah keluar');
-    window.location.href = '../../administrator/login'; // Ganti dengan route login Anda
-  };
+    console.log('Logout response:', response);
+
+    if (response.status === 200) {
+      // Redirect ke halaman login setelah logout
+      window.location.href = '/login';
+    }
+  } catch (error) {
+    console.error('Error during logout:', error);
+  }
+};
     return (
     <>
     <nav className="bg-teal-500 z-30 relative sticky top-0 shadow-lg">
@@ -126,7 +143,7 @@ const handleMenuClick = (menu) => {
           <h2 className='px-4 opacity-75'>Menu</h2>
           <ul>
             <li className="mb-2">
-              <Link href="../../dash">
+              <Link href="/dash">
               <div onClick={() => handleMenuClick('dashboard')}className={`px-4 py-2 hover:bg-teal-200 rounded flex items-center cursor-pointer ${activeMenu === 'dashboard' ? 'bg-teal-500' : ''}`}>
               {isMasterDataOpen ? <HomeIcon className="h-6 w-6 mr-2" /> : <HomeIcon className="h-6 w-6 mr-2" />}
                 <p>Dashboard</p>
@@ -134,7 +151,7 @@ const handleMenuClick = (menu) => {
               </Link>
             </li>
             <li className="mb-2">
-              <Link href="../../components/absensi">
+              <Link href="/absensi">
               <div onClick={() => handleMenuClick('absensi')}
                                 className={`px-4 py-2 hover:bg-teal-200 rounded flex items-center cursor-pointer ${activeMenu === 'absensi' ? 'bg-teal-500' : ''}`}>
                 <ClipboardDocumentIcon className="h-6 w-6 mr-2" />
@@ -143,7 +160,7 @@ const handleMenuClick = (menu) => {
               </Link>
             </li>
             <li className="mb-2">
-              <Link href="../components/naik_kelas">
+              <Link href="/naik_kelas">
               <div onClick={() => handleMenuClick('naik_kelas')}
                                 className={`px-4 py-2 hover:bg-teal-200 rounded flex items-center cursor-pointer ${activeMenu === 'naik_kelas' ? 'bg-teal-500' : ''}`}>
                 <AcademicCapIcon className="h-6 w-6 mr-2" />
@@ -181,7 +198,7 @@ const handleMenuClick = (menu) => {
                     {isAkademikOpen && (
                 <ul className="pl-4 mt-2 space-y-1">
                   <li>
-                    <Link href="../../master_data/akademik/thn_ajaran">
+                    <Link href="/master_data/akademik/thn_ajaran">
                     <div onClick={() => handleMenuClick('thn_ajaran')}
                                 className={`px-4 py-2 hover:bg-teal-200 rounded flex items-center cursor-pointer ${activeMenu === 'thn_ajaran' ? 'bg-teal-500' : ''}`}>
                         <p className="block rounded opacity-70">Tahun Ajaran</p>
@@ -189,12 +206,12 @@ const handleMenuClick = (menu) => {
                     </Link>
                   </li>
                   <li>
-                    <Link href="../../master_data/akademik/kelas">
+                    <Link href="/master_data/akademik/kelas">
                         <p className="block px-4 py-2 hover:bg-teal-200 rounded opacity-70">Kelas</p>
                     </Link>
                   </li>
                   <li>
-                    <Link href="../../master_data/akademik/jurusan">
+                    <Link href="/master_data/akademik/jurusan">
                         <p className="block px-4 py-2 hover:bg-teal-200 rounded opacity-70">Rombel</p>
                     </Link>
                   </li>
@@ -214,14 +231,14 @@ const handleMenuClick = (menu) => {
                     {isSiswaOpen && (
                         <ul className="pl-4 mt-2 space-y-1">
                           <li>
-                            <Link href="../../master_data/siswa/data_siswa">
+                            <Link href="/master_data/siswa/data_siswa">
                               <p className="block px-4 py-2 hover:bg-teal-200 rounded opacity-70">
                                 Siswa
                               </p>
                             </Link>
                           </li>
                           <li>
-                            <Link href="../../master_data/siswa/rombel">
+                            <Link href="/master_data/siswa/rombel">
                               <p className="block px-4 py-2 hover:bg-teal-200 rounded opacity-70">
                                 Rombel
                               </p>
@@ -243,14 +260,14 @@ const handleMenuClick = (menu) => {
                     {isGuruOpen && (
                         <ul className="pl-4 mt-2 space-y-1">
                           <li>
-                            <Link href="../../master_data/guru/mapel">
+                            <Link href="/master_data/guru/mapel">
                               <p className="block px-4 py-2 hover:bg-teal-200 rounded opacity-70">
                                 Mapel
                               </p>
                             </Link>
                           </li>
                           <li>
-                            <Link href="../../master_data/guru/data_guru">
+                            <Link href="/master_data/guru/data_guru">
                               <p className="block px-4 py-2 hover:bg-teal-200 rounded opacity-70">
                                 Guru
                               </p>
@@ -280,14 +297,14 @@ const handleMenuClick = (menu) => {
                 {isAdminOpen && (
                 <ul className="pl-4 mt-2 space-y-1">
                   <li>
-                    <Link href="../../administrator/profile">
+                    <Link href="/profile">
                       <p className="block px-4 py-2 hover:bg-teal-200 rounded opacity-85">
                         Profile
                       </p>
                     </Link>
                   </li>
                   <li>
-                    <Link href="../../administrator/add_user">
+                    <Link href="/administrator/add_user">
                       <p className="block px-4 py-2 hover:bg-teal-200 rounded opacity-85">
                         Add User
                       </p>
@@ -298,7 +315,7 @@ const handleMenuClick = (menu) => {
                 </div>
             </li>
             <li className="mb-2">
-              <Link href="../../../setting">
+              <Link href="/setting">
               <div onClick={() => handleMenuClick('setting')}
                                 className={`px-4 py-2 hover:bg-teal-200 rounded flex items-center cursor-pointer ${activeMenu === 'setting' ? 'bg-teal-500' : ''}`}>
                 <CogIcon className="h-6 w-6 mr-2" />

@@ -17,32 +17,30 @@ type Admin = {
 const AdminPage = () => {
   const [admins, setAdmins] = useState<Admin[]>([]);
   const router = useRouter();
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
+  // const router = useRouter();
 
   useEffect(() => {
-    const token = Cookies.get('token'); // atau dari cookies
-    
-    if (!token) {
-      // Jika token tidak ada, redirect ke halaman login
-      router.push('../../administrator/login');
-      return;
+    const token = Cookies.get('token');
+  if (!token) {
+    router.push('../login');
+    return;
+  }
+
+  axios.defaults.headers.common['Authorization'] = token;
+
+  const fetchAdmins = async () => {
+    try {
+      const res = await axios.get(`${baseUrl}/admin/all-Admin`);
+      const data: Admin[] = res.data;
+      setAdmins(data);
+    } catch (eror) {
+      console.error('Error:', error);
     }
-
-    // Menambahkan token ke header axios tanpa Bearer
-    axios.defaults.headers.common['Authorization'] = token;
-
-    const fetchAdmins = async () => {
-      try {
-        const res = await axios.get(`${baseUrl}/admin/all-Admin`);
-        const data: Admin[] = res.data;
-        setAdmins(data);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      }
-    };
-
-    fetchAdmins();
+  };
+  fetchAdmins();
   }, [router]);
-
   return (
     <div>
       <h1>Admin List</h1>
