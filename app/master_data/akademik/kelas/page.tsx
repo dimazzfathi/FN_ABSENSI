@@ -1,9 +1,9 @@
 "use client";
 import Kelas from '../kelas/hal';
 import React, { useState } from 'react'
-import Layout from "../../../components/layout/page"
-import Navbar from "../../../components/layout/navbar/page"
-import Footer from "../../../components/layout/footer/page"
+import Layout from "../../../layout/page"
+import Navbar from "../../../components/navbar/page"
+import Footer from "../../../components/footer/page"
 
   const Page = () => {
     const [isOpen, setIsOpen] = useState(false);

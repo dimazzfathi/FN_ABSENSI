@@ -1,8 +1,12 @@
 "use client";
-import Profile from './app';
+<<<<<<< HEAD:app/components/absensi/page.tsx
+import Absensi from '../absensi/app';
+=======
+import Absensi from './hal';
+>>>>>>> user:app/absensi/page.tsx
 import React, { useState } from 'react'
-import Navbar from "../../components/layout/navbar/page"
-import Footer from "../../components/layout/footer/page"
+import Navbar from "../components/navbar/page"
+import Footer from "../components/footer/page"
 
   const Page = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -23,7 +27,7 @@ import Footer from "../../components/layout/footer/page"
   }`}>
       <div className="flex-1 p-6">
           <div className="min-h-screen">
-            <Profile />
+            <Absensi />
           </div>
       </div>
     </main>

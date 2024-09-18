@@ -82,7 +82,7 @@ const handleLogout = async () => {
 
     if (response.status === 200) {
       // Redirect ke halaman login setelah logout
-      window.location.href = '../../administrator/login';
+      window.location.href = '/login';
     }
   } catch (error) {
     console.error('Error during logout:', error);
@@ -143,7 +143,7 @@ const handleLogout = async () => {
           <h2 className='px-4 opacity-75'>Menu</h2>
           <ul>
             <li className="mb-2">
-              <Link href="../../dash">
+              <Link href="/dash">
               <div onClick={() => handleMenuClick('dashboard')}className={`px-4 py-2 hover:bg-teal-200 rounded flex items-center cursor-pointer ${activeMenu === 'dashboard' ? 'bg-teal-500' : ''}`}>
               {isMasterDataOpen ? <HomeIcon className="h-6 w-6 mr-2" /> : <HomeIcon className="h-6 w-6 mr-2" />}
                 <p>Dashboard</p>
@@ -151,7 +151,7 @@ const handleLogout = async () => {
               </Link>
             </li>
             <li className="mb-2">
-              <Link href="../../components/absensi">
+              <Link href="/absensi">
               <div onClick={() => handleMenuClick('absensi')}
                                 className={`px-4 py-2 hover:bg-teal-200 rounded flex items-center cursor-pointer ${activeMenu === 'absensi' ? 'bg-teal-500' : ''}`}>
                 <ClipboardDocumentIcon className="h-6 w-6 mr-2" />
@@ -160,7 +160,7 @@ const handleLogout = async () => {
               </Link>
             </li>
             <li className="mb-2">
-              <Link href="../components/naik_kelas">
+              <Link href="/naik_kelas">
               <div onClick={() => handleMenuClick('naik_kelas')}
                                 className={`px-4 py-2 hover:bg-teal-200 rounded flex items-center cursor-pointer ${activeMenu === 'naik_kelas' ? 'bg-teal-500' : ''}`}>
                 <AcademicCapIcon className="h-6 w-6 mr-2" />
@@ -198,7 +198,7 @@ const handleLogout = async () => {
                     {isAkademikOpen && (
                 <ul className="pl-4 mt-2 space-y-1">
                   <li>
-                    <Link href="../../master_data/akademik/thn_ajaran">
+                    <Link href="/master_data/akademik/thn_ajaran">
                     <div onClick={() => handleMenuClick('thn_ajaran')}
                                 className={`px-4 py-2 hover:bg-teal-200 rounded flex items-center cursor-pointer ${activeMenu === 'thn_ajaran' ? 'bg-teal-500' : ''}`}>
                         <p className="block rounded opacity-70">Tahun Ajaran</p>
@@ -206,12 +206,12 @@ const handleLogout = async () => {
                     </Link>
                   </li>
                   <li>
-                    <Link href="../../master_data/akademik/kelas">
+                    <Link href="/master_data/akademik/kelas">
                         <p className="block px-4 py-2 hover:bg-teal-200 rounded opacity-70">Kelas</p>
                     </Link>
                   </li>
                   <li>
-                    <Link href="../../master_data/akademik/jurusan">
+                    <Link href="/master_data/akademik/jurusan">
                         <p className="block px-4 py-2 hover:bg-teal-200 rounded opacity-70">Rombel</p>
                     </Link>
                   </li>
@@ -231,14 +231,14 @@ const handleLogout = async () => {
                     {isSiswaOpen && (
                         <ul className="pl-4 mt-2 space-y-1">
                           <li>
-                            <Link href="../../master_data/siswa/data_siswa">
+                            <Link href="/master_data/siswa/data_siswa">
                               <p className="block px-4 py-2 hover:bg-teal-200 rounded opacity-70">
                                 Siswa
                               </p>
                             </Link>
                           </li>
                           <li>
-                            <Link href="../../master_data/siswa/rombel">
+                            <Link href="/master_data/siswa/rombel">
                               <p className="block px-4 py-2 hover:bg-teal-200 rounded opacity-70">
                                 Rombel
                               </p>
@@ -260,14 +260,14 @@ const handleLogout = async () => {
                     {isGuruOpen && (
                         <ul className="pl-4 mt-2 space-y-1">
                           <li>
-                            <Link href="../../master_data/guru/mapel">
+                            <Link href="/master_data/guru/mapel">
                               <p className="block px-4 py-2 hover:bg-teal-200 rounded opacity-70">
                                 Mapel
                               </p>
                             </Link>
                           </li>
                           <li>
-                            <Link href="../../master_data/guru/data_guru">
+                            <Link href="/master_data/guru/data_guru">
                               <p className="block px-4 py-2 hover:bg-teal-200 rounded opacity-70">
                                 Guru
                               </p>
@@ -297,14 +297,14 @@ const handleLogout = async () => {
                 {isAdminOpen && (
                 <ul className="pl-4 mt-2 space-y-1">
                   <li>
-                    <Link href="../../administrator/profile">
+                    <Link href="/profile">
                       <p className="block px-4 py-2 hover:bg-teal-200 rounded opacity-85">
                         Profile
                       </p>
                     </Link>
                   </li>
                   <li>
-                    <Link href="../../administrator/add_user">
+                    <Link href="/administrator/add_user">
                       <p className="block px-4 py-2 hover:bg-teal-200 rounded opacity-85">
                         Add User
                       </p>
@@ -315,7 +315,7 @@ const handleLogout = async () => {
                 </div>
             </li>
             <li className="mb-2">
-              <Link href="../../../setting">
+              <Link href="/setting">
               <div onClick={() => handleMenuClick('setting')}
                                 className={`px-4 py-2 hover:bg-teal-200 rounded flex items-center cursor-pointer ${activeMenu === 'setting' ? 'bg-teal-500' : ''}`}>
                 <CogIcon className="h-6 w-6 mr-2" />

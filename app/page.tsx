@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from 'react';
-import Navbar from './components/layout/navbar/page';
+import Navbar from './components/navbar/page';
 import Pw from "../app/administrator/add_user/pass";
 
 const Page = () => {

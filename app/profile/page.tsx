@@ -1,9 +1,8 @@
 "use client";
-import Absensi from '../absensi/app';
+import Profile from './app';
 import React, { useState } from 'react'
-import Layout from "../../../components/layout/page"
-import Navbar from "../layout/navbar/page"
-import Footer from "../layout/footer/page"
+import Navbar from "../components/navbar/page"
+import Footer from "../components/footer/page"
 
   const Page = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -24,7 +23,7 @@ import Footer from "../layout/footer/page"
   }`}>
       <div className="flex-1 p-6">
           <div className="min-h-screen">
-            <Absensi />
+            <Profile />
           </div>
       </div>
     </main>

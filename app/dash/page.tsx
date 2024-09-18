@@ -1,8 +1,8 @@
 "use client";
 import Dash from './app';
 import React, { useState } from 'react'
-import Navbar from "../components/layout/navbar/page"
-import Footer from "../components/layout/footer/page"
+import Navbar from "../components/navbar/page"
+import Footer from "../components/footer/page"
 
   const Page = () => {
     const [isOpen, setIsOpen] = useState(false);

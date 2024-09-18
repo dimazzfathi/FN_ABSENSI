@@ -24,7 +24,7 @@ const AdminPage = () => {
   useEffect(() => {
     const token = Cookies.get('token');
   if (!token) {
-    router.push('../../administrator/login');
+    router.push('../login');
     return;
   }
 
