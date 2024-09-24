@@ -1,7 +1,9 @@
 "use client";
 
+
 import Absensi from './app';
 // import Absensi from './hal';
+
 import React, { useState } from 'react'
 import Navbar from "../components/navbar/page"
 import Footer from "../components/footer/page"
