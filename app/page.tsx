@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import Navbar from './header';
 import Pw from "../app/administrator/add_user/pass";
 
-const Page = () => {
+const Page = () => { 
   const [isResettable, setIsResettable] = useState(false);
   // State untuk dropdown dan modals
   const [openDropdown, setOpenDropdown] = useState(null);
@@ -27,44 +27,25 @@ const Page = () => {
   const [showTable, setShowTable] = useState(false);
   const [currentPage, setCurrentPage] = useState(1); // Halaman saat ini
   const [rowsPerPage, setRowsPerPage] = useState(5); // Jumlah data per halaman
-  const [currentData, setCurrentData] = useState([]); // Data keseluruhan
+  const [currentData, setCurrentData] = useState([
+    { id: 1, barcode: '123', hadir: 0 },
+    { id: 2, barcode: '456', hadir: 0 },]); // Data keseluruhan
   const [searchTerm, setSearchTerm] = useState(''); // Kata kunci pencarian
   // Ambil data dari local storage saat pertama kali komponen dimuat
   const [dataAbsensi, setDataAbsensi] = useState<any[]>([]);
   // Data untuk tabel kedua (data yang sudah dikirim)
   const [dataTerkirim, setDataTerkirim] = useState<any[]>([]);
   //khusus untuk input barcode
+  
   const [barcode, setBarcode] = useState('');
-  const handleChange = (event) => {
-    const value = event.target.value;
-    setBarcode(value);
+  const [timer, setTimer] = useState(null);
 
-    // Jika karakter enter atau tab terdeteksi, proses data
-    if (event.key === 'Enter') {
-      handleBarcodeSubmit(value);
-    }
-  };
-  const handleBarcodeSubmit = (barcode) => {
-    // Kirim data barcode ke backend atau proses sesuai kebutuhan
-    console.log('Data barcode:', barcode);
-
-    // Contoh pengiriman data ke backend
-    fetch('/api/absensi', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ barcode }),
-    })
-      .then((response) => response.json())
-      .then((data) => console.log('Response:', data))
-      .catch((error) => console.error('Error:', error));
-
-    // Kosongkan input setelah mengirim
-    setBarcode('');
-  };
-
-
+  useEffect(() => {
+    const storedData = JSON.parse(localStorage.getItem('dataAbsensi')) || [];
+    setDataAbsensi(storedData);
+  }, []);
+  // Fungsi untuk menangani perubahan input barcode
+  
   // Fungsi untuk menyimpan data ke localStorage
   const saveDataToLocalStorage = (key, data) => {
     localStorage.setItem(key, JSON.stringify(data));
@@ -157,7 +138,7 @@ useEffect(() => {
       nama: 'John Doe', // Nama contoh, bisa diganti dengan input dinamis
       kelas: 'XII IPA 1', // Kelas contoh, bisa diganti dengan input dinamis
       keterangan: status,
-      jumlah: '12',// jumlah contoh, bisa diganti dengan input dinamis
+      jumlah: '',// jumlah contoh, bisa diganti dengan input dinamis
       walas: 'pak lukim', // walas contoh, bisa diganti dengan input dinamis
     };
 
@@ -199,8 +180,7 @@ useEffect(() => {
     // Perbarui atau tambahkan item di currentData
     const newCurrentData = currentData.map((data) => {
       if (data.id === item.id) {
-        // Hitung nilai hadir berdasarkan total dikurangi sakit, keterangan lain, dan alpha
-        const totalJumlah = item.jumlah || data.jumlah || 0;
+        const totalJumlah = item.jumlah || data.jumlah || 0; // Pastikan jumlah tidak undefined
         const sakit = data.sakit + updatedItem.sakit;
         const keteranganLain = data.keteranganLain + updatedItem.keteranganLain;
         const alpha = data.alpha + updatedItem.alpha;
@@ -210,7 +190,7 @@ useEffect(() => {
           ...data,
           sakit: sakit,
           keteranganLain: keteranganLain,
-          hadir: hadir,
+          hadir: hadir >= 0 ? hadir : 0, // Pastikan hadir tidak negatif
           alpha: alpha,
           terlambat: data.terlambat + updatedItem.terlambat,
         };
@@ -230,9 +210,9 @@ useEffect(() => {
         ...item,
         sakit: sakit,
         keteranganLain: keteranganLain,
-        hadir: hadir,
+        hadir: hadir >= 0 ? hadir : 0, // Pastikan hadir tidak negatif
         alpha: alpha,
-        terlambat: updatedItem.terlambat
+        terlambat: updatedItem.terlambat,
       });
     }
   
@@ -248,9 +228,51 @@ useEffect(() => {
     // Tutup dropdown
     setOpenDropdown(null);
   };
+  const handleBarcodeChange = (e) => {
+    setBarcode(e.target.value);
   
+    // Jika ada timer sebelumnya, clear dahulu
+    if (timer) {
+      clearTimeout(timer);
+    }
   
+    // Timer untuk menyimpan barcode ke kolom "H" setelah 2 detik
+    setTimer(setTimeout(saveBarcodeToH, 1000));
+  };
 
+  // Fungsi untuk menyimpan hasil scan barcode ke kolom H
+  const saveBarcodeToH = () => {
+    console.log('Barcode yang di-scan:', barcode);
+    
+    const existingItem = currentData.find(item => item.barcode === barcode);
+    
+    if (existingItem) {
+      const updatedData = currentData.map((item) => {
+        if (item.barcode === barcode) {
+          const hadirCount = (item.hadir || 0) + 1;
+          return { ...item, hadir: hadirCount };
+        }
+        return item;
+      });
+  
+      console.log('Data setelah update:', updatedData);
+      setCurrentData(updatedData);
+    } else {
+      // Jika tidak ada, tambahkan entry baru
+      const newEntry = {
+        id: currentData.length + 1, // Atau gunakan logika lain untuk ID
+        barcode: barcode,
+        hadir: 1,
+        // Properti lain yang diperlukan
+      };
+  
+      const updatedData = [...currentData, newEntry];
+      console.log('Menambahkan entry baru:', newEntry);
+      setCurrentData(updatedData);
+    }
+  
+    setBarcode('');
+  };
 
   //untuk hapus
   const handleDeleteClick = (id) => {
@@ -460,7 +482,7 @@ useEffect(() => {
                     </button>
                   </div>
                 )} 
-              </div>
+            </div>
               <div className="relative inline-block text-left">
                   <div
                     onClick={toggleDropdown}
@@ -583,12 +605,12 @@ useEffect(() => {
                   </tr>
                 </thead>
                 <tbody>
-                  {currentData.map((item, index) => (
-                    <tr key={index}>
-                      <td className="p-3 sm:p-3 text-white border-b">{startIndex + index + 1}</td> {/* Nomor urut yang dinamis */}
+                  {currentData.map((item ) => (
+                    <tr key={item.id}>
+                      <td className="p-3 sm:p-3 text-white border-b">{item.id}</td> {/* Nomor urut yang dinamis */}
                       <td className="p-3 sm:p-3 text-white border-b">{item.kelas}</td>
                       <td className="p-3 sm:p-3 text-white border-b">{item.jumlah}</td>
-                      <td className="p-3 sm:p-3 text-white border-b">{item.hadir}</td>
+                      <td className="p-3 sm:p-3 text-white border-b">{item.hadir || 0}</td>
                       <td className="p-2 sm:p-3 text-white border-b">{item.sakit}</td> {/* Kolom sakit */}
                       <td className="p-3 sm:p-3 text-white border-b">{item.keteranganLain}</td> {/* Kolom izin */}
                       <td className="p-3 sm:p-3 text-white border-b">{item.alpha}</td>
@@ -824,21 +846,16 @@ useEffect(() => {
             </div>
           </div>
         )}
-
-        
-
     </div>
-    <div> 
-  
-    <input
-      type="text"
-      value={barcode}
-      onChange={handleChange}
-      onKeyDown={handleChange}
-      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-      placeholder="Scan barcode here"
-    />
-    </div>
+    <div className="p-4">
+              <h2 className="text-xl font-bold mb-4">Scan Barcode</h2>
+             <input 
+                type="text" 
+                value={barcode} 
+                onChange={handleBarcodeChange} 
+                placeholder="Scan Barcode" 
+              />
+        </div>
     </>
 
     

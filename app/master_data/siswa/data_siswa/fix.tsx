@@ -139,7 +139,7 @@ const handleEditImageChange = (e) => {
 };
   
      // Referensi untuk input
-     const idSiswaRef = useRef(null)
+     const idSiswaRef = useRef(null);
      const nisnRef = useRef(null);
      const namaSiswaRef = useRef(null);
      const jkRef = useRef(null);

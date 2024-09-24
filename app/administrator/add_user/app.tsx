@@ -20,6 +20,21 @@ export default function DataSiswa() {
   const [isResettable, setIsResettable] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);// Untuk pratinjau gambar
   
+  //State untuk menyimpan nilai edit
+  const [editTtlValue, setEditTtlValue] = useState(""); 
+  const [editNamaSiswaValue, setEditNamaSiswaValue] = useState("");
+  const [editJkValue, setEditJkValue] = useState("");
+  const [editEmailValue, setEditEmailValue] = useState("");
+  const [editAlamatValue, setEditAlamatValue] = useState("");
+  const [editUsernameValue, setEditUsernameValue] = useState("");
+  const [editPasswordValue, setEditPasswordValue] = useState("");
+  const [editPasswordVisible, setEditPasswordVisible] = useState(false);
+  const [editNoWaliValue, setEditNoWaliValue] = useState("");
+  const [editPeranValue, setEditPeranValue] = useState("");
+  const [editFotoValue, setEditFotoValue] = useState(null); // State untuk foto
+  const [editPreviewURL, setEditPreviewURL] = useState(""); // State untuk URL preview foto
+  const [editImagePreview, setEditImagePreview] = useState(null);// Untuk pratinjau gambar
+  
   // State untuk menyimpan data tabel
   const [tableData, setTableData] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -108,8 +123,66 @@ export default function DataSiswa() {
         reader.readAsDataURL(file);
     }
 };
+
+const [validationErrors, setValidationErrors] = useState({
+  namaSiswa: false,
+  ttl: false,
+  jk: false,
+  email: false,
+  alamat: false,
+  username: false,
+  password: false,
+  noWali: false,
+  peran: false,
+  foto: false,
+});
+  const namaSiswaRef = useRef(null);
+  const ttlRef = useRef(null);
+  const jkRef = useRef(null);
+  const emailRef = useRef(null);
+  const alamatRef = useRef(null);
+  const usernameRef = useRef(null);
+  const passwordRef = useRef(null);
+  const noWaliRef = useRef(null);
+  const peranRef = useRef(null);
+  const fotoRef = useRef(null);
+
   // Fungsi untuk menyimpan data baru ke dalam tabel
   const handleSaveClick = () => {
+    const inputs = [
+      { value: namaSiswaValue, ref: namaSiswaRef, key: 'namaSiswa' },
+      { value: ttlValue, ref: ttlRef, key: 'ttl' },
+      { value: jkValue, ref: jkRef, key: 'jk' },
+      { value: emailValue, ref: emailRef, key: 'email' },
+      { value: alamatValue, ref: alamatRef, key: 'alamat' },
+      { value: usernameValue, ref: usernameRef, key: 'username' },
+      { value: passwordValue, ref: passwordRef, key: 'password' },
+      { value: noWaliValue, ref: noWaliRef, key: 'noWali' },
+      { value: peranValue, ref: peranRef, key: 'peran' },
+      { value: fotoValue, ref: fotoRef, key: 'foto' },
+    ];
+
+    const errors = {};
+    let firstEmptyInput = null;
+  
+    inputs.forEach(input => {
+      if (!input.value) {
+        errors[input.key] = true;
+        if (!firstEmptyInput) {
+          firstEmptyInput = input.ref;
+        }
+      } else {
+        errors[input.key] = false;
+      }
+    });
+  
+    setValidationErrors(errors);
+  
+    if (firstEmptyInput) {
+      firstEmptyInput.current.focus();
+      return;
+    }
+
     const newData = [
       ...tableData,
       { no: tableData.length > 0 ? Math.max(...tableData.map(item => item.no)) + 1 : 1,
@@ -154,16 +227,16 @@ export default function DataSiswa() {
 
   const handleEditClick = (item) => {
     setEditData(item);
-    setPeranValue(item.peran);
-    setNoWaliValue(item.noWali);
-    setUsernameValue(item.username);
-    setPasswordValue(item.password);
-    setPreviewURL(item.imagePreview); // Set preview URL for the edit modal
-    setAlamatValue(item.alamat);
-    setEmailValue(item.email);
-    setJkValue(item.jk);
-    setNamaSiswaValue(item.namaSiswa);
-    setTtlValue(item.ttl);
+    setEditPeranValue(item.peran);
+    setEditNoWaliValue(item.noWali);
+    setEditUsernameValue(item.username);
+    setEditPasswordValue(item.password);
+    setEditPreviewURL(item.imagePreview); // setEdit preview URL for the edit modal
+    setEditAlamatValue(item.alamat);
+    setEditEmailValue(item.email);
+    setEditJkValue(item.jk);
+    setEditNamaSiswaValue(item.namaSiswa);
+    setEditTtlValue(item.ttl);
     setShowEditModal(true);
   };
 
@@ -188,15 +261,15 @@ export default function DataSiswa() {
     localStorage.setItem("tableDataSiswa", JSON.stringify(updatedData));
 
     setShowEditModal(false);
-    setPeranValue("");
-    setNoWaliValue("");
-    setUsernameValue("");
-    setPasswordValue("");
-    setFotoValue(null);
-    setAlamatValue("");
-    setJkValue("");
-    setNamaSiswaValue("");
-    setTtlValue("");
+    setEditPeranValue("");
+    setEditNoWaliValue("");
+    setEditUsernameValue("");
+    setEditPasswordValue("");
+    setEditFotoValue(null);
+    setEditAlamatValue("");
+    setEditJkValue("");
+    setEditNamaSiswaValue("");
+    setEditTtlValue("");
   };
 
   const handleDeleteClick = (id) => {
@@ -310,7 +383,8 @@ export default function DataSiswa() {
                     type="text"
                     value={namaSiswaValue}
                     onChange={handleNamaSiswaChange}
-                    className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
+                    ref={namaSiswaRef}
+                    className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${validationErrors.namaSiswa ? 'border-red-500' : 'border-gray-300'}`}
                     placeholder="Nama Siswa..."
                 />
             <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold"> Tempat Tanggal Lahir</h2>
@@ -318,14 +392,16 @@ export default function DataSiswa() {
                     type="text"
                     value={ttlValue}
                     onChange={handleTtlChange}
-                    className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
+                    ref={ttlRef}
+                    className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${validationErrors.ttl ? 'border-red-500' : 'border-gray-300'}`}
                     placeholder="Tempat Tanggal Lahir..."
                 />
             <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold"> Jenis Kelamin</h2>
                 <select
                     value={jkValue}
                     onChange={handleJkChange}
-                    className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
+                    ref={jkRef}
+                    className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${validationErrors.jk ? 'border-red-500' : 'border-gray-300'}`}
                  >
                     <option value="">Pilih Jenis Kelamin...</option>
                         {jkOptions.map((option, index) => (
@@ -339,7 +415,8 @@ export default function DataSiswa() {
                     type="alamat"
                     value={alamatValue}
                     onChange={handleAlamatChange}
-                    className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
+                    ref={alamatRef}
+                    className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${validationErrors.alamat ? 'border-red-500' : 'border-gray-300'}`}
                     placeholder="Alamat..."
                 />
             <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold"> Email</h2>
@@ -347,7 +424,8 @@ export default function DataSiswa() {
                     type="email"
                     value={emailValue}
                     onChange={handleEmailChange}
-                    className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
+                    ref={emailRef}
+                    className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${validationErrors.email ? 'border-red-500' : 'border-gray-300'}`}
                     placeholder="Email..."
                 />
             <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold"> Username</h2>
@@ -355,7 +433,8 @@ export default function DataSiswa() {
                     type="username"
                     value={usernameValue}
                     onChange={handleUsernameChange}
-                    className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
+                    ref={usernameRef}
+                    className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${validationErrors.username ? 'border-red-500' : 'border-gray-300'}`}
                     placeholder="Username..."
                 />
             <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold"> Password</h2>
@@ -364,7 +443,8 @@ export default function DataSiswa() {
                     type={passwordVisible ? 'text' : 'password'}
                     value={passwordValue}
                     onChange={handlePasswordChange}
-                    className="w-full p-2 pr-10 border border-gray-300 rounded text-sm sm:text-base mb-2"
+                    ref={passwordRef}
+                    className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${validationErrors.password ? 'border-red-500' : 'border-gray-300'}`}
                     placeholder="Password..."
                 />
                 <span
@@ -379,20 +459,23 @@ export default function DataSiswa() {
                     type="text"
                     value={noWaliValue}
                     onChange={handleNoWaliChange}
-                    className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
+                    ref={noWaliRef}
+                    className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${validationErrors.noWali ? 'border-red-500' : 'border-gray-300'}`}
                     placeholder="No Telepon..."
                 />
             <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold"> Foto</h2>
                 <input
                     type="file"
                     onChange={handleImageChange}
-                    className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
+                    ref={fotoRef}
+                    className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${validationErrors.foto ? 'border-red-500' : 'border-gray-300'}`}
                 />
               <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold"> Peran</h2>
               <select
                 value={peranValue}
                 onChange={handlePeranChange}
-                className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
+                ref={peranRef}
+                className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${validationErrors.peran ? 'border-red-500' : 'border-gray-300'}`}
               >
                 <option value="">Pilih Peran...</option>
                 {peranOptions.map((option, index) => (
@@ -401,12 +484,12 @@ export default function DataSiswa() {
                   </option>
                 ))}
               </select>
-              <div className="mt-4 flex justify-between items-center">
+              <div className="mt-4 flex justify-end items-center">
                 {/* Tombol Simpan */}
                 <div className="flex m-4 space-x-2">
                 <button
                   onClick={handleSaveClick}
-                  className="px-3 py-2 sm:px-4 sm:py-2 bg-teal-400 hover:bg-teal-500 text-white items-end-end rounded text-sm sm:text-base"
+                   className="px-3 py-2 sm:px-4 sm:py-2 bg-teal-400 hover:bg-teal-500 text-white items-end-end rounded text-sm sm:text-base"
                 >
                   Simpan
                 </button>
@@ -618,21 +701,21 @@ export default function DataSiswa() {
               <h2 className="text-sm pt-3 sm:text-2xl font-bold">Edit Data</h2>
               <input
                 type="text"
-                value={namaSiswaValue}
-                onChange={handleNamaSiswaChange}
+                value={editNamaSiswaValue}
+                onChange={(e) => setEditNamaSiswaValue(e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
                 placeholder="Nama..."
               />
               <input
                 type="text"
-                value={ttlValue}
-                onChange={handleTtlChange}
+                value={editTtlValue}
+                onChange={(e) => setEditTtlValue(e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
                 placeholder="Ttl..."
               />
               <select
-                value={jkValue}
-                onChange={handleJkChange}
+                value={editJkValue}
+                onChange={(e) => setEditJkValue(e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
               >
                 <option value="">Pilih Jk...</option>
@@ -644,30 +727,30 @@ export default function DataSiswa() {
               </select>
               <input
                 type="alamat"
-                value={alamatValue}
-                onChange={handleAlamatChange}
+                value={editAlamatValue}
+                onChange={(e) => setEditAlamatValue(e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
                 placeholder="Alamat..."
                 />
               <input
                 type="username"
-                value={usernameValue}
-                onChange={handleUsernameChange}
+                value={editUsernameValue}
+                onChange={(e) => setEditUsernameValue(e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
                 placeholder="Username..."
               />
               <input
                 type="email"
-                value={emailValue}
-                onChange={handleEmailChange}
+                value={editEmailValue}
+                onChange={(e) => setEditEmailValue(e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
                 placeholder="Email..."
                 />
               <div className="relative w-full">
                 <input
                     type={passwordVisible ? 'text' : 'password'}
-                    value={passwordValue}
-                    onChange={handlePasswordChange}
+                    value={editPasswordValue}
+                    onChange={(e) => setEditPasswordValue(e.target.value)}
                     className="w-full p-2 pr-10 border border-gray-300 rounded text-sm sm:text-base mb-2"
                     placeholder="Password..."
                 />
@@ -680,19 +763,19 @@ export default function DataSiswa() {
             </div>
               <input
                 type="text"
-                value={noWaliValue}
-                onChange={handleNoWaliChange}
+                value={editNoWaliValue}
+                onChange={(e) => setEditNoWaliValue(e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
                 placeholder="No Wali..."
               />
               {/* Input untuk mengedit foto */}
               <input type="file"
-               onChange={handleImageChange} 
+               onChange={(e) => setEditFotoValue(e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
                />
               <select
-                value={peranValue}
-                onChange={handlePeranChange}
+                value={editPeranValue}
+                onChange={(e) => setEditPeranValue(e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
               >
                 <option value="">Pilih peran...</option>

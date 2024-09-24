@@ -1,9 +1,7 @@
 "use client";
-<<<<<<< HEAD:app/components/absensi/page.tsx
-import Absensi from '../absensi/app';
-=======
-import Absensi from './hal';
->>>>>>> user:app/absensi/page.tsx
+
+import Absensi from './app';
+// import Absensi from './hal';
 import React, { useState } from 'react'
 import Navbar from "../components/navbar/page"
 import Footer from "../components/footer/page"

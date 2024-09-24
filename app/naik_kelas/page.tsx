@@ -1,8 +1,8 @@
 "use client";
 import React, { useState } from 'react'
 import NaikKelas from "./app"
-import Navbar from "../layout/navbar/page"
-import Footer from "../layout/footer/page"
+import Navbar from "../components/navbar/page"
+import Footer from "../components/footer/page"
 const page = () => {
     const [isOpen, setIsOpen] = useState(false);
 
