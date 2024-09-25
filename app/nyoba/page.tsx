@@ -30,7 +30,7 @@ const AdminPage = () => {
       <h1>Admin List</h1>
       <ul>
       {admins.map((admin, index) => (
-        <li key={admin.id || index}>{admin.nama_admin} ({admin.email})</li>
+        <li key={admin.id_admin || index}>{admin.nama_admin} ({admin.email})</li>
       ))}
       </ul>
     </div>
