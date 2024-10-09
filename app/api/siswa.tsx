@@ -10,7 +10,7 @@ export type Siswa = {
 
 export const fetchSiswa = async (): Promise<Siswa[]> => {
   try {
-    const response = await axios.get(`${baseUrl}/siswa/all`);
+    const response = await axios.get(`${baseUrl}/siswa/all-siswa`);
     console.log(response)
     return response.data as Siswa[];
   } catch (error) {
