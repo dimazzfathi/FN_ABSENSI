@@ -39,10 +39,6 @@ export default function DataSiswa() {
     setCurrentDataa(dataSiswa);
   }, [dataSiswa]);
 
-
-  
-
-
     const [editIdSiswaValue, setEditIdSiswaValue] = useState('');
     const [editNisnValue, setEditNisnValue] = useState('');
     const [editNamaSiswaValue, setEditNamaSiswaValue] = useState('');
@@ -195,7 +191,7 @@ const handleEditImageChange = (e) => {
   
     // Jika semua input valid, lanjutkan dengan menyimpan data
     const newEntry = {
-      no: tableData.length > 0 ? Math.max(...tableData.map(item => item.no)) + 1 : 1,
+      no: currentDataa.length + 1,
       kelas: kelasValue,
       jurusan: jurusanValue,
       tahunAjaran: tahunAjaranValue,
@@ -209,20 +205,16 @@ const handleEditImageChange = (e) => {
       idSiswa: idSiswaValue,
     };
   
-    const updatedTableData = [...tableData, newEntry];
-    const updatedTableDataKedua = [...tableDataTabelKedua, newEntry];
-  
-    // Simpan ke local storage menggunakan fungsi reusable
-    saveToLocalStorage("tableDataSiswa", updatedTableData);
-    saveToLocalStorage("tableDataSiswaKedua", updatedTableDataKedua);
-  
-    setTableData(updatedTableData);
-    setTableDataTabelKedua(updatedTableDataKedua);
-  
-    // Mengosongkan input setelah disimpan
-    resetFormFields();
-    setValidationErrors({});
-  };
+     // Update state currentDataa
+  setCurrentDataa(prevData => [...prevData, newEntry]);
+
+  // Simpan ke local storage jika perlu
+  saveToLocalStorage("tableDataSiswa", [...currentDataa, newEntry]);
+
+  // Mengosongkan input setelah disimpan
+  resetFormFields();
+  setValidationErrors({});
+};
   
   // Fungsi untuk mereset semua input form
   const resetFormFields = () => {
@@ -331,13 +323,13 @@ const handleFileChange = (event) => {
         noWali: row[12] || ''   // Kolom No Wali
       }))
       // Filter untuk baris yang memiliki setidaknya satu kolom yang tidak kosong
-      .filter(item => {
-        // Hanya masukkan baris yang memiliki data valid (tidak semuanya kosong)
-        return Object.values(item).some(value => typeof value === 'string' && value.trim() !== '');
-      });
+      .filter(item => Object.values(item).some(value => typeof value === 'string' && value.trim() !== ''));
+      // Menyimpan data ke state jika ada data yang valid
       // Menyimpan data ke state jika ada data yang valid
       if (formattedData.length > 0) {
         setCurrentDataa((prevData) => [...prevData, ...formattedData]);
+        // Simpan ke local storage jika perlu
+        saveToLocalStorage("tableDataSiswa", [...currentDataa, ...formattedData]);
       } else {
         console.log("Tidak ada data valid yang dimasukkan.");
       }
@@ -468,10 +460,9 @@ const handleSaveEdit = () => {
     );
   });
 
-   // State untuk pagination
-   const [currentPage, setCurrentPage] = useState(1);
-   const [itemsPerPage, setItemsPerPage] = useState(5);
-   const [rowsPerPage, setRowsPerPage] = useState(5); 
+  // State untuk pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(5);    
 
    // Fungsi untuk mendapatkan data yang ditampilkan pada halaman saat ini
   const getPaginatedData = () => {
@@ -480,12 +471,18 @@ const handleSaveEdit = () => {
     return currentDataa.slice(startIndex, endIndex);
   };
 
-   const handleRowsChange = (event) => {
-    setRowsPerPage(parseInt(event.target.value)); // Mengubah jumlah baris sesuai pilihan
-    setCurrentPage(1); // Reset halaman ke 1 saat jumlah baris berubah
+  // Fungsi untuk menangani klik tombol "Previous"
+  const handlePrevious = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
   };
-   const handlePreviousPage = () => {
-    setCurrentPage(prevPage => prevPage - 1);
+
+  // Fungsi untuk menangani klik tombol "Next"
+  const handleNext = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
   };
 
   // Fungsi untuk mengubah halaman
@@ -493,8 +490,9 @@ const handleSaveEdit = () => {
     setCurrentPage(page);
   };
   
-  // Hitung total halaman berdasarkan data yang difilter
-  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+  // Menghitung total halaman
+  const totalPages = Math.ceil(currentDataa.length / itemsPerPage);
+
 
   // Hitung data yang ditampilkan berdasarkan halaman saat ini
   // const startIndex = (currentPage - 1) * rowsPerPage;
@@ -546,7 +544,7 @@ const handleSaveEdit = () => {
     "TKJ 1",
     "TKJ 2",
     "TSM",
-    "Bd",
+    "BD",
     "BD 1",
     "BD 2",
     "DKV",
@@ -723,6 +721,7 @@ const handleSaveEdit = () => {
                 <input
                     type="file"
                     ref={fileInputRef}
+                    accept=".xlsx, .xls"
                     style={{ display: "none" }}
                     onChange={handleFileChange}
                 />
@@ -900,31 +899,30 @@ const handleSaveEdit = () => {
                 
 
               <div className="mt-4 flex justify-between items-center">
-        <div className="text-sm text-white">
-          Halaman {currentPage} dari {totalPages > 0 ? totalPages : 1}
-        </div>
-        <div className="flex m-4 space-x-2">
-          
-       <button
-            onClick={() => handlePageChange(currentPage - 1)} 
-            disabled={currentPage === 1}
-            // className={`px-2 py-1 border rounded ${
-            //   currentPage === 1 ? "bg-gray-300" : "bg-teal-400 hover:bg-teal-600 text-white"
-            // }`}
-          >
-            Previous
-          </button>
-          <button
-            onClick={() => handlePageChange(currentPage + 1)} 
-            disabled={currentPage === totalPages}
-            // className={`px-2 py-1 border rounded ${
-            //   !hasNextPage ? "bg-gray-300" : "bg-teal-400 hover:bg-teal-600 text-white"
-            // }`}
-          >
-            Next
-          </button>   
-        </div>
-      </div>
+                <div className="text-sm text-white">
+                  Halaman {currentPage} dari {totalPages > 0 ? totalPages : 1}
+                </div>
+                <div className="flex m-4 space-x-2">
+                  <button
+                    onClick={handlePrevious}
+                    disabled={currentPage === 1}
+                    className={`px-2 py-1 border rounded ${
+                      currentPage === 1 ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-teal-400 hover:bg-teal-600 text-white'
+                    }`}
+                  >
+                    Previous
+                  </button>
+                  <button
+                    onClick={handleNext}
+                    disabled={currentPage === totalPages}
+                    className={`px-2 py-1 border rounded ${
+                      currentPage === totalPages ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-teal-400 hover:bg-teal-600 text-white'
+                    }`}
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
           </div>

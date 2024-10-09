@@ -599,7 +599,7 @@ function DropdownMenu({ isOpen, onClick, onEdit, onDelete, onClose }) {
         )}
       </div>
     );
-  }
+}
   
 function FileUpload() {
     const [file, setFile] = useState(null);

@@ -1,960 +1,832 @@
 "use client";
 import { useState, useEffect, useRef } from 'react';
-import Navbar from './header';
-import Pw from "../app/administrator/add_user/pass";
+import Navbar from './header'
+const Page = () => {
+    // State untuk kontrol popup Sakit
+    const [isPopupVisibleSakit, setIsPopupVisibleSakit] = useState(false);
+    // State untuk menyimpan data sakit yang dipilih
+    const [selectedSakit, setSelectedSakit] = useState([]);
+  
+  // State untuk pengaturan item per halaman dan halaman saat ini
+  const [sakitItemsPerPage, setSakitItemsPerPage] = useState(5);
+  const [sakitCurrentPage, setSakitCurrentPage] = useState(1);
 
-const Page = () => { 
-  const [isResettable, setIsResettable] = useState(false);
-  // State untuk dropdown dan modals
-  const [openDropdown, setOpenDropdown] = useState(null);
-  const [confirmDelete, setConfirmDelete] = useState({
-    visible: false,
-    id: null,
+  // Data contoh untuk item Sakit
+  const sakitItems = [
+    { name: 'Aldi', kelas: '1A' },
+    { name: 'Budi', kelas: '1B' },
+    { name: 'Citra', kelas: '1C' },
+    { name: 'Diana', kelas: '1A' },
+    { name: 'Eko', kelas: '1B' },
+    { name: 'Fani', kelas: '1C' },
+    { name: 'Gita', kelas: '2A' },
+    { name: 'Hendra', kelas: '2B' },
+    { name: 'Ika', kelas: '2C' },
+    { name: 'Joko', kelas: '2A' },
+    { name: 'Kiki', kelas: '2B' },
+    { name: 'Lina', kelas: '2C' },
+    { name: 'Maya', kelas: '3A' },
+    { name: 'Nia', kelas: '3B' },
+    { name: 'Omar', kelas: '3C' },
+];
+ // Contoh data
+  const sakitTotalPages = Math.ceil(sakitItems.length / sakitItemsPerPage);
+
+  // Fungsi untuk mengubah item per halaman
+  const handleSakitItemsPerPageChange = (e) => {
+    setSakitItemsPerPage(parseInt(e.target.value));
+  };
+
+  // Mengambil item Sakit yang ditampilkan berdasarkan halaman saat ini
+  const currentItemsSakit = sakitItems.slice(
+    (sakitCurrentPage - 1) * sakitItemsPerPage,
+    sakitCurrentPage * sakitItemsPerPage
+  );
+
+  //Handle untuk ngirim sakit
+  const handleSakitSubmit = () => {
+    if (selectedSakit) {
+        setTableData((prevData) => {
+            // Cek apakah kelas dari siswa yang dipilih sudah ada di tableData
+            const updatedData = prevData.map((data) => {
+                if (data.kelas === selectedSakit.kelas) {
+                    // Jika kelas cocok, tambahkan 1 ke kolom "s"
+                    return {
+                        ...data,
+                        s: data.s ? data.s + 1 : 1, // Jika "s" belum ada, mulai dari 1
+                    };
+                }
+                return data; // Jika kelas tidak cocok, biarkan tetap sama
+            });
+
+            return updatedData;
+        });
+
+        // Reset pilihan setelah kirim
+        setSelectedSakit(null);
+        togglePopupSakit(); // Tutup popup setelah kirim
+    }
+  };
+  // Fungsi untuk menambahkan siswa yang dipilih ke selectedSakit
+  const handleSakitSelect = (item) => {
+    setSelectedSakit(item); // Menyimpan item yang dipilih
+    setSearchTermSakit(item.name);
+  };
+
+  //function untuk search
+  const [searchTermSakit, setSearchTermSakit] = useState('');
+  const handleSearchSakitChange = (event) => {
+    setSearchTermSakit(event.target.value);
+  };
+  const filteredSakitItems = sakitItems.filter(item => {
+    const nameMatch = item.name.toLowerCase().includes(searchTermSakit.toLowerCase());
+    const kelasMatch = item.kelas.toLowerCase().includes(searchTermSakit.toLowerCase());
+    return nameMatch || kelasMatch;
   });
 
-  // Handler untuk mereset filter
-  const handleResetClick = () => {
-    if (isResettable) {
-    setFilterperan('');
-    setFilterJurusan('');
-    setSearchTerm('');
+  // Fungsi untuk toggle popup Sakit
+  const togglePopupSakit = () => {
+    if (isPopupVisibleSakit) {
+      // Jika popup ditutup, reset kembali items per page, halaman, dan search ke default
+      setSakitItemsPerPage(5); // Kembali ke default 5 item per halaman
+      setSakitCurrentPage(1); // Kembali ke halaman 1
+      setSearchTermSakit(''); // Kosongkan search input
+    }
+    setIsPopupVisibleSakit(!isPopupVisibleSakit); // Tampilkan atau sembunyikan popup
+  };
+
+  // State untuk kontrol popup keterangan lain
+  const [isPopupVisibleKeteranganLain, setIsPopupVisibleKeteranganLain] = useState(false);
+  
+   // State untuk menyimpan data keterangan lain yang dipilih
+   const [selectedKeteranganLain, setSelectedKeteranganLain] = useState([]);
+
+  // State untuk pengaturan item per halaman dan halaman saat ini
+  const [keteranganItemsPerPage, setKeteranganItemsPerPage] = useState(5);
+  const [keteranganCurrentPage, setKeteranganCurrentPage] = useState(1);
+  
+  // Data contoh untuk item keterangan lain bisa diganti secara dinamis
+  const keteranganItems = [
+    { name: 'Aldi', kelas: '1A' },
+    { name: 'Budi', kelas: '1B' },
+    { name: 'Citra', kelas: '1C' },
+    { name: 'Diana', kelas: '1A' },
+    { name: 'Eko', kelas: '1B' },
+    { name: 'Fani', kelas: '1C' },
+    { name: 'Gita', kelas: '2A' },
+    { name: 'Hendra', kelas: '2B' },
+    { name: 'Ika', kelas: '2C' },
+    { name: 'Joko', kelas: '2A' },
+    { name: 'Kiki', kelas: '2B' },
+    { name: 'Lina', kelas: '2C' },
+    { name: 'Maya', kelas: '3A' },
+    { name: 'Nia', kelas: '3B' },
+    { name: 'Omar', kelas: '3C' },
+  ];
+
+  //Handle untuk ngirim keterangan lain
+  const handleKeteranganLainSubmit = () => {
+    if (selectedKeteranganLain) {
+        setTableData((prevData) => {
+            // Cek apakah kelas dari siswa yang dipilih sudah ada di tableData
+            const updatedData = prevData.map((data) => {
+                if (data.kelas === selectedKeteranganLain.kelas) {
+                    // Jika kelas cocok, tambahkan 1 ke kolom "s"
+                    return {
+                        ...data,
+                        i: data.i ? data.i + 1 : 1, // Jika "s" belum ada, mulai dari 1
+                    };
+                }
+                return data; // Jika kelas tidak cocok, biarkan tetap sama
+            });
+
+            return updatedData;
+        });
+
+        // Reset pilihan setelah kirim
+        setSelectedKeteranganLain(null);
+        togglePopupKeteranganLain(); // Tutup popup setelah kirim
+    }
+  };
+     // Fungsi untuk menambahkan siswa yang dipilih ke selectedKeteranganLain
+    const handleKeteranganLainSelect = (item) => {
+        setSelectedKeteranganLain(item); // Menyimpan item yang dipilih
+        setSearchTermKeterangan(item.name);
+    };
+
+  // Contoh data
+  const keteranganTotalPages = Math.ceil(keteranganItems.length / keteranganItemsPerPage);
+  //state input keterangan lain
+  const [inputketeranganLain, setInputKeteranganLain] = useState('');
+// Fungsi untuk toggle popup Keterangan Lain
+  const togglePopupKeteranganLain = () => {
+    if (isPopupVisibleKeteranganLain) {
+        // Jika popup ditutup, reset kembali items per page, halaman, dan search ke default
+        setKeteranganItemsPerPage(5); // Kembali ke default 5 item per halaman
+        setKeteranganCurrentPage(1); // Kembali ke halaman 1
+        setSearchTermKeterangan(''); // Kosongkan search input
+      }
+      setIsPopupVisibleKeteranganLain(!isPopupVisibleKeteranganLain); // Tampilkan atau sembunyikan popup
+  };
+
+  // Fungsi untuk mengubah item per halaman
+  const handleKeteranganItemsPerPageChange = (event) => {
+    setKeteranganItemsPerPage(parseInt(event.target.value, 10));
+    setKeteranganCurrentPage(1); // Reset ke halaman 1 saat item per page berubah
+  };
+
+  //function untuk search
+  const [searchTermKeterangan, setSearchTermKeterangan] = useState('');
+  const handleKeteranganSearchChange = (event) => {
+    setSearchTermKeterangan(event.target.value);
+  };
+  const filteredKeteranganItems = keteranganItems.filter(item => {
+    const nameMatch = item.name.toLowerCase().includes(searchTermKeterangan.toLowerCase());
+    const kelasMatch = item.kelas.toLowerCase().includes(searchTermKeterangan.toLowerCase());
+    return nameMatch || kelasMatch;
+  });
+  
+  //function untuk pulang
+  const [isOpen, setIsOpen] = useState(false);
+  // State untuk kontrol popup pulang
+  const [isPopupVisiblePulang, setIsPopupVisiblePulang] = useState(false);
+  // State untuk menyimpan data pulang yang dipilih
+  const [selectedPulang, setSelectedPulang] = useState([]);
+  // State untuk pengaturan item per halaman dan halaman saat ini
+  const [pulangItemsPerPage, setPulangItemsPerPage] = useState(5);
+  const [pulangCurrentPage, setPulangCurrentPage] = useState(1);
+  // Data contoh untuk item pulang bisa diganti secara dinamis
+  const pulangItems = [
+    { name: 'Aldi', kelas: '1A' },
+    { name: 'Budi', kelas: '1B' },
+    { name: 'Citra', kelas: '1C' },
+    { name: 'Diana', kelas: '1A' },
+    { name: 'Eko', kelas: '1B' },
+    { name: 'Fani', kelas: '1C' },
+    { name: 'Gita', kelas: '2A' },
+    { name: 'Hendra', kelas: '2B' },
+    { name: 'Ika', kelas: '2C' },
+    { name: 'Joko', kelas: '2A' },
+    { name: 'Kiki', kelas: '2B' },
+    { name: 'Lina', kelas: '2C' },
+    { name: 'Maya', kelas: '3A' },
+    { name: 'Nia', kelas: '3B' },
+    { name: 'Omar', kelas: '3C' },
+  ];
+  
+  //Handle untuk ngirim pulang
+  const handlePulangSubmit = () => {
+    if (selectedPulang) {
+        setTableData((prevData) => {
+            // Cek apakah kelas dari siswa yang dipilih sudah ada di tableData
+            const updatedData = prevData.map((data) => {
+                if (data.kelas === selectedPulang.kelas) {
+                    // Jika kelas cocok, tambahkan 1 ke kolom "s"
+                    return {
+                        ...data,
+                        i: data.i ? data.i + 1 : 1, // Jika "s" belum ada, mulai dari 1
+                    };
+                }
+                return data; // Jika kelas tidak cocok, biarkan tetap sama
+            });
+
+            return updatedData;
+        });
+
+        // Reset pilihan setelah kirim
+        setSelectedPulang(null);
+        togglePopupPulang(); // Tutup popup setelah kirim
     }
   };
 
-  //baru##############################
-  const [showButtons, setShowButtons] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
-  const [showTable, setShowTable] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1); // Halaman saat ini
-  const [rowsPerPage, setRowsPerPage] = useState(5); // Jumlah data per halaman
-  const [currentData, setCurrentData] = useState([
-    { id: 1, barcode: '123', hadir: 0 },
-    { id: 2, barcode: '456', hadir: 0 },]); // Data keseluruhan
-  const [searchTerm, setSearchTerm] = useState(''); // Kata kunci pencarian
-  // Ambil data dari local storage saat pertama kali komponen dimuat
-  const [dataAbsensi, setDataAbsensi] = useState<any[]>([]);
-  // Data untuk tabel kedua (data yang sudah dikirim)
-  const [dataTerkirim, setDataTerkirim] = useState<any[]>([]);
-  //khusus untuk input barcode
+  // Fungsi untuk menambahkan siswa yang dipilih ke selectedPulang
+  const handlePulangSelect = (item) => {
+    setSelectedPulang(item); // Menyimpan item yang dipilih
+    setSearchTermPulang(item.name);
+  };
+
+  // Contoh data
+  const pulangTotalPages = Math.ceil(pulangItems.length / pulangItemsPerPage);
   
+  //state input keterangan lain
+  const [inputPulang, setInputPulang] = useState('');
+
+  // Handler untuk membuka/tutup dropdown
+  const toggleDropdown = () => {
+    setIsOpen(!isOpen);
+  };
+  // Fungsi untuk toggle popup pulang
+  const togglePopupPulang = () => {
+    if (isPopupVisiblePulang) {
+        // Jika popup ditutup, reset kembali items per page, halaman, dan search ke default
+        setPulangItemsPerPage(5); // Kembali ke default 5 item per halaman
+        setPulangCurrentPage(1); // Kembali ke halaman 1
+        setSearchTermPulang(''); // Kosongkan search input
+      }
+      setIsPopupVisiblePulang(!isPopupVisiblePulang); // Tampilkan atau sembunyikan popup
+  };
+
+  // Fungsi untuk mengubah item per halaman
+  const handlePulangItemsPerPageChange = (event) => {
+    setPulangItemsPerPage(parseInt(event.target.value, 10));
+    setPulangCurrentPage(1); // Reset ke halaman 1 saat item per page berubah
+  };
+
+  //function untuk search
+  const [searchTermPulang, setSearchTermPulang] = useState('');
+  const handlePulangSearchChange = (event) => {
+    setSearchTermPulang(event.target.value);
+  };
+  const filteredPulangItems = pulangItems.filter(item => {
+    const nameMatch = item.name.toLowerCase().includes(searchTermPulang.toLowerCase());
+    const kelasMatch = item.kelas.toLowerCase().includes(searchTermPulang.toLowerCase());
+    return nameMatch || kelasMatch;
+  });
+
+  // data untuk tabel absensi 
+  const [tableData, setTableData] = useState([
+    { no: 1, kelas: '1A', jumlah: 30, h: '', s: '', i: '', a: '', t: '', walas: 'Mr. A' },
+    { no: 2, kelas: '1B', jumlah: 28, h: '', s: '', i: '', a: '', t: '', walas: 'Ms. B' },
+  ]);
+
+  //variabel  dan function untuk barcode 
   const [barcode, setBarcode] = useState('');
   const [timer, setTimer] = useState(null);
-
-  useEffect(() => {
-    const storedData = JSON.parse(localStorage.getItem('dataAbsensi')) || [];
-    setDataAbsensi(storedData);
-  }, []);
-  // Fungsi untuk menangani perubahan input barcode
-  
-  // Fungsi untuk menyimpan data ke localStorage
-  const saveDataToLocalStorage = (key, data) => {
-    localStorage.setItem(key, JSON.stringify(data));
-  };
-  // Fungsi untuk memuat data dari localStorage
-  const loadDataFromLocalStorage = (key) => {
-    const savedData = localStorage.getItem(key);
-    return savedData ? JSON.parse(savedData) : [];
-  };
-  const dropdownRef = useRef(null); // Referensi untuk dropdown
-  
-  const [editItem, setEditItem] = useState(null);
-  const [newData, setNewData] = useState({
-    nama: '',
-    keterangan: '',
-    kelas: '',
-    jumlah: '',
-    hadir: '',
-    sakit: '',
-    keteranganLain: '',
-    alpha: '',
-    terlambat: '',
-    walas: ''
-  });
-
-  useEffect(() => {
-    const loadedDataAbsensi = loadDataFromLocalStorage('dataAbsensi');
-    const loadedCurrentData = loadDataFromLocalStorage('currentData');
-    
-    setDataAbsensi(loadedDataAbsensi);
-    setCurrentData(loadedCurrentData);
-  }, []);
-
-  // Fungsi untuk cek apakah hari sudah berganti atau akhir bulan
-const isNewDay = (lastSaveDate) => {
-  const today = new Date().toISOString().slice(0, 10); // Format YYYY-MM-DD
-  return today !== lastSaveDate; // Jika tanggal hari ini tidak sama dengan tanggal penyimpanan terakhir
-};
-
-const isEndOfMonth = () => {
-  const today = new Date();
-  const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-  return today.getDate() === lastDayOfMonth.getDate();
-};
-
-const savePreviousData = (currentData) => {
-  const today = new Date().toISOString().slice(0, 10); // Format YYYY-MM-DD
-  saveDataToLocalStorage(`previousData_${today}`, currentData);
-};
-
-const resetData = (currentData) => {
-  savePreviousData(currentData); // Simpan data sebelumnya
-  setCurrentData([]); // Reset data saat ini
-  saveDataToLocalStorage('currentData', []); // Simpan data kosong ke localStorage
-};
-
-useEffect(() => {
-  const today = new Date().toISOString().slice(0, 10); // Format YYYY-MM-DD
-  const lastSaveDate = loadDataFromLocalStorage('lastSaveDate'); // Tanggal terakhir data disimpan
-  
-  if (isNewDay(lastSaveDate) || isEndOfMonth()) {
-    // Jika hari baru atau akhir bulan, reset data
-    const currentData = loadDataFromLocalStorage('currentData'); // Ambil data saat ini sebelum reset
-    resetData(currentData); // Reset dan simpan data
-    saveDataToLocalStorage('lastSaveDate', today); // Simpan tanggal terakhir
-  } else {
-    // Jika tidak perlu reset, muat data dari localStorage
-    setCurrentData(loadDataFromLocalStorage('currentData'));
-  }
-}, []);
-
-  
-
-  const handleIzinClick = () => {
-    setShowButtons(!showButtons);
-  };
-
-  const toggleDropdown = () => {
-     setIsOpen(!isOpen);
-  };
-
-  const handleButtonClick = () => {
-    setShowTable(!showTable); // Toggle the table visibility
-  };
-
-  // Fungsi untuk menambah data baru ke tabel absensi
-  const handleClick = (status) => {
-    const newEntry = {
-      id: dataAbsensi.length + 1, // Menambah ID berdasarkan panjang data
-      nama: 'John Doe', // Nama contoh, bisa diganti dengan input dinamis
-      kelas: 'XII IPA 1', // Kelas contoh, bisa diganti dengan input dinamis
-      keterangan: status,
-      jumlah: '',// jumlah contoh, bisa diganti dengan input dinamis
-      walas: 'pak lukim', // walas contoh, bisa diganti dengan input dinamis
-    };
-
-    const updatedData = [...dataAbsensi, newEntry];
-    setDataAbsensi(updatedData);
-    localStorage.setItem('dataAbsensi', JSON.stringify(updatedData));
-  };
-
-  // Memuat data dari localStorage saat komponen pertama kali di-mount
-  useEffect(() => {
-    const savedDataAbsensi = loadDataFromLocalStorage('dataAbsensi');
-    const savedCurrentData = loadDataFromLocalStorage('currentData');
-    setDataAbsensi(savedDataAbsensi);
-    setCurrentData(savedCurrentData);
-  }, []);
-
-  // Fungsi yang dijalankan saat tombol "Kirim" diklik
-  const handleKirim = (item) => {
-    // Tentukan nilai default untuk semua kolom jika item belum ada di currentData
-    const updatedItem = {
-      sakit: 0,
-      keteranganLain: 0,
-      hadir: 0,
-      alpha: 0,
-      terlambat: 0,
-    };
-  
-    // Tentukan nilai berdasarkan keterangan
-    if (item.keterangan === 'sakit') {
-      updatedItem.sakit = 1;
-    } else if (item.keterangan === 'keteranganLain') {
-      updatedItem.keteranganLain = 1;
-    } else if (item.keterangan === 'alpha') {
-      updatedItem.alpha = 1;
-    } else if (item.keterangan === 'terlambat') {
-      updatedItem.terlambat = 1;
-    }
-  
-    // Perbarui atau tambahkan item di currentData
-    const newCurrentData = currentData.map((data) => {
-      if (data.id === item.id) {
-        const totalJumlah = item.jumlah || data.jumlah || 0; // Pastikan jumlah tidak undefined
-        const sakit = data.sakit + updatedItem.sakit;
-        const keteranganLain = data.keteranganLain + updatedItem.keteranganLain;
-        const alpha = data.alpha + updatedItem.alpha;
-        const hadir = totalJumlah - sakit - keteranganLain - alpha;
-  
-        return {
-          ...data,
-          sakit: sakit,
-          keteranganLain: keteranganLain,
-          hadir: hadir >= 0 ? hadir : 0, // Pastikan hadir tidak negatif
-          alpha: alpha,
-          terlambat: data.terlambat + updatedItem.terlambat,
-        };
-      }
-      return data;
-    });
-  
-    // Jika item tidak ada di currentData, tambahkan item baru
-    if (!currentData.some(data => data.id === item.id)) {
-      const totalJumlah = item.jumlah || 0;
-      const sakit = updatedItem.sakit;
-      const keteranganLain = updatedItem.keteranganLain;
-      const alpha = updatedItem.alpha;
-      const hadir = totalJumlah - sakit - keteranganLain - alpha;
-  
-      newCurrentData.push({
-        ...item,
-        sakit: sakit,
-        keteranganLain: keteranganLain,
-        hadir: hadir >= 0 ? hadir : 0, // Pastikan hadir tidak negatif
-        alpha: alpha,
-        terlambat: updatedItem.terlambat,
-      });
-    }
-  
-    // Hapus item dari tabel pertama
-    const newDataAbsensi = dataAbsensi.filter((absensi) => absensi.id !== item.id);
-    setDataAbsensi(newDataAbsensi);
-  
-    // Simpan perubahan ke localStorage
-    setCurrentData(newCurrentData);
-    saveDataToLocalStorage('dataAbsensi', newDataAbsensi);
-    saveDataToLocalStorage('currentData', newCurrentData);
-  
-    // Tutup dropdown
-    setOpenDropdown(null);
-  };
   const handleBarcodeChange = (e) => {
-    setBarcode(e.target.value);
-  
-    // Jika ada timer sebelumnya, clear dahulu
-    if (timer) {
-      clearTimeout(timer);
-    }
-  
-    // Timer untuk menyimpan barcode ke kolom "H" setelah 2 detik
-    setTimer(setTimeout(saveBarcodeToH, 1000));
-  };
+        setBarcode(e.target.value);
 
-  // Fungsi untuk menyimpan hasil scan barcode ke kolom H
-  const saveBarcodeToH = () => {
-    console.log('Barcode yang di-scan:', barcode);
-    
-    const existingItem = currentData.find(item => item.barcode === barcode);
-    
-    if (existingItem) {
-      const updatedData = currentData.map((item) => {
-        if (item.barcode === barcode) {
-          const hadirCount = (item.hadir || 0) + 1;
-          return { ...item, hadir: hadirCount };
+        // Clear timer sebelumnya jika ada
+        if (timer) {
+            clearTimeout(timer);
         }
-        return item;
-      });
-  
-      console.log('Data setelah update:', updatedData);
-      setCurrentData(updatedData);
-    } else {
-      // Jika tidak ada, tambahkan entry baru
-      const newEntry = {
-        id: currentData.length + 1, // Atau gunakan logika lain untuk ID
-        barcode: barcode,
-        hadir: 1,
-        // Properti lain yang diperlukan
-      };
-  
-      const updatedData = [...currentData, newEntry];
-      console.log('Menambahkan entry baru:', newEntry);
-      setCurrentData(updatedData);
-    }
-  
-    setBarcode('');
-  };
 
-  //untuk hapus
-  const handleDeleteClick = (id) => {
-    console.log("ID yang akan dihapus: ", id); // Debugging
-    setConfirmDelete({ visible: true, id });
-    setOpenDropdown(null);
-  };
-  
-  const handleConfirmDelete = () => {
-    console.log("Confirm Delete ID:", confirmDelete.id);
-
-    // Filter currentData berdasarkan ID yang tidak sesuai dengan confirmDelete.id
-    const filteredCurrentData = currentData.filter((item) => item.id !== confirmDelete.id);
-    console.log("Filtered Current Data:", filteredCurrentData);
-
-    // Update ID pada currentData agar tetap berurutan setelah penghapusan
-    const updatedCurrentData = filteredCurrentData.map((item, index) => ({
-      ...item,
-      id: index + 1,
-    }));
-
-    // Simpan perubahan ke state dan localStorage
-    setCurrentData(updatedCurrentData);
-    saveDataToLocalStorage("currentData", updatedCurrentData);
-    setConfirmDelete("")
-  };
-
-  const handleCancelDelete = () => {
-    setConfirmDelete({ visible: false, id: null });
-  };
-
-  const handleDropdownClick = (id) => {
-    setOpenDropdown((prev) => (prev === id ? null : id)); // Jika dropdown yang sama diklik, tutup
-  };
-  //untuk edit
-  const handleEditClick = (id) => {
-    console.log("Edit Clicked ID:", id); // Pastikan ID diklik
-    const itemToEdit = currentData.find((item) => item.id === id);
-    console.log("Item to Edit:", itemToEdit); // Pastikan item ditemukan
-    
-    if (itemToEdit) {
-      setEditItem(itemToEdit); // Set item yang akan diedit
-      setNewData({
-        nama: itemToEdit.nama,
-        keterangan: itemToEdit.keterangan,
-        kelas: itemToEdit.kelas, 
-        jumlah: itemToEdit.jumlah, 
-        hadir: itemToEdit.hadir, 
-        sakit: itemToEdit.sakit, 
-        keteranganLain: itemToEdit.keteranganLain, 
-        alpha: itemToEdit.alpha, 
-        terlambat: itemToEdit.terlambat,
-        walas: itemToEdit.walas
-      });
-      console.log("Edit Item Set:", itemToEdit); // Pastikan item sudah di-set
-    } else {
-      console.error("Item tidak ditemukan untuk ID:", id); // Debug jika tidak ditemukan
-    }
-  };
-
-  const handleEdit = (id, newData) => {
-    console.log("Data yang diedit untuk ID", id, ":", newData); // Debug data yang akan di-update
-  
-    // Update currentData dengan data baru berdasarkan ID
-    const updatedCurrentData = currentData.map((item) =>
-      item.id === id ? { ...item, ...newData } : item
-    );
-    
-    setCurrentData(updatedCurrentData); // Update state dengan data terbaru
-    console.log("Current Data setelah update:", updatedCurrentData); // Debug data setelah update
-  
-    saveDataToLocalStorage("currentData", updatedCurrentData); // Simpan ke localStorage
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setNewData((prev) => ({ ...prev, [name]: value }));
-  };
-  
-  const handleEditSubmit = () => {
-    if (editItem) {
-      // Hitung nilai hadir berdasarkan total dikurangi sakit, keterangan lain, dan alpha
-      const totalJumlah = newData.jumlah || 0;
-      const sakit = newData.sakit || 0;
-      const keteranganLain = newData.keteranganLain || 0;
-      const alpha = newData.alpha || 0;
-      const hadir = totalJumlah - sakit - keteranganLain - alpha;
-  
-      // Update newData dengan nilai hadir yang baru dihitung
-      const updatedData = {
-        ...newData,
-        hadir: hadir,
-      };
-  
-      // Panggil fungsi handleEdit untuk memperbarui data
-      handleEdit(editItem.id, updatedData);
-  
-      // Debug data yang telah diupdate
-      console.log("Data yang diedit:", updatedData); // Debug data yang akan di-update
-      console.log("Data Terkirim setelah diedit:", dataTerkirim); // Debug data setelah update
-  
-      // Reset form
-      setEditItem(null); // Tutup form
-      setNewData({
-        nama: '',
-        keterangan: '',
-        kelas: '',
-        jumlah: 0,
-        hadir: 0,
-        sakit: 0,
-        keteranganLain: 0,
-        alpha: 0,
-        terlambat: 0,
-        walas: ''
-      });
-    }
-  };
-  
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setOpenDropdown(null); // Tutup dropdown jika klik di luar
-      }
+        // Timer untuk menyimpan barcode ke kolom "H" setelah 1 detik
+        setTimer(setTimeout(saveBarcodeToH, 1000));
     };
 
-    document.addEventListener('click', handleClickOutside);
+    const saveBarcodeToH = () => {
+        const existingItem = tableData.find(item => item.barcode === barcode);
 
-    return () => {
-      document.removeEventListener('click', handleClickOutside);
+        if (existingItem) {
+            const updatedData = tableData.map((item) => {
+                if (item.barcode === barcode) {
+                    const hadirCount = (item.h || 0) + 1;
+                    return { ...item, h: hadirCount };
+                }
+                return item;
+            });
+
+            setTableData(updatedData);
+        } else {
+            const newEntry = {
+                no: tableData.length + 1,
+                kelas: 'Unknown', // Atur kelas jika ada data yang sesuai
+                jumlah: 1,
+                barcode: barcode,
+                h: 1,
+                s: 0,
+                i: 0,
+                a: 0,
+                t: 0,
+                walas: 'Unknown'
+            };
+
+            setTableData([...tableData, newEntry]);
+        }
+
+        setBarcode(''); // Reset input barcode setelah disimpan
     };
-  }, []);
-
-  useEffect(() => {
-    // Mengambil data dari localStorage saat komponen pertama kali di-render
-    const storedData = localStorage.getItem('dataKey'); // 'dataKey' adalah kunci penyimpanan di localStorage
-    if (storedData) {
-      setCurrentData(JSON.parse(storedData)); // Parsing data dari localStorage ke array JavaScript
-    }
-  }, []);
-
-  const handleRowsChange = (event) => {
-    setRowsPerPage(parseInt(event.target.value)); // Mengubah jumlah baris sesuai pilihan
-    setCurrentPage(1); // Reset halaman ke 1 saat jumlah baris berubah
-  };
-
-  const handleNextPage = () => {
-    setCurrentPage(prevPage => prevPage + 1);
-  };
-
-  const handlePreviousPage = () => {
-    setCurrentPage(prevPage => prevPage - 1);
-  };
   
-  const handleSearchChange = (event) => {
-    setSearchTerm(event.target.value.toLowerCase()); // Mengubah kata kunci pencarian
-    setCurrentPage(1); // Reset halaman ke 1 saat kata kunci berubah
-  };
+    //state untuk dropdown aksi
+    const [openDropdown, setOpenDropdown] = useState(null);
+    const handleDropdownClick = (id) => {
+        setOpenDropdown((prev) => (prev === id ? null : id));
+      };
+    //state edit  
 
-  // Filter data berdasarkan kata kunci pencarian
-  const filteredData = currentData.filter(item => {
-    console.log('Search Term:', searchTerm); // Memeriksa nilai search term
-    console.log('Item:', item); // Memeriksa setiap item data
-    return (
-      (item.kelas && item.kelas.toLowerCase().includes(searchTerm)) ||
-      (item.walas && item.walas.toLowerCase().includes(searchTerm))
-    );
-  });
-
-  // Hitung total halaman berdasarkan data yang difilter
-  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
-
-  // Hitung data yang ditampilkan berdasarkan halaman saat ini
-  const startIndex = (currentPage - 1) * rowsPerPage;
-  const endIndex = startIndex + rowsPerPage;
-  const paginatedData = currentData.slice(startIndex, endIndex);
-
-  // Mengecek apakah ada halaman selanjutnya
-  const hasNextPage = currentPage * rowsPerPage < currentData.length;
-  
   return (
     <>
     <div>
-      <Navbar />
+        <Navbar />
     </div>
     <div className="flex flex-col lg:flex-row">
-          {/* Column 1: Input */}
-          <div className="w-full lg:w-1/3 p-4 lg:p-6">
-            <div className="bg-white rounded-lg shadow-md p-4 lg:p-6 border">
+        {/* Column 1: Input */}
+      <div className="w-full lg:w-1/3 p-4 lg:p-6">
+        <div className="bg-white rounded-lg shadow-md p-4 lg:p-6 border">
             <div className="flex flex-col items-center justify-center">
                 <h1 className="font-bold text-xl text-center">Tombol untuk siswa</h1>
-                <button
-                  onClick={handleIzinClick}
-                  className="bg-blue-500 text-white w-32 px-4 py-2 mt-4 rounded"
-                >
-                  Izin
-                </button>
-                {showButtons && (
-                  <div className="mt-4">
-                    <button className="bg-green-500 w-44 text-white px-4 py-2 mr-2 rounded"
-                    onClick={() => handleClick('sakit')}>
-                      Sakit
-                    </button>
-                    <button className="bg-orange-500 text-white w-44  px-4 py-2 rounded"
-                    onClick={() => handleClick('keteranganLain')}>
-                      Keterangan Lain
-                    </button>
-                  </div>
-                )} 
-            </div>
-              <div className="relative inline-block text-left">
-                  <div
-                    onClick={toggleDropdown}
-                    className="text-white px-4 py-2 rounded flex items-center"
-                  >
-                    <span className="flex items-end text-gray-200">
-                      {isOpen ? "<" : ">"}
-                      {isOpen && (
-                        <div className="absolute left-8 border rounded shadow-lg -mb-2">
-                          <button className="block px-4 py-2 text-gray-800 hover:bg-gray-200 text-left"
-                          onClick={handleButtonClick}>
-                            Pulang
-                          </button>
-                        </div>
-                      )}
-                    </span>
-                  </div>
+                <div>
+                    <div className="flex space-x-4">
+                        <button
+                            className="bg-blue-500 w-44 text-white px-4 py-2 mr-2 rounded"
+                            onClick={togglePopupSakit}
+                        >
+                            Sakit
+                        </button>
+                        {isPopupVisibleSakit && (
+                            <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
+                                <div className="bg-white p-3 rounded shadow-md">
+                                    <div className="bg-slate-600 p-2 rounded-lg">
+                                        <div className="flex items-center space-x-4">
+                                            <select
+                                                className="border border-gray-300 rounded px-2 py-1"
+                                                value={sakitItemsPerPage}
+                                                onChange={handleSakitItemsPerPageChange}
+                                            >
+                                                <option value="5">5</option>
+                                                <option value="10">10</option>
+                                                <option value="12">12</option>
+                                            </select>
+                                            <input
+                                                type="text"
+                                                placeholder="Search..."
+                                                className="border border-gray-300 rounded px-2 py-1"
+                                                value={searchTermSakit}
+                                                onChange={handleSearchSakitChange} // Tambahkan handler untuk pencarian
+                                            />
+                                        </div>
+
+                                        <div className="mt-4">
+                                            <table className="min-w-full  border-gray-300">
+                                                <thead>
+                                                    <tr className="bg-slate-500 text-left">
+                                                        <th className=" rounded-l-lg text-white px-4 py-2">Nama</th>
+                                                        <th className=" rounded-r-lg text-white px-4 py-2">Kelas</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {filteredSakitItems
+                                                        .slice((sakitCurrentPage - 1) * sakitItemsPerPage, sakitCurrentPage * sakitItemsPerPage)
+                                                        .map((item, index) => (
+                                                            <tr
+                                                                key={index}
+                                                                className="border-b hover:bg-slate-400 hover:rounded cursor-pointer "
+                                                                onClick={() => handleSakitSelect(item)} // Pilih item yang sakit
+                                                            >
+                                                                <td className=" text-white   px-4 py-2">{item.name}</td>
+                                                                <td className=" text-white  px-4 py-2">{item.kelas}</td>
+                                                            </tr>
+                                                        ))}
+                                                </tbody>
+
+                                            </table>
+                                        </div>
+
+                                        <div className="flex justify-between mt-4">
+                                            <button
+                                                className={`px-2 py-1 rounded ${sakitTotalPages === 0 || sakitCurrentPage === 1 ? 'bg-gray-300 cursor-not-allowed' : 'bg-teal-400 hover:bg-teal-500 text-white'}`}
+                                                disabled={sakitTotalPages === 0 || sakitCurrentPage === 1}
+                                                onClick={() => setSakitCurrentPage(sakitCurrentPage - 1)}
+                                            >
+                                                Previous
+                                            </button>
+                                            <span className='text-white'>
+                                                Page {sakitItems.length > 0 ? sakitCurrentPage : 0} of {sakitTotalPages}
+                                            </span>
+                                            <button
+                                                className={`px-2 py-1 rounded ${sakitTotalPages === 0 || sakitCurrentPage === sakitTotalPages ? 'bg-gray-300 cursor-not-allowed' : 'bg-teal-400 hover:bg-teal-500 text-white'}`}
+                                                disabled={sakitTotalPages === 0 || sakitCurrentPage === sakitTotalPages}
+                                                onClick={() => setSakitCurrentPage(sakitCurrentPage + 1)}
+                                            >
+                                                Next
+                                            </button>
+                                        </div>
+
+                                        <div className="flex justify-between">
+                                            <button
+                                                className="mt-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                                                onClick={togglePopupSakit}
+                                            >
+                                                Close
+                                            </button>
+                                            <button 
+                                                className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" 
+                                                onClick={handleSakitSubmit}
+                                            >
+                                                Kirim
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                        <button 
+                            className="bg-orange-500 w-44 text-white px-4 py-2 mr-2 rounded"
+                            onClick={togglePopupKeteranganLain} // Panggil fungsi untuk toggle pop-up
+                        >
+                            Keterangan Lain
+                        </button>
+                        {isPopupVisibleKeteranganLain && (
+                            <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
+                                <div className="bg-white p-3 rounded shadow-md">
+                                    <div className="bg-slate-600 p-2 rounded-lg">
+                                        <div className="flex items-center space-x-4">
+                                            <select
+                                                className="border border-gray-300 rounded px-2 py-1"
+                                                value={keteranganItemsPerPage} // Ganti dengan state yang sesuai
+                                                onChange={handleKeteranganItemsPerPageChange} // Ganti dengan handler yang sesuai
+                                            >
+                                                <option value="5">5</option>
+                                                <option value="10">10</option>
+                                                <option value="12">12</option>
+                                            </select>
+                                            <input
+                                                type="text"
+                                                placeholder="Search..."
+                                                className="border border-gray-300 rounded px-2 py-1"
+                                                onChange={handleKeteranganSearchChange} // Handler pencarian untuk keterangan
+                                            />
+                                        </div>
+
+                                        {/* Input untuk mengisi keterangan lain */}
+                                        <div className="mt-4">
+                                            <input
+                                                type="text"
+                                                placeholder="Alasannya..."
+                                                className="border border-gray-300 rounded px-2 py-1 w-full"
+                                                value={inputketeranganLain} // State untuk menyimpan nilai input keterangan lain
+                                                onChange={(e) => setInputKeteranganLain(e.target.value)} // Handler untuk mengubah state keterangan lain
+                                            />
+                                        </div>
+
+                                        <div className="mt-4">
+                                            <table className="min-w-full">
+                                                <thead>
+                                                    <tr 
+                                                    className="bg-slate-500"
+                                                    onClick={() => handleKeteranganLainSelect(item)}
+                                                    >
+                                                        <th className="text-white text-left rounded-l-lg px-4 py-2">Nama</th>
+                                                        <th className="text-white text-left rounded-r-lg px-4 py-2">Kelas</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {filteredKeteranganItems // Ganti dengan daftar yang sesuai
+                                                        .slice((keteranganCurrentPage - 1) * keteranganItemsPerPage, keteranganCurrentPage * keteranganItemsPerPage)
+                                                        .map((item, index) => (
+                                                            <tr 
+                                                                key={index}
+                                                                className='border-b hover:bg-slate-300 cursor-pointer" // Tambahkan hover dan cursor'
+                                                                onClick={() => handleKeteranganLainSelect(item)} // Pilih item yang ket lain
+
+                                                            >
+                                                                <td className="border-b text-white px-4 py-2">{item.name}</td>
+                                                                <td className="border-b text-white px-4 py-2">{item.kelas}</td>
+                                                            </tr>
+                                                        ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        <div className="flex justify-between mt-4">
+                                            <button
+                                                className={`px-2 py-1 rounded ${keteranganTotalPages === 0 || keteranganCurrentPage === 1 ? 'bg-gray-300 cursor-not-allowed' : 'bg-teal-400 hover:bg-teal-500 text-white'}`}
+                                                disabled={keteranganTotalPages === 0 || keteranganCurrentPage === 1}
+                                                onClick={() => setKeteranganCurrentPage(keteranganCurrentPage - 1)}
+                                            >
+                                                Previous
+                                            </button>
+                                            <span className='text-white'>
+                                                Page {filteredKeteranganItems.length > 0 ? keteranganCurrentPage : 0} of {keteranganTotalPages}
+                                            </span>
+                                            <button
+                                                className={`px-2 py-1 rounded ${keteranganTotalPages === 0 || keteranganCurrentPage === keteranganTotalPages ? 'bg-gray-300 cursor-not-allowed' : 'bg-teal-400 hover:bg-teal-500 text-white'}`}
+                                                disabled={keteranganTotalPages === 0 || keteranganCurrentPage === keteranganTotalPages}
+                                                onClick={() => setKeteranganCurrentPage(keteranganCurrentPage + 1)}
+                                            >
+                                                Next
+                                            </button>
+                                        </div>
+
+                                        <div className="flex justify-between">
+                                            <button
+                                                className="mt-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                                                onClick={togglePopupKeteranganLain} // Fungsi untuk menutup pop-up
+                                            >
+                                                Close
+                                            </button>
+                                            <button
+                                                className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                                                onClick={handleKeteranganLainSubmit} // Fungsi untuk kirim jika diperlukan
+                                            >
+                                                Kirim
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                    </div>
                 </div>
-            </div>
-            {showTable && (
-              <div>
-                <h1>Absen untuk yang pulang dulu</h1>
-                <table className="min-w-full bg-white mt-4">
-                  <thead>
-                    <tr>
-                      <th className="px-3 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">NO</th>
-                      <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">NAMA</th>
-                      <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">KELAS</th>
-                      <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">KETERANGAN</th>
-                      <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {dataAbsensi.map((item, index) => (
-                      <tr key={index}>
-                        <td className="p-3 sm:p-3 ml-5 text-black border-b">{index + 1}</td> {/* Nomor urut yang dinamis */}
-                        <td className="px-6 py-4 border-b border-gray-300 text-sm">{item.nama}</td>
-                        <td className="px-6 py-4 border-b border-gray-300 text-sm">{item.kelas}</td>
-                        <td className="px-6 py-4 border-b border-gray-300 text-sm">{item.keterangan}</td>
-                        <td className="px-6 py-4 border-b border-gray-300 text-sm">
-                          <button
-                            className="bg-blue-500 text-white px-2 py-1 rounded"
-                            onClick={() => handleKirim(item)}
-                          >
-                            Kirim
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-          </div>
-          {/* Column 2: Table */}
-          <div className="w-full  lg:w-2/3 p-4 lg:p-6">
-            <div className="bg-white rounded-lg shadow-md p-4 lg:p-6 border">
-             <div className="bg-slate-600 px-2 rounded-xl">
-              <div className="flex flex-col lg:flex-row justify-between mb-4">
-                <div className="p-2">
-                  <h2 className="text-sm pt-3 sm:text-2xl text-white font-bold">
-                    Tabel
-                  </h2>
-                </div>          
-              </div>
-             {/* Filter Dropdown */}
-            <div className="grid grid-cols-1 sm:grid-cols-6 gap-4 mt-4">
-            <div className="lg:flex-row justify-between items-center">
-              <div className=" items-center lg:mb-0 space-x-2 mb-3 lg:order-1">
-                    <select
-                      onChange={handleRowsChange}
-                      value={rowsPerPage}
-                      className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base"
-                    >
-                      <option value={5}>5</option>
-                      <option value={10}>10</option>
-                      <option value={20}>20</option>
-                    </select>
-              </div>
-            </div>
-              {/* <div className=" items-center lg:mb-0 space-x-2 lg:order-1">
-                    <input
-                      type="text"
-                      placeholder="Cari..."
-                      value={searchTerm}
-                      onChange={handleSearchChange}
-                      className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base"
-                    />
-              </div>
-                  <div className=" items-center lg:mb-0 space-x-2 lg:order-1">
-                  <button
-                    onClick={handleResetClick}
-                    disabled={!isResettable}
-                    className={`w-full p-2 rounded text-sm sm:text-base transition z-20 ${
-                      isResettable
-                        ? "text-white bg-red-500 hover:bg-red-600 cursor-pointer"
-                        : "text-gray-400 bg-gray-300 cursor-not-allowed"
-                    }`}
-                  >
-              <p>Reset</p>
-            </button >
-                  </div> */}
-            </div>
-            {/* tabel */}
-            <div className="overflow-x-auto">
-              <table className="w-full text-left mt-4 border-collapse">
-                <thead>
-                  <tr className="ml-2">
-                    <th className="p-2 sm:p-3 rounded-l-lg bg-slate-500 text-white">No</th>
-                    <th className="p-2 sm:p-3 bg-slate-500 text-white">Kelas</th>
-                    <th className="p-2 sm:p-3 bg-slate-500 text-white">Jumlah</th>
-                    <th className="p-2 sm:p-3 bg-slate-500 text-white">H</th>
-                    <th className="p-2 sm:p-3 bg-slate-500 text-white">S</th>
-                    <th className="p-2 sm:p-3 bg-slate-500 text-white">I</th>
-                    <th className="p-2 sm:p-3 bg-slate-500 text-white">A</th>
-                    <th className="p-2 sm:p-3 bg-slate-500 text-white">T</th>
-                    <th className="p-2 sm:p-3 bg-slate-500 text-white">Walas</th>
-                    <th className="p-2 sm:p-3 rounded-r-lg bg-slate-500 text-white">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {currentData.map((item ) => (
-                    <tr key={item.id}>
-                      <td className="p-3 sm:p-3 text-white border-b">{item.id}</td> {/* Nomor urut yang dinamis */}
-                      <td className="p-3 sm:p-3 text-white border-b">{item.kelas}</td>
-                      <td className="p-3 sm:p-3 text-white border-b">{item.jumlah}</td>
-                      <td className="p-3 sm:p-3 text-white border-b">{item.hadir || 0}</td>
-                      <td className="p-2 sm:p-3 text-white border-b">{item.sakit}</td> {/* Kolom sakit */}
-                      <td className="p-3 sm:p-3 text-white border-b">{item.keteranganLain}</td> {/* Kolom izin */}
-                      <td className="p-3 sm:p-3 text-white border-b">{item.alpha}</td>
-                      <td className="p-3 sm:p-3 text-white border-b">{item.terlambat}</td>
-                      <td className="p-3 sm:p-3 text-white border-b">{item.walas}</td>
-                      <td className="p-3 sm:p-3 text-white border-b text-center">
-                        <DropdownMenu
-                          isOpen={openDropdown === item.id}
-                          onClick={() => handleDropdownClick(item.id)}
-                          onDelete={() => handleDeleteClick(item.id)}
-                          onEdit={() => handleEditClick(item.id)}
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-              <div className="mt-4 flex justify-between items-center">
-              <div className="text-sm text-gray-700 text-white">
-                Halaman {currentPage} dari {totalPages}
-              </div>
-              <div className="flex m-4 space-x-2">
-                <button
-                  onClick={handlePreviousPage}
-                  disabled={currentPage === 1}
-                  className={`px-2 py-1 border rounded ${
-                    currentPage === 1 ? "bg-gray-300" : "bg-teal-400 hover:bg-teal-600 text-white"
-                  }`}
-                >
-                  Previous
-                </button>
-                <button
-                  onClick={handleNextPage}
-                  disabled={!hasNextPage}
-                  className={`px-2 py-1 border rounded ${
-                    !hasNextPage ? "bg-gray-300" : "bg-teal-400 hover:bg-teal-600 text-white"
-                  }`}
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-            </div>
-          </div>
-          </div>
-          {/* Modal untuk konfirmasi penghapusan */}
-        {confirmDelete.visible && (
-          <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
-            <div className="bg-white p-4 rounded-lg shadow-lg">
-              <p>Apakah Anda yakin ingin menghapus item ini?</p>
-              <div className="flex justify-end mt-4">
-                <button
-                  onClick={handleCancelDelete}
-                  className="px-3 py-2 sm:px-4 sm:py-2 bg-gray-300 text-black rounded text-sm sm:text-base mr-2"
-                >
-                  Batal
-                </button>
-                <button 
-                onClick={() => handleConfirmDelete()}
-                className="px-3 py-2 sm:px-4 sm:py-2 bg-red-500 text-white rounded text-sm sm:text-base"
-                >
-                  Hapus
-                  </button>
-              </div>
-            </div>
-          </div>
-        )}
-        {/* Modal untuk mengedit data */}
-        {editItem && (
-          <div className="fixed z-50 inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
-            <div className="bg-white p-4 rounded shadow-lg z-50">
-              {/* Input Nama */}
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="nama">
-                  Nama
-                </label>
-                <input
-                  id="nama"
-                  type="text"
-                  name="nama"
-                  value={newData.nama}
-                  onChange={handleInputChange}
-                  placeholder="Nama"
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                />
-              </div>
-
-              {/* Input Kelas */}
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="kelas">
-                  Kelas
-                </label>
-                <input
-                  id="kelas"
-                  type="text"
-                  name="kelas"
-                  value={newData.kelas}
-                  onChange={handleInputChange}
-                  placeholder="Kelas"
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                />
-              </div>
-
-              {/* Input Jumlah */}
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="jumlah">
-                  Jumlah
-                </label>
-                <input
-                  id="jumlah"
-                  type="number"
-                  name="jumlah"
-                  value={newData.jumlah}
-                  onChange={handleInputChange}
-                  placeholder="Jumlah"
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                />
-              </div>
-
-              {/* Input Hadir (H) */}
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="hadir">
-                  Hadir
-                </label>
-                <input
-                  id="hadir"
-                  type="number"
-                  name="hadir"
-                  value={newData.hadir}
-                  onChange={handleInputChange}
-                  placeholder="Hadir"
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                />
-              </div>
-
-              {/* Input Sakit */}
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="sakit">
-                  Sakit
-                </label>
-                <input
-                  id="sakit"
-                  type="number"
-                  name="sakit"
-                  value={newData.sakit}
-                  onChange={handleInputChange}
-                  placeholder="Sakit"
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                />
-              </div>
-
-              {/* Input Izin */}
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="izin">
-                  Izin
-                </label>
-                <input
-                  id="keteranganLain"
-                  type="number"
-                  name="keteranganLain"
-                  value={newData.keteranganLain}
-                  onChange={handleInputChange}
-                  placeholder="Izin"
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                />
-              </div>
-
-              {/* Input Alpha (A) */}
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="alpha">
-                  Alpha
-                </label>
-                <input
-                  id="alpha"
-                  type="number"
-                  name="alpha"
-                  value={newData.alpha}
-                  onChange={handleInputChange}
-                  placeholder="Alpha"
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                />
-              </div>
-
-              {/* Input Terlambat (T) */}
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="terlambat">
-                  Terlambat
-                </label>
-                <input
-                  id="terlambat"
-                  type="number"
-                  name="terlambat"
-                  value={newData.terlambat}
-                  onChange={handleInputChange}
-                  placeholder="Terlambat"
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                />
-              </div>
-
-              {/* Input Walas */}
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="walas">
-                  Wali Kelas (Walas)
-                </label>
-                <input
-                  id="walas"
-                  type="text"
-                  name="walas"
-                  value={newData.walas}
-                  onChange={handleInputChange}
-                  placeholder="Wali Kelas"
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                />
-              </div>
-
-              {/* Buttons */}
-              <div className="flex items-center justify-between">
-                <button
-                  onClick={handleEditSubmit}
-                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                >
-                  Simpan
-                </button>
-                <button
-                  onClick={() => setEditItem(null)}
-                  className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                >
-                  Batal
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-    </div>
-    <div className="p-4">
-              <h2 className="text-xl font-bold mb-4">Scan Barcode</h2>
-             <input 
-                type="text" 
-                value={barcode} 
-                onChange={handleBarcodeChange} 
-                placeholder="Scan Barcode" 
-              />
-        </div>
-    </>
-
-    
-  );
-}// Komponen DropdownMenu yang menampilkan menu aksi untuk setiap item dalam tabel.
-// isOpen: Properti boolean yang menentukan apakah menu dropdown saat ini terbuka.
-// onClick: Fungsi callback yang dipanggil saat tombol dropdown diklik, untuk membuka atau menutup menu.
-// onDelete: Fungsi callback yang dipanggil saat opsi 'Hapus' dipilih dari menu dropdown.
-function DropdownMenu({ isOpen, onClick, onEdit, onDelete, onClose }) {
-  const dropdownRef = useRef(null);
-
-  // Fungsi untuk menutup dropdown saat pengguna mengklik di luar dropdown.
-  const handleClickOutside = (event) => {
-    console.log('Clicked outside'); // Debugging
-    if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-      console.log('Outside detected'); // Debugging
-      if (typeof onClose === 'function') {
-        onClose(); // Memanggil fungsi onClose untuk menutup dropdown
-      }
-    }
-  };
-  //untuk detail
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [confirmedPassword, setConfirmedPassword] = useState('');
-
-  const handleDetailClick = () => {
-    setIsModalOpen(true);
-    if (typeof onClose === 'function') {
-      onClose(); // Menutup dropdown setelah detail diklik
-    }
-  };
-  const handleConfirm = (password) => {
-    setConfirmedPassword(password); // Menyimpan password di state
-  };
-  //detail end
-
-  useEffect(() => {
-    console.log('Effect ran', isOpen); // Debugging
-    // Menambahkan event listener untuk menangani klik di luar dropdown jika dropdown terbuka.
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    } else {
-      // Menghapus event listener ketika dropdown ditutup.
-      document.removeEventListener('mousedown', handleClickOutside);
-    }
-
-    // Cleanup function untuk menghapus event listener saat komponen di-unmount atau isOpen berubah.
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      console.log('Cleanup'); // Debugging
-    };
-  }, [isOpen]);
-
-  return (
-    <div className="relative" ref={dropdownRef}>
-      <button
-        onClick={onClick}
-        className="p-1 z-40 text-white text-xs sm:text-sm"
-      >
-        &#8942;
-      </button>
+            </div>    
+            <div className="relative inline-block text-left">
+  <div onClick={toggleDropdown} className="text-white px-4 py-2 rounded flex items-center">
+    <span className="flex items-end text-gray-200">
+      {isOpen ? "<" : ">"}
       {isOpen && (
-        <div
-          className="absolute z-50 mt-1 w-24 sm:w-32 bg-slate-600 border rounded-md shadow-lg"
-          style={{ left: '-62px', top: '20px' }} // Menggeser dropdown ke kiri
-        >
+        <div className="absolute left-8 border rounded shadow-lg -mb-2">
           <button
-            className="block w-full px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm hover:bg-slate-500"
-            onClick={handleDetailClick}
+            className="block px-4 py-2 text-gray-800 hover:bg-gray-200 text-left"
+            onClick={togglePopupPulang} // Ketika tombol "Pulang" diklik, buka pop-up
           >
-            Detail
-          </button>
-          <Pw isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onConfirm={handleConfirm} />
-          <button
-            onClick={() => {
-              onEdit();
-              if (typeof onClose === 'function') {
-                onClose(); // Menutup dropdown setelah edit diklik
-              }
-            }}
-            className="block w-full px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm hover:bg-slate-500"
-          >
-            Edit
-          </button>
-          <button
-            onClick={() => {
-              onDelete();
-              if (typeof onClose === 'function') {
-                onClose(); // Menutup dropdown setelah delete diklik
-              }
-            }}
-            className="block w-full px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm hover:bg-slate-500"
-          >
-            Hapus
+            Pulang
           </button>
         </div>
       )}
-    </div>
-  );
-}
+    </span>
+  </div>
+            </div>
+            {isPopupVisiblePulang && (
+            <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
+                <div className="bg-white p-3 rounded shadow-md">
+                <div className="bg-slate-600 p-2 rounded-lg">
+                    <div className="flex items-center space-x-4">
+                    <select
+                        className="border border-gray-300 rounded px-2 py-1"
+                        value={pulangItemsPerPage} // Ganti dengan state yang sesuai
+                        onChange={handlePulangItemsPerPageChange} // Ganti dengan handler yang sesuai
+                    >
+                        <option value="5">5</option>
+                        <option value="10">10</option>
+                        <option value="12">12</option>
+                    </select>
+                    <input
+                        type="text"
+                        placeholder="Search..."
+                        className="border border-gray-300 rounded px-2 py-1"
+                        onChange={handlePulangSearchChange} // Handler pencarian untuk pulang
+                    />
+                    </div>
 
+                    {/* Input untuk mengisi alasan pulang */}
+                    <div className="mt-4">
+                    <input
+                        type="text"
+                        placeholder="Alasan pulang..."
+                        className="border border-gray-300 rounded px-2 py-1 w-full"
+                        value={inputPulang} // State untuk menyimpan nilai input alasan pulang
+                        onChange={(e) => setInputPulang(e.target.value)} // Handler untuk mengubah state alasan pulang
+                    />
+                    </div>
+
+                    <div className="mt-4">
+                    <table className="min-w-full">
+                        <thead>
+                        <tr 
+                            className="bg-slate-500"
+                            onClick={() => handlePulangSelect(item)}
+                        >
+                            <th className="text-white text-left rounded-l-lg px-4 py-2">Nama</th>
+                            <th className="text-white text-left rounded-r-lg px-4 py-2">Kelas</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {filteredPulangItems // Ganti dengan daftar yang sesuai
+                            .slice((pulangCurrentPage - 1) * pulangItemsPerPage, pulangCurrentPage * pulangItemsPerPage)
+                            .map((item, index) => (
+                            <tr 
+                                key={index}
+                                className="border-b hover:bg-slate-300 cursor-pointer"
+                                onClick={() => handlePulangSelect(item)} // Pilih item pulang
+                            >
+                                <td className="border-b text-white px-4 py-2">{item.name}</td>
+                                <td className="border-b text-white px-4 py-2">{item.kelas}</td>
+                            </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                    </div>
+
+                    <div className="flex justify-between mt-4">
+                    <button
+                        className={`px-2 py-1 rounded ${pulangTotalPages === 0 || pulangCurrentPage === 1 ? 'bg-gray-300 cursor-not-allowed' : 'bg-teal-400 hover:bg-teal-500 text-white'}`}
+                        disabled={pulangTotalPages === 0 || pulangCurrentPage === 1}
+                        onClick={() => setPulangCurrentPage(pulangCurrentPage - 1)}
+                    >
+                        Previous
+                    </button>
+                    <span className="text-white">
+                        Page {filteredPulangItems.length > 0 ? pulangCurrentPage : 0} of {pulangTotalPages}
+                    </span>
+                    <button
+                        className={`px-2 py-1 rounded ${pulangTotalPages === 0 || pulangCurrentPage === pulangTotalPages ? 'bg-gray-300 cursor-not-allowed' : 'bg-teal-400 hover:bg-teal-500 text-white'}`}
+                        disabled={pulangTotalPages === 0 || pulangCurrentPage === pulangTotalPages}
+                        onClick={() => setPulangCurrentPage(pulangCurrentPage + 1)}
+                    >
+                        Next
+                    </button>
+                    </div>
+
+                    <div className="flex justify-between">
+                    <button
+                        className="mt-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                        onClick={togglePopupPulang} // Fungsi untuk menutup pop-up
+                    >
+                        Close
+                    </button>
+                    <button
+                        className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                        onClick={handlePulangSubmit} // Fungsi untuk kirim jika diperlukan
+                    >
+                        Kirim
+                    </button>
+                    </div>
+                </div>
+                </div>
+            </div>
+            )}
+
+        </div>
+        
+      </div>
+        {/* Column 2: Table */}  
+        <div className="w-full  lg:w-2/3 p-4 lg:p-6">          
+            <div className="bg-white p-3 rounded shadow-md">
+                <div className="bg-slate-600 p-2 rounded-lg">
+                    <div className="p-2">
+                        <h2 className="text-sm pt-3 sm:text-2xl text-white font-bold">
+                            Data Absen
+                        </h2>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left mt-4 border-collapse">
+                            <thead>
+                                <tr className="ml-2">
+                                <th className="p-2 sm:p-3 rounded-l-lg bg-slate-500 text-white">No</th>
+                                <th className="p-2 sm:p-3 bg-slate-500 text-white">Kelas</th>
+                                <th className="p-2 sm:p-3 bg-slate-500 text-white">Jumlah</th>
+                                <th className="p-2 sm:p-3 bg-slate-500 text-white">H</th>
+                                <th className="p-2 sm:p-3 bg-slate-500 text-white">S</th>
+                                <th className="p-2 sm:p-3 bg-slate-500 text-white">I</th>
+                                <th className="p-2 sm:p-3 bg-slate-500 text-white">A</th>
+                                <th className="p-2 sm:p-3 bg-slate-500 text-white">T</th>
+                                <th className="p-2 sm:p-3 bg-slate-500 text-white">Walas</th>
+                                <th className="p-2 sm:p-3 rounded-r-lg bg-slate-500 text-white">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {tableData.map((item, index) => (
+                                <tr key={index} className="border-b">
+                                <td className="p-2 sm:p-3 text-white">{item.no}</td>
+                                <td className="p-2 sm:p-3 text-white">{item.kelas}</td>
+                                <td className="p-2 sm:p-3 text-white">{item.jumlah}</td>
+                                <td className="p-2 sm:p-3 text-white">{item.h}</td>
+                                <td className="p-2 sm:p-3 text-white">{item.s}</td>
+                                <td className="p-2 sm:p-3 text-white">{item.i}</td>
+                                <td className="p-2 sm:p-3 text-white">{item.a}</td>
+                                <td className="p-2 sm:p-3 text-white">{item.t}</td>
+                                <td className="p-2 sm:p-3 text-white">{item.walas}</td>
+                                <td className="p-2 sm:p-3 text-white">
+                                <DropdownMenu
+                                    isOpen={openDropdown === item.no}
+                                    onClick={() => handleDropdownClick(item.no)}
+                                    onDelete={() => handleDeleteClick(item.no)}
+                                    onEdit={() => handleEditClick(item)}
+                                />
+                                </td>
+                                </tr>
+                            ))}
+                            </tbody>     
+                        </table>                  
+                    </div>
+                </div>             
+            </div>
+        </div>    
+    </div>
+    <div className="p-4">
+        <h2 className="text-xl font-bold mb-4">Scan Barcode</h2>
+        <input 
+            type="text" 
+            value={barcode} 
+            onChange={handleBarcodeChange} 
+            placeholder="Scan Barcode" 
+        />
+    </div>
+    </>
+  )
+}
+function DropdownMenu({ isOpen, onClick, onEdit, onDelete, onClose }) {
+    const dropdownRef = useRef(null);
+  
+    // Fungsi untuk menutup dropdown saat pengguna mengklik di luar dropdown.
+    const handleClickOutside = (event) => {
+      console.log('Clicked outside'); // Debugging
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        console.log('Outside detected'); // Debugging
+        if (typeof onClick === 'function') {
+          onClick(); // Memanggil fungsi onClose untuk menutup dropdown
+        }
+      }
+    };
+  
+    useEffect(() => {
+      console.log('Effect ran', isOpen); // Debugging
+      // Menambahkan event listener untuk menangani klik di luar dropdown jika dropdown terbuka.
+      if (isOpen) {
+        document.addEventListener('mousedown', handleClickOutside);
+      } else {
+        // Menghapus event listener ketika dropdown ditutup.
+        document.removeEventListener('mousedown', handleClickOutside);
+      }
+  
+      // Cleanup function untuk menghapus event listener saat komponen di-unmount atau isOpen berubah.
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+        console.log('Cleanup'); // Debugging
+      };
+    }, [isOpen]);
+  
+    return (
+      <div className="relative" ref={dropdownRef}>
+        <button
+          onClick={onClick}
+          className="p-1 z-40  text-white text-xs sm:text-sm"
+
+        >
+          &#8942;
+        </button>
+        {isOpen && (
+          <div
+            className="absolute z-50 mt-1 w-24 sm:w-32 bg-slate-600 border rounded-md shadow-lg"
+            style={{ left: '-62px', top: '20px' }} // Menggeser dropdown ke kiri
+          >
+            <button
+              className="block w-full px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm hover:bg-slate-500"
+              onClick={() => {
+                alert('Detail clicked');
+                if (typeof onClose === 'function') {
+                  onClose(); // Menutup dropdown setelah detail diklik
+                }
+              }}
+            >
+              Detail
+            </button>
+            <button
+              onClick={() => {
+                onEdit();
+                if (typeof onClose === 'function') {
+                  onClose(); // Menutup dropdown setelah edit diklik
+                }
+              }}
+              className="block w-full px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm hover:bg-slate-500"
+            >
+              Edit
+            </button>
+            <button
+              onClick={() => {
+                onDelete();
+                if (typeof onClose === 'function') {
+                  onClose(); // Menutup dropdown setelah delete diklik
+                }
+              }}
+              className="block w-full px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm hover:bg-slate-500"
+            >
+              Hapus
+            </button>
+          </div>
+        )}
+      </div>
+    );
+}
 export default Page
