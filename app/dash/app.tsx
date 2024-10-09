@@ -8,9 +8,9 @@ import { UserIcon, UserGroupIcon, IdentificationIcon } from '@heroicons/react/24
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 type Admin = {
-  id: number;
-  nama: string;
-  email: string;
+  id_admin: number;
+  nama_admin: string;
+  alamat: string;
   // Tambahkan properti lain yang sesuai dengan struktur data di tabel 'admin'
 };
 
@@ -23,6 +23,7 @@ const AdminPage = () => {
 
   useEffect(() => {
     const token = Cookies.get('token');
+    console.log(token)
   if (!token) {
     router.push('../login');
     return;
@@ -32,7 +33,7 @@ const AdminPage = () => {
 
   const fetchAdmins = async () => {
     try {
-      const res = await axios.get(`${baseUrl}/admin/all-Admin`);
+      const res = await axios.get(`api/admin`);
       const data: Admin[] = res.data;
       setAdmins(data);
     } catch (eror) {

@@ -25,3 +25,15 @@ export const fetchAdmins = async (): Promise<Admin[]> => {
     throw error;
   }
 };
+
+// Fungsi untuk menambah Admins
+export const addAdmins = async (AdminsData: Admin) => {
+  try {
+    const response = await axios.post(`${baseUrl}/admin/add-Admin`, AdminsData);
+    console.log(response);
+    return response.data;
+  } catch (error) {
+    console.error('Data sudah ada:', error);
+    throw error;
+  }
+};

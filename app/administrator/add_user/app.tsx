@@ -2,6 +2,8 @@
 import { useState, useEffect, useRef } from 'react';
 import Pw from "./pass";
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import { fetchAdmins, Admin } from '../../api/admin';
+import DataTable from '../../components/dataTabel';
 
 export default function DataSiswa() {
   // State untuk menyimpan nilai input
@@ -277,6 +279,40 @@ export default function DataSiswa() {
     "Administrator",
   ]
 
+  const [admins, setAdmins] = useState<Admin[]>([]);
+
+  useEffect(() => {
+    const loadAdmins = async () => {
+      const response = await fetchAdmins();
+      console.log('API response:', response); // Debugging tambahan
+      const data = response.data; 
+      setAdmins(data);
+    };
+    loadAdmins();
+  }, []);
+  const adminColumns = [
+    { header: 'ID', accessor: 'id_admin' as keyof Admin },
+    { header: 'Nama', accessor: 'nama_admin' as keyof Admin },
+    { header: 'Email', accessor: 'email' as keyof Admin },
+  ];
+
+  const handleEdit = (updatedRow) => {
+    setAdmins((prevAdmins) =>
+      prevAdmins.map((admin) =>
+        admin.id === updatedRow.id ? updatedRow : admin // Update row yang sesuai
+      )
+    );
+  };
+
+  const handleDelete = (deletedRow) => {
+    const confirmed = window.confirm(`Apakah Anda yakin ingin menghapus ${deletedRow.name}?`);
+    if (confirmed) {
+      setAdmins((prevAdmins) =>
+        prevAdmins.filter((admin) => admin.id !== deletedRow.id) // Hapus data yang sesuai
+      );
+    }
+  };
+
   return (
     <>
       <div className="rounded-lg max-w-full bg-slate-100">
@@ -483,7 +519,13 @@ export default function DataSiswa() {
                   </div>
             </div>
               <div className="overflow-x-auto">
-                <table className="w-full text-left mt-4 border-collapse">
+              <DataTable 
+              columns={adminColumns} 
+              data={admins}
+              onEdit={handleEdit}    // Fungsi ini dipassing ke komponen DataTable
+              onDelete={handleDelete} 
+               />
+                {/* <table className="w-full text-left mt-4 border-collapse">
                   <thead>
                     <tr className="ml-2">
                       <th className="p-2 sm:p-3 rounded-l-lg  bg-slate-500 text-white">No</th>
@@ -546,7 +588,7 @@ export default function DataSiswa() {
                         {/* // Komponen DropdownMenu yang ditampilkan dalam tabel untuk setiap baris data.
                         // isOpen: Menentukan apakah dropdown saat ini terbuka berdasarkan nomor item.
                         // onClick: Fungsi untuk menangani aksi klik pada dropdown untuk membuka atau menutupnya.
-                        // onDelete: Fungsi untuk memicu proses penghapusan data ketika opsi 'Hapus' dalam dropdown diklik. */}
+                        // onDelete: Fungsi untuk memicu proses penghapusan data ketika opsi 'Hapus' dalam dropdown diklik.
                          <DropdownMenu
                             isOpen={openDropdown === item.no}
                             onClick={() => handleDropdownClick(item.no)}
@@ -557,7 +599,7 @@ export default function DataSiswa() {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </table> */}
               </div>
               <div className="mt-4 flex justify-between items-center">
               <div className="text-sm text-gray-700 text-white">
