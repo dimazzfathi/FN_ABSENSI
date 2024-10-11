@@ -285,56 +285,99 @@ const Page = () => {
 
   // data untuk tabel absensi 
   const [tableData, setTableData] = useState([
-    { no: 1, kelas: '1A', jumlah: 30, h: '', s: '', i: '', a: '', t: '', walas: 'Mr. A' },
-    { no: 2, kelas: '1B', jumlah: 28, h: '', s: '', i: '', a: '', t: '', walas: 'Ms. B' },
-  ]);
+    { no: 1, kelas: '1 A', jumlah: 30, h: 0, s: 0, i: 0, a: 0, t: 0, walas: 'Mr. A', barcode: ['(242)501013', '(242)501069'] },
+    { no: 2, kelas: '1 B', jumlah: 28, h: 0, s: 0, i: 0, a: 0, t: 0, walas: 'Ms. B', barcode: ['(242)501006', '(242)501084'] },
+    { no: 3, kelas: '11 D', jumlah: 25, h: 0, s: 0, i: 0, a: 0, t: 0, walas: 'Dimaz', barcode: ['(K242501029)', '(242)501039'] }
+]);
+
 
   //variabel  dan function untuk barcode 
   const [barcode, setBarcode] = useState('');
   const [timer, setTimer] = useState(null);
-  const handleBarcodeChange = (e) => {
-        setBarcode(e.target.value);
+  const [popupMessage, setPopupMessage] = useState('');
+  const normalizeBarcode = (barcode) => {
+    // Menghilangkan tanda kurung `)` yang berlebihan
+    const cleanedBarcode = barcode.replace(/\)/g, '');
+    // Menghilangkan tanda kurung `(` yang tidak perlu jika ada
+    const finalBarcode = cleanedBarcode.replace(/\(/g, '');
+    return `(${finalBarcode})`; // Menyusun ulang barcode dengan format yang benar
+};
 
-        // Clear timer sebelumnya jika ada
-        if (timer) {
-            clearTimeout(timer);
+// Gunakan di `handleBarcodeChange`
+const handleBarcodeChange = (e) => {
+    const normalizedBarcode = normalizeBarcode(e.target.value);
+    setBarcode(normalizedBarcode);
+
+    console.log("Barcode setelah dinormalisasi:", normalizedBarcode);
+
+    if (timer) {
+        clearTimeout(timer);
+    }
+
+    setTimer(setTimeout(saveBarcodeToH, 500));
+};
+
+
+
+    //state untuk inputan terhidden dan mengarah ke crusor
+    const barcodeInputRef = useRef(null);
+    useEffect(() => {
+        // Mengarahkan fokus ke input saat komponen dimuat
+        if (barcodeInputRef.current) {
+            barcodeInputRef.current.focus();
         }
-
-        // Timer untuk menyimpan barcode ke kolom "H" setelah 1 detik
-        setTimer(setTimeout(saveBarcodeToH, 1000));
-    };
+    }, []);
 
     const saveBarcodeToH = () => {
-        const existingItem = tableData.find(item => item.barcode === barcode);
-
+        const today = new Date().toLocaleDateString(); // Mengambil tanggal hari ini
+    
+        console.log("Barcode yang dipindai:", barcode);
+    
+        // Cari item di tableData yang memiliki barcode yang sesuai
+        const existingItem = tableData.find(item => {
+            console.log(`Memeriksa barcodes di kelas ${item.kelas}:`, item.barcode);
+            return item.barcode.includes(barcode);
+        });
+    
+        console.log("Item ditemukan:", existingItem);
+    
         if (existingItem) {
-            const updatedData = tableData.map((item) => {
-                if (item.barcode === barcode) {
-                    const hadirCount = (item.h || 0) + 1;
-                    return { ...item, h: hadirCount };
-                }
-                return item;
-            });
-
-            setTableData(updatedData);
+            // Cek jika item sudah absen pada hari ini
+            if (existingItem.lastAbsen === today) {
+                showPopup(`Sudah absen: ${existingItem.walas}, kelas ${existingItem.kelas}`);
+            } else {
+                const updatedData = tableData.map((item) => {
+                    if (item.barcode.includes(barcode)) {
+                        const hadirCount = (item.h || 0) + 1;
+                        return { 
+                            ...item, 
+                            h: hadirCount, 
+                            lastAbsen: today // Update tanggal absen terakhir
+                        };
+                    }
+                    return item;
+                });
+    
+                setTableData(updatedData);
+                showPopup(`Absen berhasil: ${existingItem.walas}, kelas ${existingItem.kelas}`);
+            }
         } else {
-            const newEntry = {
-                no: tableData.length + 1,
-                kelas: 'Unknown', // Atur kelas jika ada data yang sesuai
-                jumlah: 1,
-                barcode: barcode,
-                h: 1,
-                s: 0,
-                i: 0,
-                a: 0,
-                t: 0,
-                walas: 'Unknown'
-            };
-
-            setTableData([...tableData, newEntry]);
+            if (!barcode.trim()) {
+                showPopup('ID tidak boleh kosong');
+            } else {
+                showPopup('ID tidak terdaftar');
+            }
         }
-
+    
         setBarcode(''); // Reset input barcode setelah disimpan
+    };
+    
+    
+    const showPopup = (message) => {
+        setPopupMessage(message);
+        setTimeout(() => {
+            setPopupMessage('');
+        }, 1500);
     };
   
     //state untuk dropdown aksi
@@ -734,15 +777,29 @@ const Page = () => {
             </div>
         </div>    
     </div>
+
+    {/* scan barcode */}
     <div className="p-4">
-        <h2 className="text-xl font-bold mb-4">Scan Barcode</h2>
-        <input 
-            type="text" 
-            value={barcode} 
-            onChange={handleBarcodeChange} 
-            placeholder="Scan Barcode" 
-        />
-    </div>
+            
+            {popupMessage && (
+            <div
+                className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-auto max-w-xs bg-green-500 text-white p-4 rounded shadow-md transition-all duration-300 ${
+                popupMessage.includes('Absen berhasil') ? 'bg-green-500' : 'bg-red-500'
+                }`}
+            >
+                {popupMessage}
+            </div>
+            
+            )}
+            <input 
+                ref={barcodeInputRef}
+                type="text" 
+                value={barcode} 
+                onChange={handleBarcodeChange} 
+                placeholder="Scan Barcode"
+                className=" pointer-events-none" // Menyembunyikan input
+            />
+        </div>
     </>
   )
 }

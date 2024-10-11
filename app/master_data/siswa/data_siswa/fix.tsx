@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from 'react';
 import * as XLSX from 'xlsx';
+import '@fortawesome/fontawesome-free/css/all.min.css';
 import imageCompression from 'browser-image-compression';
 
 export default function DataSiswa() {
@@ -877,7 +878,15 @@ const handleSaveEdit = () => {
                         <td className="p-3 sm:p-3 text-white border-b">{item.jurusan}</td>
                         <td className="p-3 sm:p-3 text-white border-b">{item.jk}</td>
                         <td className="p-3 sm:p-3 text-white border-b">{item.namaWali}</td>
-                        <td className="p-3 sm:p-3 text-white border-b">{item.noWali}</td>
+                        <td className="p-3 sm:p-3 text-white border-b text-center">
+                          {item.noWali ? ( // Ganti student.phoneNumber dengan item.noWali
+                            <a href={`https://wa.me/${item.noWali}`} target="_blank" rel="noopener noreferrer">   
+                              <i className="fab fa-whatsapp fa-lg"></i> {/* Ikon WhatsApp */}
+                            </a>
+                          ) : (
+                            ""
+                          )}
+                        </td>
                         <td className="p-3 sm:p-3 text-white border-b text-center">
                         {/* // Komponen DropdownMenu yang ditampilkan dalam tabel untuk setiap baris data.
                         // isOpen: Menentukan apakah dropdown saat ini terbuka berdasarkan nomor item.
