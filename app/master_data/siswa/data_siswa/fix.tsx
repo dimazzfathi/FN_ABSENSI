@@ -1,5 +1,12 @@
 "use client";
 import { useState, useEffect, useRef } from 'react';
+import { updateSiswa, deleteSiswa } from '../../../api/siswa';
+import axios, { AxiosError } from 'axios';
+
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { addSiswa, fetchSiswa, Siswa  } from '../../../api/siswa';
+import DataTable from '../../../components/dataTabel';
 import * as XLSX from 'xlsx';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import imageCompression from 'browser-image-compression';
@@ -34,11 +41,117 @@ export default function DataSiswa() {
   const [previewURL, setPreviewURL] = useState(""); // State untuk URL preview foto
   const [isResettable, setIsResettable] = useState(false);
   const [fileData, setFileData] = useState([]);
-  const [dataSiswa, setDataSiswa] = useState([]);
+  const [dataSiswa, setDataSiswa] = useState<Siswa[]>([]);
   const [currentDataa, setCurrentDataa] = useState([]);
-  useEffect(() => {
-    setCurrentDataa(dataSiswa);
-  }, [dataSiswa]);
+
+   useEffect(() => {
+    const loadSiswa = async () => {
+      const response = await fetchSiswa();
+      console.log('API response:', response); // Debugging tambahan
+      const data = response.data; 
+      setDataSiswa(data);
+    };
+    loadSiswa();
+  }, []);
+
+  const siswaColumns = [
+    { header: 'ID', accessor: 'id_siswa' as keyof Siswa },
+    { header: 'Foto', accessor: 'foto' as keyof Siswa },
+    { header: 'Nisn', accessor: 'nis' as keyof Siswa },
+    { header: 'Nama', accessor: 'nama_siswa' as keyof Siswa },
+    { header: 'Kelas', accessor: 'id_kelas' as keyof Siswa },
+    { header: 'Jurusan', accessor: 'id_rombel' as keyof Siswa },
+    { header: 'Jk', accessor: 'jenis_kelamin' as keyof Siswa },
+    { header: 'Nama Wali', accessor: 'nama_wali' as keyof Siswa },
+    { header: 'No Wali', accessor: 'nomor_wali' as keyof Siswa },
+  ];
+
+
+  //.......untuk add data
+  // State untuk menyimpan data input
+  const [formData, setFormData] = useState<Siswa>({
+    id_siswa: '',
+    id_admin: '',
+    nis: '',
+    nama_siswa: '',
+    jenis_kelamin: '',
+    id_tahun_pelajaran: '',
+    id_kelas: '',
+    id_rombel: '',
+    email: '',
+    pass: '',
+    foto: '',
+    barcode: '',
+    nama_wali: '',
+    nomor_wali: '',
+  });
+  //Handle perubahan input
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: value,
+    }));
+  };
+  const handleFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setFormData((prevData) => ({
+      ...prevData,
+      foto: file,
+    }));
+  };
+  // Handle submit form
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!formData.id_siswa || !formData.nama_siswa || !formData.nis || !formData.email || !formData.jenis_kelamin || !formData.foto || !formData.nama_wali || !formData.nomor_wali || !formData.id_tahun_pelajaran || !formData.id_kelas || !formData.id_rombel) {
+        toast.error("Data tidak boleh kosong");
+        return;
+    }
+
+    try {
+        const response = await addSiswa(formData);
+        console.log("API response:", response);
+        if (response?.exists) {
+            toast.error("Data sudah ada!");
+        } else {
+            toast.success("Siswa berhasil ditambahkan!");
+            setFormData({
+                id_siswa: '',
+                id_admin: '',
+                nis: '',
+                nama_siswa: '',
+                jenis_kelamin: '',
+                id_tahun_pelajaran: '',
+                id_kelas: '',
+                id_rombel: '',
+                email: '',
+                pass: '',
+                foto: '',
+                barcode: '',
+                nama_wali: '',
+                nomor_wali: '',
+            });
+        }
+    } catch (error) {
+        console.error('Error adding siswa:', error);
+        
+        if (axios.isAxiosError(error)) {
+            console.error('Error response:', error.response);
+            if (error.response) {
+                // Tampilkan pesan error spesifik dari server jika ada
+                const errorMessage = error.response.data.message || 'Terjadi kesalahan pada server';
+                toast.error(`Error: ${error.response.status} - ${errorMessage}`);
+            } else {
+                toast.error('Tidak dapat terhubung ke server. Periksa koneksi Anda atau coba lagi nanti.');
+            }
+        } else {
+            toast.error("Terjadi kesalahan saat menambah data");
+        }
+    }
+};
+
+
 
     const [editIdSiswaValue, setEditIdSiswaValue] = useState('');
     const [editNisnValue, setEditNisnValue] = useState('');
@@ -584,122 +697,117 @@ const handleSaveEdit = () => {
         <div className="flex flex-col lg:flex-row">
           {/* Column 1: Input */}
           <div className="w-full lg:w-1/3 p-4 lg:p-6">
-            <div className="bg-white rounded-lg shadow-md p-4 lg:p-6 border">
-            <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold"> Id Siswa</h2>
+            <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-4 lg:p-6 border">
+            <label htmlFor="id_siswa" className="block text-sm mb-2 sm:text-sm font-bold"> Id Siswa</label>
               <input
-              value={idSiswaValue}
-              onChange={handleIdSiswaChange}
-              ref={idSiswaRef}
-              className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${validationErrors.nisn ? 'border-red-500' : 'border-gray-300'}`}
+              type="text"
+              name="id_siswa"
+              value={formData.id_siswa}
+              onChange={handleChange}
+              className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${idSiswaValue === "" ? "border-red-500" : "border-gray-300"}`}
               placeholder="Id Siswa..."
             />
-            <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold"> Nisn Siswa</h2>
+            <label htmlFor="nis" className="block text-sm mb-2 sm:text-sm font-bold"> Nisn Siswa</label>
               <input
-              value={nisnValue}
-              onChange={handleNisnChange}
-              ref={nisnRef}
-              className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${validationErrors.nisn ? 'border-red-500' : 'border-gray-300'}`}
+              type="text"
+              name="nis"
+              value={formData.nis}
+              onChange={handleChange}
+              className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${nisnValue === "" ? "border-red-500" : "border-gray-300"}`}
               placeholder="Nisn..."
             />
-              <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold"> Nama Siswa</h2>
+            <label htmlFor="nama_siswa" className="block text-sm mb-2 sm:text-sm font-bold"> Nama Siswa</label>
               <input
-              value={namaSiswaValue}
-              onChange={handleNamaSiswaChange}
-              ref={namaSiswaRef}
-              className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${validationErrors.namaSiswa ? 'border-red-500' : 'border-gray-300'}`}
+              type="text"
+              name="nama_siswa"
+              value={formData.nama_siswa}
+              onChange={handleChange}
+              className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${namaSiswaValue === "" ? "border-red-500" : "border-gray-300"}`}
               placeholder="Nama Siswa..."
             />
-            <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold"> Jenis Kelamin</h2>
+            <label htmlFor="jenis_kelamin"  className="block text-sm mb-2 sm:text-sm font-bold"> Jenis Kelamin</label>
                 <select
-                    value={jkValue}
-                    onChange={handleJkChange}
-                    ref={jkRef}
-                    className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${validationErrors.jk ? 'border-red-500' : 'border-gray-300'}`}
+                    name="jenis_kelamin"
+                    value={formData.jenis_kelamin}
+                    onChange={handleChange}
+                    className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${jkValue === "" ? "border-red-500" : "border-gray-300"}`}
                  >
                     <option value="">Pilih Jenis Kelamin...</option>
-                        {jkOptions.map((option, index) => (
-                        <option key={index} value={option}>
-                            {option}
-                        </option>
-                        ))}
+                    <option value="L">Laki-Laki</option>  
+                    <option value="P">Perempuan</option> 
                 </select> 
-            <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold"> Email</h2>
+            <label htmlFor="email" className="block text-sm mb-2 sm:text-sm font-bold"> Email</label>
                 <input
                     type="email"
-                    value={emailValue}
-                    onChange={handleEmailChange}
-                    ref={emailRef}
-                    className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${validationErrors.email ? 'border-red-500' : 'border-gray-300'}`}
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${emailValue === "" ? "border-red-500" : "border-gray-300"}`}
                     placeholder="Email..."
                 />
-            <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold"> Foto</h2>
+            <label htmlFor="foto" className="block text-sm mb-2 sm:text-sm font-bold"> Foto</label>
                 <input
                     type="file"
-                    onChange={handleImageChange}
-                    ref={fotoRef}
-                    className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${validationErrors.foto ? 'border-red-500' : 'border-gray-300'}`}
+                    name="foto"
+                    accept="image/*"
+                    onChange={handleFotoChange}
+                    className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${fotoValue === "" ? "border-red-500" : "border-gray-300"}`}
                 />
-                <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold"> Nama Wali</h2>
+                <label htmlFor="nama_wali" className="block text-sm mb-2 sm:text-sm font-bold"> Nama Wali</label>
                 <input
                     type="text"
-                    value={namaWaliValue}
-                    onChange={handleNamaWaliChange}
-                    ref={namaWaliRef}
-                    className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${validationErrors.namaWali ? 'border-red-500' : 'border-gray-300'}`}
+                    name="nama_wali"
+                    value={formData.nama_wali}
+                    onChange={handleChange}
+                    className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${namaWaliValue === "" ? "border-red-500" : "border-gray-300"}`}
                     placeholder="Nama Wali..."
                 />
-                <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold"> No Wali</h2>
+                <label htmlFor="nomor_wali" className="block text-sm mb-2 sm:text-sm font-bold"> No Wali</label>
                 <input
                     type="text"
-                    value={noWaliValue}
-                    onChange={handleNoWaliChange}
-                    ref={noWaliRef}
-                    className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${validationErrors.noWali ? 'border-red-500' : 'border-gray-300'}`}
+                    name="nomor_wali"
+                    value={formData.nomor_wali}
+                    onChange={handleChange}
+                    className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${noWaliValue === "" ? "border-red-500" : "border-gray-300"}`}
                     placeholder="No Wali..."
                 />
-                <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold"> Tahun Ajaran</h2>
+                <label htmlFor="id_tahun_pelajaran" className="block text-sm mb-2 sm:text-sm font-bold"> Tahun Ajaran</label>
                 <select
-                    value={tahunAjaranValue}
-                    onChange={handleTahunAjaranChange}
-                    ref={tahunAjaranRef}
-                    className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${validationErrors.tahunAjaran ? 'border-red-500' : 'border-gray-300'}`}
+                    id="id_tahun_pelajaran"
+                    name="id_tahun_pelajaran"
+                    value={formData.id_tahun_pelajaran}
+                    onChange={handleChange}
+                    className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${tahunAjaranValue === "" ? "border-red-500" : "border-gray-300"}`}
                  >
                     <option value="">Pilih Tahun Ajaran...</option>
-                        {tahunAjaranOptions.map((option, index) => (
-                        <option key={index} value={option}>
-                            {option}
-                        </option>
-                        ))}
+                    <option value="2021/2021">2021/2021</option> 
+                    <option value="2021/2022">2021/2022</option>   
                 </select> 
-              <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold"> Kelas</h2>
+              <label htmlFor="id_kelas" className="block text-sm mb-2 sm:text-sm font-bold"> Kelas</label>
               <select
-                value={kelasValue}
-                onChange={handleKelasChange}
-                ref={kelasRef}
-                className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${validationErrors.kelas ? 'border-red-500' : 'border-gray-300'}`}
+                id="id_kelas"
+                name="id_kelas"
+                value={formData.id_kelas}
+                onChange={handleChange}
+                className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${kelasValue === "" ? "border-red-500" : "border-gray-300"}`}
               >
                 <option value="">Pilih Kelas...</option>
-                {kelasOptions.map((option, index) => (
-                  <option key={index} value={option}>
-                    {option}
-                  </option>
-                ))}
+                <option value="10">10</option>
+                <option value="11">11</option>
               </select>
-              <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold ">
+              <label htmlFor="id_rombel" className="block text-sm mb-2 sm:text-sm font-bold">
                 Input Jurusan
-              </h2>
+              </label>
               <select
-                value={jurusanValue}
-                onChange={handleJurusanChange}
-                ref={jurusanRef}
-                className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${validationErrors.jurusan ? 'border-red-500' : 'border-gray-300'}`}
+                id="id_rombel"
+                name="id_rombel"
+                value={formData.id_rombel}
+                onChange={handleChange}
+                className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${jurusanValue === "" ? "border-red-500" : "border-gray-300"}`}
               >
                 <option value="">Pilih Jurusan...</option>
-                {jurusanOptions.map((option, index) => (
-                  <option key={index} value={option}>
-                    {option}
-                  </option>
-                ))}
+                <option value="bd">bd</option>
+                <option value="tkj">tkj</option>
               </select>
               <div className="mt-4 flex justify-between items-center">               
                 {/* Tombol Unduh Format dan Upload File */}
@@ -730,14 +838,15 @@ const handleSaveEdit = () => {
                 {/* Tombol Simpan */}
                 <div className="flex m-4 space-x-2">
                 <button
-                  onClick={handleSaveClick}
+                  type="submit"
                   className="px-3 py-2 sm:px-4 sm:py-2 bg-teal-400 hover:bg-teal-500 text-white items-end-end rounded text-sm sm:text-base"
                 >
                   Simpan
                 </button>
                 </div>
               </div>                
-            </div>
+            </form>
+            <ToastContainer className="mt-14" />
           </div>
 
           {/* Column 2: Table */}
@@ -828,7 +937,13 @@ const handleSaveEdit = () => {
             </div>
              
               <div className="overflow-x-auto">
-                <table className="w-full text-left mt-4 border-collapse">
+                <DataTable 
+                  columns={siswaColumns}
+                  data={dataSiswa}
+                  // onEdit={handleEdit}
+                  // onDelete={handleDelete}
+                />
+                {/* <table className="w-full text-left mt-4 border-collapse">
                   <thead>
                     <tr className="ml-2">
                       <th className="p-2 sm:p-3 rounded-l-lg  bg-slate-500 text-white">No</th>
@@ -881,17 +996,17 @@ const handleSaveEdit = () => {
                         <td className="p-3 sm:p-3 text-white border-b text-center">
                           {item.noWali ? ( // Ganti student.phoneNumber dengan item.noWali
                             <a href={`https://wa.me/${item.noWali}`} target="_blank" rel="noopener noreferrer">   
-                              <i className="fab fa-whatsapp fa-lg"></i> {/* Ikon WhatsApp */}
+                              <i className="fab fa-whatsapp fa-lg"></i> 
                             </a>
                           ) : (
                             ""
                           )}
                         </td>
                         <td className="p-3 sm:p-3 text-white border-b text-center">
-                        {/* // Komponen DropdownMenu yang ditampilkan dalam tabel untuk setiap baris data.
+                         // Komponen DropdownMenu yang ditampilkan dalam tabel untuk setiap baris data.
                         // isOpen: Menentukan apakah dropdown saat ini terbuka berdasarkan nomor item.
                         // onClick: Fungsi untuk menangani aksi klik pada dropdown untuk membuka atau menutupnya.
-                        // onDelete: Fungsi untuk memicu proses penghapusan data ketika opsi 'Hapus' dalam dropdown diklik. */}
+                        // onDelete: Fungsi untuk memicu proses penghapusan data ketika opsi 'Hapus' dalam dropdown diklik.
                          <DropdownMenu
                             isOpen={openDropdown === item.no}
                             onClick={() => handleDropdownClick(item.no)}
@@ -902,7 +1017,7 @@ const handleSaveEdit = () => {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </table> */}
               </div>
 
                 
