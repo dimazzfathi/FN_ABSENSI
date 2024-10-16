@@ -1,13 +1,13 @@
 "use client";
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from "react";
 import Pw from "./pass";
-import { FaEye, FaEyeSlash } from 'react-icons/fa';
-import { fetchAdmins, Admin } from '../../api/admin';
-import DataTable from '../../components/dataTabel';
+import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { fetchAdmins, Admin } from "../../api/admin";
+import DataTable from "../../components/dataTabel";
 
 export default function DataSiswa() {
   // State untuk menyimpan nilai input
-  const [ttlValue, setTtlValue] = useState(""); 
+  const [ttlValue, setTtlValue] = useState("");
   const [namaSiswaValue, setNamaSiswaValue] = useState("");
   const [jkValue, setJkValue] = useState("");
   const [emailValue, setEmailValue] = useState("");
@@ -20,10 +20,10 @@ export default function DataSiswa() {
   const [fotoValue, setFotoValue] = useState(null); // State untuk foto
   const [previewURL, setPreviewURL] = useState(""); // State untuk URL preview foto
   const [isResettable, setIsResettable] = useState(false);
-  const [imagePreview, setImagePreview] = useState(null);// Untuk pratinjau gambar
-  
+  const [imagePreview, setImagePreview] = useState(null); // Untuk pratinjau gambar
+
   //State untuk menyimpan nilai edit
-  const [editTtlValue, setEditTtlValue] = useState(""); 
+  const [editTtlValue, setEditTtlValue] = useState("");
   const [editNamaSiswaValue, setEditNamaSiswaValue] = useState("");
   const [editJkValue, setEditJkValue] = useState("");
   const [editEmailValue, setEditEmailValue] = useState("");
@@ -35,8 +35,8 @@ export default function DataSiswa() {
   const [editPeranValue, setEditPeranValue] = useState("");
   const [editFotoValue, setEditFotoValue] = useState(null); // State untuk foto
   const [editPreviewURL, setEditPreviewURL] = useState(""); // State untuk URL preview foto
-  const [editImagePreview, setEditImagePreview] = useState(null);// Untuk pratinjau gambar
-  
+  const [editImagePreview, setEditImagePreview] = useState(null); // Untuk pratinjau gambar
+
   // State untuk menyimpan data tabel
   const [tableData, setTableData] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -56,17 +56,17 @@ export default function DataSiswa() {
 
   const [filterPeran, setFilterperan] = useState("");
   const [filterJurusan, setFilterJurusan] = useState("");
-  
+
   // useEffect to monitor changes and update isResettable
   useEffect(() => {
     const savedData = JSON.parse(localStorage.getItem("tableDataSiswa")) || [];
     setTableData(savedData);
-    if (filterPeran || filterJurusan  || searchTerm) {
+    if (filterPeran || filterJurusan || searchTerm) {
       setIsResettable(true);
     } else {
       setIsResettable(false);
     }
-  }, [filterPeran, filterJurusan , searchTerm]);
+  }, [filterPeran, filterJurusan, searchTerm]);
 
   const handleFilterChange = (setter) => (e) => {
     setter(e.target.value);
@@ -79,9 +79,9 @@ export default function DataSiswa() {
   // Handler untuk mereset filter
   const handleResetClick = () => {
     if (isResettable) {
-    setFilterperan('');
-    setFilterJurusan('');
-    setSearchTerm('');
+      setFilterperan("");
+      setFilterJurusan("");
+      setSearchTerm("");
     }
   };
 
@@ -90,10 +90,10 @@ export default function DataSiswa() {
     const savedData = JSON.parse(localStorage.getItem("tableDataSiswa")) || [];
     setTableData(savedData);
 
-    const savedImage = localStorage.getItem('profileImage');
-  if (savedImage) {
-    setImagePreview(savedImage);
-  }
+    const savedImage = localStorage.getItem("profileImage");
+    if (savedImage) {
+      setImagePreview(savedImage);
+    }
   }, []);
 
   const handleTtlChange = (e) => setTtlValue(e.target.value);
@@ -106,38 +106,38 @@ export default function DataSiswa() {
   // Fungsi untuk mengganti password dengan simbol asterisk
   const maskPassword = (password: string | undefined) => {
     if (password) {
-      return '*'.repeat(password.length);
+      return "*".repeat(password.length);
     }
-    return '';
+    return "";
   };
   const handleNoWaliChange = (e) => setNoWaliValue(e.target.value);
   const handlePeranChange = (e) => setPeranValue(e.target.value);
-  
+
   // Fungsi untuk menangani perubahan gambar profil
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setImagePreview(reader.result); // Menyimpan data URL gambar untuk pratayang
-          setFotoValue(reader.result); // Menyimpan data URL gambar untuk digunakan nanti
-        };
-        reader.readAsDataURL(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result); // Menyimpan data URL gambar untuk pratayang
+        setFotoValue(reader.result); // Menyimpan data URL gambar untuk digunakan nanti
+      };
+      reader.readAsDataURL(file);
     }
-};
+  };
 
-const [validationErrors, setValidationErrors] = useState({
-  namaSiswa: false,
-  ttl: false,
-  jk: false,
-  email: false,
-  alamat: false,
-  username: false,
-  password: false,
-  noWali: false,
-  peran: false,
-  foto: false,
-});
+  const [validationErrors, setValidationErrors] = useState({
+    namaSiswa: false,
+    ttl: false,
+    jk: false,
+    email: false,
+    alamat: false,
+    username: false,
+    password: false,
+    noWali: false,
+    peran: false,
+    foto: false,
+  });
   const namaSiswaRef = useRef(null);
   const ttlRef = useRef(null);
   const jkRef = useRef(null);
@@ -152,22 +152,22 @@ const [validationErrors, setValidationErrors] = useState({
   // Fungsi untuk menyimpan data baru ke dalam tabel
   const handleSaveClick = () => {
     const inputs = [
-      { value: namaSiswaValue, ref: namaSiswaRef, key: 'namaSiswa' },
-      { value: ttlValue, ref: ttlRef, key: 'ttl' },
-      { value: jkValue, ref: jkRef, key: 'jk' },
-      { value: emailValue, ref: emailRef, key: 'email' },
-      { value: alamatValue, ref: alamatRef, key: 'alamat' },
-      { value: usernameValue, ref: usernameRef, key: 'username' },
-      { value: passwordValue, ref: passwordRef, key: 'password' },
-      { value: noWaliValue, ref: noWaliRef, key: 'noWali' },
-      { value: peranValue, ref: peranRef, key: 'peran' },
-      { value: fotoValue, ref: fotoRef, key: 'foto' },
+      { value: namaSiswaValue, ref: namaSiswaRef, key: "namaSiswa" },
+      { value: ttlValue, ref: ttlRef, key: "ttl" },
+      { value: jkValue, ref: jkRef, key: "jk" },
+      { value: emailValue, ref: emailRef, key: "email" },
+      { value: alamatValue, ref: alamatRef, key: "alamat" },
+      { value: usernameValue, ref: usernameRef, key: "username" },
+      { value: passwordValue, ref: passwordRef, key: "password" },
+      { value: noWaliValue, ref: noWaliRef, key: "noWali" },
+      { value: peranValue, ref: peranRef, key: "peran" },
+      { value: fotoValue, ref: fotoRef, key: "foto" },
     ];
 
     const errors = {};
     let firstEmptyInput = null;
-  
-    inputs.forEach(input => {
+
+    inputs.forEach((input) => {
       if (!input.value) {
         errors[input.key] = true;
         if (!firstEmptyInput) {
@@ -177,9 +177,9 @@ const [validationErrors, setValidationErrors] = useState({
         errors[input.key] = false;
       }
     });
-  
+
     setValidationErrors(errors);
-  
+
     if (firstEmptyInput) {
       firstEmptyInput.current.focus();
       return;
@@ -187,7 +187,11 @@ const [validationErrors, setValidationErrors] = useState({
 
     const newData = [
       ...tableData,
-      { no: tableData.length > 0 ? Math.max(...tableData.map(item => item.no)) + 1 : 1,
+      {
+        no:
+          tableData.length > 0
+            ? Math.max(...tableData.map((item) => item.no)) + 1
+            : 1,
         namaSiswa: namaSiswaValue,
         ttl: ttlValue,
         jk: jkValue,
@@ -198,12 +202,12 @@ const [validationErrors, setValidationErrors] = useState({
         noWali: noWaliValue,
         foto: fotoValue || "", // Handle file URL
         peran: peranValue,
-        },
+      },
     ];
 
     setTableData(newData);
     localStorage.setItem("tableDataSiswa", JSON.stringify(newData)); // Simpan ke Local Storage
-  
+
     setPeranValue(""); // Mengosongkan input peran setelah disimpan
     setNoWaliValue("");
     setUsernameValue("");
@@ -218,14 +222,13 @@ const [validationErrors, setValidationErrors] = useState({
 
   const handleDownloadFormatClick = () => {
     // Logika untuk mengunduh file format
-    console.log('Unduh format');
+    console.log("Unduh format");
   };
 
   const handleUploadFileClick = () => {
     // Logika untuk mengunggah file
-    console.log('Upload file');
+    console.log("Upload file");
   };
-
 
   const handleEditClick = (item) => {
     setEditData(item);
@@ -245,7 +248,8 @@ const [validationErrors, setValidationErrors] = useState({
   const handleSaveEdit = () => {
     const updatedData = tableData.map((item) =>
       item.no === editData.no
-        ? { ...item,
+        ? {
+            ...item,
             namaSiswa: namaSiswaValue,
             ttl: ttlValue,
             jk: jkValue,
@@ -256,7 +260,7 @@ const [validationErrors, setValidationErrors] = useState({
             noWali: noWaliValue,
             foto: fotoValue || "", // Handle file URL
             peran: peranValue,
-             }
+          }
         : item
     );
     setTableData(updatedData);
@@ -287,12 +291,11 @@ const [validationErrors, setValidationErrors] = useState({
       ...item,
       no: index + 1,
     }));
-    
+
     setTableData(updatedData);
     localStorage.setItem("tableDataSiswa", JSON.stringify(updatedData)); // Update localStorage
     setConfirmDelete({ visible: false, id: null });
   };
-  
 
   const handleCancelDelete = () => {
     setConfirmDelete({ visible: false, id: null });
@@ -308,21 +311,28 @@ const [validationErrors, setValidationErrors] = useState({
   };
 
   // Filter dan pencarian logika
-  const filteredData = tableData.filter(item => {
+  const filteredData = tableData.filter((item) => {
     const searchLowerCase = searchTerm.toLowerCase();
 
     return (
       (filterPeran ? item.peran === filterPeran : true) &&
       (filterJurusan ? item.jurusan === filterJurusan : true) &&
-      (searchTerm ? (
-        (typeof item.ttl === 'string' && item.ttl.toLowerCase().includes(searchLowerCase)) ||
-        (typeof item.namaSiswa === 'string' && item.namaSiswa.toLowerCase().includes(searchLowerCase)) ||
-        (typeof item.peran === 'string' && item.peran.toLowerCase().includes(searchLowerCase)) ||
-        (typeof item.jurusan === 'string' && item.jurusan.toLowerCase().includes(searchLowerCase)) ||
-        (typeof item.jk === 'string' && item.jk.toLowerCase().includes(searchLowerCase)) ||
-        (typeof item.email === 'string' && item.email.toLowerCase().includes(searchLowerCase)) ||
-        (typeof item.noWali === 'string' && item.noWali.toLowerCase().includes(searchLowerCase))
-      ) : true)
+      (searchTerm
+        ? (typeof item.ttl === "string" &&
+            item.ttl.toLowerCase().includes(searchLowerCase)) ||
+          (typeof item.namaSiswa === "string" &&
+            item.namaSiswa.toLowerCase().includes(searchLowerCase)) ||
+          (typeof item.peran === "string" &&
+            item.peran.toLowerCase().includes(searchLowerCase)) ||
+          (typeof item.jurusan === "string" &&
+            item.jurusan.toLowerCase().includes(searchLowerCase)) ||
+          (typeof item.jk === "string" &&
+            item.jk.toLowerCase().includes(searchLowerCase)) ||
+          (typeof item.email === "string" &&
+            item.email.toLowerCase().includes(searchLowerCase)) ||
+          (typeof item.noWali === "string" &&
+            item.noWali.toLowerCase().includes(searchLowerCase))
+        : true)
     );
   });
 
@@ -340,48 +350,50 @@ const [validationErrors, setValidationErrors] = useState({
   );
 
   //List of Jk
-  const jkOptions =[
-    "Laki-Laki",
-    "Perempuan",
-  ]
+  const jkOptions = ["Laki-Laki", "Perempuan"];
 
   //List of class options
-  const peranOptions =[
-    "Guru",
-    "Siswa",
-    "Administrator",
-  ]
+  const peranOptions = ["Guru", "Siswa", "Administrator"];
 
   const [admins, setAdmins] = useState<Admin[]>([]);
 
   useEffect(() => {
     const loadAdmins = async () => {
       const response = await fetchAdmins();
-      console.log('API response:', response); // Debugging tambahan
-      const data = response.data; 
+      console.log("API response:", response); // Debugging tambahan
+      const data = response.data;
       setAdmins(data);
     };
     loadAdmins();
   }, []);
   const adminColumns = [
-    { header: 'ID', accessor: 'id_admin' as keyof Admin },
-    { header: 'Nama', accessor: 'nama_admin' as keyof Admin },
-    { header: 'Email', accessor: 'email' as keyof Admin },
+    { header: "No", accessor: "id_admin" as keyof Admin },
+    { header: "Nama", accessor: "nama_admin" as keyof Admin },
+    { header: "Alamat", accessor: "alamat" as keyof Admin },
+    { header: "Jk", accessor: "jenis_kelamin" as keyof Admin },
+    { header: "No telepon", accessor: "no_telp" as keyof Admin },
+    { header: "Email", accessor: "email" as keyof Admin },
+    // { header: 'Username', accessor: 'username' as keyof Admin },
+    // { header: 'Password', accessor: 'pass' as keyof Admin },
+    { header: "Foto", accessor: "foto" as keyof Admin },
+    { header: "Status", accessor: "status" as keyof Admin },
   ];
 
   const handleEdit = (updatedRow) => {
     setAdmins((prevAdmins) =>
-      prevAdmins.map((admin) =>
-        admin.id === updatedRow.id ? updatedRow : admin // Update row yang sesuai
+      prevAdmins.map(
+        (admin) => (admin.id === updatedRow.id ? updatedRow : admin) // Update row yang sesuai
       )
     );
   };
 
   const handleDelete = (deletedRow) => {
-    const confirmed = window.confirm(`Apakah Anda yakin ingin menghapus ${deletedRow.name}?`);
+    const confirmed = window.confirm(
+      `Apakah Anda yakin ingin menghapus ${deletedRow.name}?`
+    );
     if (confirmed) {
-      setAdmins((prevAdmins) =>
-        prevAdmins.filter((admin) => admin.id !== deletedRow.id) // Hapus data yang sesuai
+      setAdmins(
+        (prevAdmins) => prevAdmins.filter((admin) => admin.id !== deletedRow.id) // Hapus data yang sesuai
       );
     }
   };
@@ -394,13 +406,23 @@ const [validationErrors, setValidationErrors] = useState({
           <nav>
             <ol className="flex space-x-2 text-sm text-gray-700">
               <li>
-                <a href="index.html" className="text-teal-500 hover:underline hover:text-teal-600">Home</a>
+                <a
+                  href="index.html"
+                  className="text-teal-500 hover:underline hover:text-teal-600"
+                >
+                  Home
+                </a>
               </li>
               <li>
                 <span className="text-gray-500">/</span>
               </li>
               <li>
-                <a href="#" className="text-teal-500 hover:text-teal-600 hover:underline">Administrator</a>
+                <a
+                  href="#"
+                  className="text-teal-500 hover:text-teal-600 hover:underline"
+                >
+                  Administrator
+                </a>
               </li>
               <li>
                 <span className="text-gray-500">/</span>
@@ -414,104 +436,160 @@ const [validationErrors, setValidationErrors] = useState({
           {/* Column 1: Input */}
           <div className="w-full lg:w-1/3 p-4 lg:p-6">
             <div className="bg-white rounded-lg shadow-md p-4 lg:p-6 border">
-            <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold"> Nama Siswa</h2>
+              <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold">
+                {" "}
+                Nama Siswa
+              </h2>
+              <input
+                type="text"
+                value={namaSiswaValue}
+                onChange={handleNamaSiswaChange}
+                ref={namaSiswaRef}
+                className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${
+                  validationErrors.namaSiswa
+                    ? "border-red-500"
+                    : "border-gray-300"
+                }`}
+                placeholder="Nama Siswa..."
+              />
+              <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold">
+                {" "}
+                Tempat Tanggal Lahir
+              </h2>
+              <input
+                type="text"
+                value={ttlValue}
+                onChange={handleTtlChange}
+                ref={ttlRef}
+                className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${
+                  validationErrors.ttl ? "border-red-500" : "border-gray-300"
+                }`}
+                placeholder="Tempat Tanggal Lahir..."
+              />
+              <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold">
+                {" "}
+                Jenis Kelamin
+              </h2>
+              <select
+                value={jkValue}
+                onChange={handleJkChange}
+                ref={jkRef}
+                className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${
+                  validationErrors.jk ? "border-red-500" : "border-gray-300"
+                }`}
+              >
+                <option value="">Pilih Jenis Kelamin...</option>
+                {jkOptions.map((option, index) => (
+                  <option key={index} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+              <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold">
+                {" "}
+                Alamat
+              </h2>
+              <input
+                type="alamat"
+                value={alamatValue}
+                onChange={handleAlamatChange}
+                ref={alamatRef}
+                className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${
+                  validationErrors.alamat ? "border-red-500" : "border-gray-300"
+                }`}
+                placeholder="Alamat..."
+              />
+              <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold">
+                {" "}
+                Email
+              </h2>
+              <input
+                type="email"
+                value={emailValue}
+                onChange={handleEmailChange}
+                ref={emailRef}
+                className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${
+                  validationErrors.email ? "border-red-500" : "border-gray-300"
+                }`}
+                placeholder="Email..."
+              />
+              <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold">
+                {" "}
+                Username
+              </h2>
+              <input
+                type="username"
+                value={usernameValue}
+                onChange={handleUsernameChange}
+                ref={usernameRef}
+                className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${
+                  validationErrors.username
+                    ? "border-red-500"
+                    : "border-gray-300"
+                }`}
+                placeholder="Username..."
+              />
+              <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold">
+                {" "}
+                Password
+              </h2>
+              <div className="relative w-full">
                 <input
-                    type="text"
-                    value={namaSiswaValue}
-                    onChange={handleNamaSiswaChange}
-                    ref={namaSiswaRef}
-                    className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${validationErrors.namaSiswa ? 'border-red-500' : 'border-gray-300'}`}
-                    placeholder="Nama Siswa..."
-                />
-            <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold"> Tempat Tanggal Lahir</h2>
-                <input
-                    type="text"
-                    value={ttlValue}
-                    onChange={handleTtlChange}
-                    ref={ttlRef}
-                    className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${validationErrors.ttl ? 'border-red-500' : 'border-gray-300'}`}
-                    placeholder="Tempat Tanggal Lahir..."
-                />
-            <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold"> Jenis Kelamin</h2>
-                <select
-                    value={jkValue}
-                    onChange={handleJkChange}
-                    ref={jkRef}
-                    className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${validationErrors.jk ? 'border-red-500' : 'border-gray-300'}`}
-                 >
-                    <option value="">Pilih Jenis Kelamin...</option>
-                        {jkOptions.map((option, index) => (
-                        <option key={index} value={option}>
-                            {option}
-                        </option>
-                        ))}
-                </select> 
-                <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold"> Alamat</h2>
-                <input
-                    type="alamat"
-                    value={alamatValue}
-                    onChange={handleAlamatChange}
-                    ref={alamatRef}
-                    className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${validationErrors.alamat ? 'border-red-500' : 'border-gray-300'}`}
-                    placeholder="Alamat..."
-                />
-            <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold"> Email</h2>
-                <input
-                    type="email"
-                    value={emailValue}
-                    onChange={handleEmailChange}
-                    ref={emailRef}
-                    className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${validationErrors.email ? 'border-red-500' : 'border-gray-300'}`}
-                    placeholder="Email..."
-                />
-            <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold"> Username</h2>
-                <input
-                    type="username"
-                    value={usernameValue}
-                    onChange={handleUsernameChange}
-                    ref={usernameRef}
-                    className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${validationErrors.username ? 'border-red-500' : 'border-gray-300'}`}
-                    placeholder="Username..."
-                />
-            <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold"> Password</h2>
-            <div className="relative w-full">
-                <input
-                    type={passwordVisible ? 'text' : 'password'}
-                    value={passwordValue}
-                    onChange={handlePasswordChange}
-                    ref={passwordRef}
-                    className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${validationErrors.password ? 'border-red-500' : 'border-gray-300'}`}
-                    placeholder="Password..."
+                  type={passwordVisible ? "text" : "password"}
+                  value={passwordValue}
+                  onChange={handlePasswordChange}
+                  ref={passwordRef}
+                  className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${
+                    validationErrors.password
+                      ? "border-red-500"
+                      : "border-gray-300"
+                  }`}
+                  placeholder="Password..."
                 />
                 <span
-                    onClick={togglePasswordVisibility}
-                    className="absolute inset-y-0 right-2 pb-2 flex items-center cursor-pointer text-gray-600"
+                  onClick={togglePasswordVisibility}
+                  className="absolute inset-y-0 right-2 pb-2 flex items-center cursor-pointer text-gray-600"
                 >
-                    {passwordVisible ? <FaEye /> : <FaEyeSlash /> }
+                  {passwordVisible ? <FaEye /> : <FaEyeSlash />}
                 </span>
-            </div>
-            <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold"> No Telepon</h2>
-                <input
-                    type="text"
-                    value={noWaliValue}
-                    onChange={handleNoWaliChange}
-                    ref={noWaliRef}
-                    className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${validationErrors.noWali ? 'border-red-500' : 'border-gray-300'}`}
-                    placeholder="No Telepon..."
-                />
-            <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold"> Foto</h2>
-                <input
-                    type="file"
-                    onChange={handleImageChange}
-                    ref={fotoRef}
-                    className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${validationErrors.foto ? 'border-red-500' : 'border-gray-300'}`}
-                />
-              <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold"> Peran</h2>
+              </div>
+              <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold">
+                {" "}
+                No Telepon
+              </h2>
+              <input
+                type="text"
+                value={noWaliValue}
+                onChange={handleNoWaliChange}
+                ref={noWaliRef}
+                className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${
+                  validationErrors.noWali ? "border-red-500" : "border-gray-300"
+                }`}
+                placeholder="No Telepon..."
+              />
+              <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold">
+                {" "}
+                Foto
+              </h2>
+              <input
+                type="file"
+                onChange={handleImageChange}
+                ref={fotoRef}
+                className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${
+                  validationErrors.foto ? "border-red-500" : "border-gray-300"
+                }`}
+              />
+              <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold">
+                {" "}
+                Peran
+              </h2>
               <select
                 value={peranValue}
                 onChange={handlePeranChange}
                 ref={peranRef}
-                className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${validationErrors.peran ? 'border-red-500' : 'border-gray-300'}`}
+                className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${
+                  validationErrors.peran ? "border-red-500" : "border-gray-300"
+                }`}
               >
                 <option value="">Pilih Peran...</option>
                 {peranOptions.map((option, index) => (
@@ -523,12 +601,12 @@ const [validationErrors, setValidationErrors] = useState({
               <div className="mt-4 flex justify-end items-center">
                 {/* Tombol Simpan */}
                 <div className="flex m-4 space-x-2">
-                <button
-                  onClick={handleSaveClick}
-                   className="px-3 py-2 sm:px-4 sm:py-2 bg-teal-400 hover:bg-teal-500 text-white items-end-end rounded text-sm sm:text-base"
-                >
-                  Simpan
-                </button>
+                  <button
+                    onClick={handleSaveClick}
+                    className="px-3 py-2 sm:px-4 sm:py-2 bg-teal-400 hover:bg-teal-500 text-white items-end-end rounded text-sm sm:text-base"
+                  >
+                    Simpan
+                  </button>
                 </div>
               </div>
             </div>
@@ -536,49 +614,52 @@ const [validationErrors, setValidationErrors] = useState({
           {/* Column 2: Table */}
           <div className="w-full  lg:w-2/3 p-4 lg:p-6">
             <div className="bg-white rounded-lg shadow-md p-4 lg:p-6 border">
-             <div className="bg-slate-600 px-2 rounded-xl">
-              <div className="flex flex-col lg:flex-row justify-between mb-4">
-                <div className="p-2">
-                  <h2 className="text-sm pt-3 sm:text-2xl text-white font-bold">
-                    Tabel Add USer
-                  </h2>
-                </div>          
-              </div>
-             {/* Filter Dropdown */}
-            <div className="grid grid-cols-1 sm:grid-cols-6 gap-4 mt-4">
-            <div className="lg:flex-row justify-between items-center">
-              <div className=" items-center lg:mb-0 space-x-2 mb-3 lg:order-1">
+              <div className="bg-slate-600 px-2 rounded-xl">
+                <div className="flex flex-col lg:flex-row justify-between mb-4">
+                  <div className="p-2">
+                    <h2 className="text-sm pt-3 sm:text-2xl text-white font-bold">
+                      Tabel Add USer
+                    </h2>
+                  </div>
+                </div>
+                {/* Filter Dropdown */}
+                <div className="grid grid-cols-1 sm:grid-cols-6 gap-4 mt-4">
+                  <div className="lg:flex-row justify-between items-center">
+                    <div className=" items-center lg:mb-0 space-x-2 mb-3 lg:order-1">
+                      <select
+                        id="itemsPerPage"
+                        value={itemsPerPage}
+                        onChange={handleItemsPerPageChange}
+                        className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base"
+                      >
+                        <option value={5}>5</option>
+                        <option value={10}>10</option>
+                        <option value={20}>20</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="">
+                    <label
+                      htmlFor="filterPeran"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      {/* Filter peran */}
+                    </label>
                     <select
-                      id="itemsPerPage"
-                      value={itemsPerPage}
-                      onChange={handleItemsPerPageChange}
+                      id="filterPeran"
+                      value={filterPeran}
+                      onChange={handleFilterChange(setFilterperan)}
                       className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base"
                     >
-                      <option value={5}>5</option>
-                      <option value={10}>10</option>
-                      <option value={20}>20</option>
+                      <option value="">Semua peran</option>
+                      {peranOptions.map((peran, index) => (
+                        <option key={index} value={peran}>
+                          {peran}
+                        </option>
+                      ))}
                     </select>
-              </div>
-            </div>
-              <div className=''>
-                <label htmlFor="filterPeran" className="block text-sm font-medium text-gray-700">
-                  {/* Filter peran */}
-                </label>
-                <select
-                    id="filterPeran"
-                    value={filterPeran}
-                    onChange={handleFilterChange(setFilterperan)}
-                    className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base"
-                >
-                  <option value="">Semua peran</option>
-                  {peranOptions.map((peran, index) => (
-                    <option key={index} value={peran}>
-                      {peran}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className=" items-center lg:mb-0 space-x-2 lg:order-1">
+                  </div>
+                  <div className=" items-center lg:mb-0 space-x-2 lg:order-1">
                     <input
                       type="text"
                       placeholder="Cari..."
@@ -586,29 +667,29 @@ const [validationErrors, setValidationErrors] = useState({
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base"
                     />
-              </div>
-                  <div className=" items-center lg:mb-0 space-x-2 lg:order-1">
-                  <button
-              onClick={handleResetClick}
-              disabled={!isResettable}
-              className={`w-full p-2 rounded text-sm sm:text-base transition z-20 ${
-                isResettable
-                  ? "text-white bg-red-500 hover:bg-red-600 cursor-pointer"
-                  : "text-gray-400 bg-gray-300 cursor-not-allowed"
-              }`}
-            >
-              <p>Reset</p>
-            </button >
                   </div>
-            </div>
-              <div className="overflow-x-auto">
-              <DataTable 
-              columns={adminColumns} 
-              data={admins}
-              onEdit={handleEdit}    // Fungsi ini dipassing ke komponen DataTable
-              onDelete={handleDelete} 
-               />
-                {/* <table className="w-full text-left mt-4 border-collapse">
+                  <div className=" items-center lg:mb-0 space-x-2 lg:order-1">
+                    <button
+                      onClick={handleResetClick}
+                      disabled={!isResettable}
+                      className={`w-full p-2 rounded text-sm sm:text-base transition z-20 ${
+                        isResettable
+                          ? "text-white bg-red-500 hover:bg-red-600 cursor-pointer"
+                          : "text-gray-400 bg-gray-300 cursor-not-allowed"
+                      }`}
+                    >
+                      <p>Reset</p>
+                    </button>
+                  </div>
+                </div>
+                <div className="overflow-x-auto">
+                  <DataTable
+                    columns={adminColumns}
+                    data={admins}
+                    onEdit={handleEdit} // Fungsi ini dipassing ke komponen DataTable
+                    onDelete={handleDelete}
+                  />
+                  {/* <table className="w-full text-left mt-4 border-collapse">
                   <thead>
                     <tr className="ml-2">
                       <th className="p-2 sm:p-3 rounded-l-lg  bg-slate-500 text-white">No</th>
@@ -683,34 +764,38 @@ const [validationErrors, setValidationErrors] = useState({
                     ))}
                   </tbody>
                 </table> */}
-              </div>
-              <div className="mt-4 flex justify-between items-center">
-              <div className="text-sm text-gray-700 text-white">
-                Halaman {currentPage} dari {totalPages}
-              </div>
-              <div className="flex m-4 space-x-2">
-                <button
-                  onClick={() => setCurrentPage(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className={`px-2 py-1 border rounded ${
-                    currentPage === 1 ? "bg-gray-300" : "bg-teal-400 hover:bg-teal-600 text-white"
-                  }`}
-                >
-                  Previous
-                </button>
-                <button
-                  onClick={() => setCurrentPage(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className={`px-2 py-1 border rounded ${
-                    currentPage === totalPages ? "bg-gray-300" : "bg-teal-400 hover:bg-teal-600 text-white"
-                  }`}
-                >
-                  Next
-                </button>
+                </div>
+                <div className="mt-4 flex justify-between items-center">
+                  <div className="text-sm text-gray-700 text-white">
+                    Halaman {currentPage} dari {totalPages}
+                  </div>
+                  <div className="flex m-4 space-x-2">
+                    <button
+                      onClick={() => setCurrentPage(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className={`px-2 py-1 border rounded ${
+                        currentPage === 1
+                          ? "bg-gray-300"
+                          : "bg-teal-400 hover:bg-teal-600 text-white"
+                      }`}
+                    >
+                      Previous
+                    </button>
+                    <button
+                      onClick={() => setCurrentPage(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className={`px-2 py-1 border rounded ${
+                        currentPage === totalPages
+                          ? "bg-gray-300"
+                          : "bg-teal-400 hover:bg-teal-600 text-white"
+                      }`}
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
-            </div>
-          </div>
           </div>
         </div>
         {/* Modal untuk konfirmasi penghapusan */}
@@ -773,7 +858,7 @@ const [validationErrors, setValidationErrors] = useState({
                 onChange={(e) => setEditAlamatValue(e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
                 placeholder="Alamat..."
-                />
+              />
               <input
                 type="username"
                 value={editUsernameValue}
@@ -787,22 +872,22 @@ const [validationErrors, setValidationErrors] = useState({
                 onChange={(e) => setEditEmailValue(e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
                 placeholder="Email..."
-                />
+              />
               <div className="relative w-full">
                 <input
-                    type={passwordVisible ? 'text' : 'password'}
-                    value={editPasswordValue}
-                    onChange={(e) => setEditPasswordValue(e.target.value)}
-                    className="w-full p-2 pr-10 border border-gray-300 rounded text-sm sm:text-base mb-2"
-                    placeholder="Password..."
+                  type={passwordVisible ? "text" : "password"}
+                  value={editPasswordValue}
+                  onChange={(e) => setEditPasswordValue(e.target.value)}
+                  className="w-full p-2 pr-10 border border-gray-300 rounded text-sm sm:text-base mb-2"
+                  placeholder="Password..."
                 />
                 <span
-                    onClick={togglePasswordVisibility}
-                    className="absolute inset-y-0 right-2 pb-2 flex items-center cursor-pointer text-gray-600"
+                  onClick={togglePasswordVisibility}
+                  className="absolute inset-y-0 right-2 pb-2 flex items-center cursor-pointer text-gray-600"
                 >
-                    {passwordVisible ? <FaEye /> : <FaEyeSlash /> }
+                  {passwordVisible ? <FaEye /> : <FaEyeSlash />}
                 </span>
-            </div>
+              </div>
               <input
                 type="text"
                 value={editNoWaliValue}
@@ -811,10 +896,11 @@ const [validationErrors, setValidationErrors] = useState({
                 placeholder="No Wali..."
               />
               {/* Input untuk mengedit foto */}
-              <input type="file"
-               onChange={(e) => setEditFotoValue(e.target.value)}
+              <input
+                type="file"
+                onChange={(e) => setEditFotoValue(e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
-               />
+              />
               <select
                 value={editPeranValue}
                 onChange={(e) => setEditPeranValue(e.target.value)}
@@ -847,135 +933,139 @@ const [validationErrors, setValidationErrors] = useState({
       </div>
     </>
   );
-}// Komponen DropdownMenu yang menampilkan menu aksi untuk setiap item dalam tabel.
+} // Komponen DropdownMenu yang menampilkan menu aksi untuk setiap item dalam tabel.
 // isOpen: Properti boolean yang menentukan apakah menu dropdown saat ini terbuka.
 // onClick: Fungsi callback yang dipanggil saat tombol dropdown diklik, untuk membuka atau menutup menu.
 // onDelete: Fungsi callback yang dipanggil saat opsi 'Hapus' dipilih dari menu dropdown.
 function DropdownMenu({ isOpen, onClick, onEdit, onDelete, onClose }) {
-    const dropdownRef = useRef(null);
-  
-    //Fungsi untuk menutup dropdown saat pengguna mengklik di luar dropdown.
-    const handleClickOutside = (event) => {
-      console.log('Clicked outside'); // Debugging
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        console.log('Outside detected'); // Debugging
-        if (typeof onClose === 'function') {
-          onClose(); // Memanggil fungsi onClose untuk menutup dropdown
-        }
-      }
-    };
-    //untuk detail
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [confirmedPassword, setConfirmedPassword] = useState('');
+  const dropdownRef = useRef(null);
 
-    const handleDetailClick = () => {
-      setIsModalOpen(true);
-      if (typeof onClose === 'function') {
-        onClose(); // Menutup dropdown setelah detail diklik
+  //Fungsi untuk menutup dropdown saat pengguna mengklik di luar dropdown.
+  const handleClickOutside = (event) => {
+    console.log("Clicked outside"); // Debugging
+    if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      console.log("Outside detected"); // Debugging
+      if (typeof onClose === "function") {
+        onClose(); // Memanggil fungsi onClose untuk menutup dropdown
       }
+    }
+  };
+  //untuk detail
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [confirmedPassword, setConfirmedPassword] = useState("");
+
+  const handleDetailClick = () => {
+    setIsModalOpen(true);
+    if (typeof onClose === "function") {
+      onClose(); // Menutup dropdown setelah detail diklik
+    }
+  };
+  const handleConfirm = (password) => {
+    setConfirmedPassword(password); // Menyimpan password di state
+  };
+  //detail end
+
+  useEffect(() => {
+    console.log("Effect ran", isOpen); // Debugging
+    // Menambahkan event listener untuk menangani klik di luar dropdown jika dropdown terbuka.
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      // Menghapus event listener ketika dropdown ditutup.
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+
+    // Cleanup function untuk menghapus event listener saat komponen di-unmount atau isOpen berubah.
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      console.log("Cleanup"); // Debugging
     };
-    const handleConfirm = (password) => {
-      setConfirmedPassword(password); // Menyimpan password di state
-    };
-    //detail end
-  
-    useEffect(() => {
-      console.log('Effect ran', isOpen); // Debugging
-      // Menambahkan event listener untuk menangani klik di luar dropdown jika dropdown terbuka.
-      if (isOpen) {
-        document.addEventListener('mousedown', handleClickOutside);
-      } else {
-        // Menghapus event listener ketika dropdown ditutup.
-        document.removeEventListener('mousedown', handleClickOutside);
-      }
-  
-      // Cleanup function untuk menghapus event listener saat komponen di-unmount atau isOpen berubah.
-      return () => {
-        document.removeEventListener('mousedown', handleClickOutside);
-        console.log('Cleanup'); // Debugging
-      };
-    }, [isOpen]);
-  
-    return (
-      <div className="relative" ref={dropdownRef}>
-        <button
-          onClick={onClick}
-          className="p-1 z-40 text-white text-xs sm:text-sm"
+  }, [isOpen]);
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        onClick={onClick}
+        className="p-1 z-40 text-white text-xs sm:text-sm"
+      >
+        &#8942;
+      </button>
+      {isOpen && (
+        <div
+          className="absolute z-50 mt-1 w-24 sm:w-32 bg-slate-600 border rounded-md shadow-lg"
+          style={{ left: "-62px", top: "20px" }} // Menggeser dropdown ke kiri
         >
-          &#8942;
-        </button>
-        {isOpen && (
-          <div
-            className="absolute z-50 mt-1 w-24 sm:w-32 bg-slate-600 border rounded-md shadow-lg"
-            style={{ left: '-62px', top: '20px' }} // Menggeser dropdown ke kiri
+          <button
+            className="block w-full px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm hover:bg-slate-500"
+            onClick={handleDetailClick}
           >
-            <button
-              className="block w-full px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm hover:bg-slate-500"
-              onClick={handleDetailClick}
-            >
-              Detail
-            </button>
-            <Pw isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onConfirm={handleConfirm} />
-            <button
-              onClick={() => {
-                onEdit();
-                if (typeof onClose === 'function') {
-                  onClose(); // Menutup dropdown setelah edit diklik
-                }
-              }}
-              className="block w-full px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm hover:bg-slate-500"
-            >
-              Edit
-            </button>
-            <button
-              onClick={() => {
-                onDelete();
-                if (typeof onClose === 'function') {
-                  onClose(); // Menutup dropdown setelah delete diklik
-                }
-              }}
-              className="block w-full px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm hover:bg-slate-500"
-            >
-              Hapus
-            </button>
-          </div>
-        )}
-      </div>
-    );
-  }
-  
-function FileUpload() {
-    const [file, setFile] = useState(null);
-    const fileInputRef = useRef(null);
-  
-    const handleFileChange = (event) => {
-      const selectedFile = event.target.files[0];
-      setFile(selectedFile);
-    };
-  
-    const handleClearFile = () => {
-      setFile(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''; // Reset input file
-      }
-    };
-  
-    return (
-      <div>
-        <input
-          type="file"
-          ref={fileInputRef}
-          onChange={handleFileChange}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2"
-        />
-        {file && (
-          <img
-            src={URL.createObjectURL(file)}
-            alt="Preview"
-            className="w-full border border-gray-300 rounded-lg mt-4"
+            Detail
+          </button>
+          <Pw
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            onConfirm={handleConfirm}
           />
-        )}
-        <button onClick={handleClearFile}>Clear File</button>
-      </div>
-    );
-  }
+          <button
+            onClick={() => {
+              onEdit();
+              if (typeof onClose === "function") {
+                onClose(); // Menutup dropdown setelah edit diklik
+              }
+            }}
+            className="block w-full px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm hover:bg-slate-500"
+          >
+            Edit
+          </button>
+          <button
+            onClick={() => {
+              onDelete();
+              if (typeof onClose === "function") {
+                onClose(); // Menutup dropdown setelah delete diklik
+              }
+            }}
+            className="block w-full px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm hover:bg-slate-500"
+          >
+            Hapus
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FileUpload() {
+  const [file, setFile] = useState(null);
+  const fileInputRef = useRef(null);
+
+  const handleFileChange = (event) => {
+    const selectedFile = event.target.files[0];
+    setFile(selectedFile);
+  };
+
+  const handleClearFile = () => {
+    setFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""; // Reset input file
+    }
+  };
+
+  return (
+    <div>
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        className="w-full border border-gray-300 rounded-lg px-3 py-2"
+      />
+      {file && (
+        <img
+          src={URL.createObjectURL(file)}
+          alt="Preview"
+          className="w-full border border-gray-300 rounded-lg mt-4"
+        />
+      )}
+      <button onClick={handleClearFile}>Clear File</button>
+    </div>
+  );
+}

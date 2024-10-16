@@ -21,6 +21,6 @@
       "@/*": ["./*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "app/master_data/akademik/thn_ajaran/PlusIcons.jsx"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "app/master_data/akademik/thn_ajaran/PlusIcons.jsx", "app/master_data/akademik/kelas/hal.js"],
   "exclude": ["node_modules"]
 }

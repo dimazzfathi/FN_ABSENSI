@@ -1,7 +1,7 @@
 "use client";
-import React, { useState } from 'react';
-import DropdownMenu from './dropdown';
-import EditForm from './EditForm'; // Import komponen EditForm
+import React, { useState } from "react";
+import DropdownMenu from "./dropdown";
+import EditForm from "./EditForm"; // Import komponen EditForm
 
 type DataTableProps<T> = {
   columns: { header: string; accessor: keyof T }[];
@@ -20,7 +20,7 @@ const DataTable = <T,>({
   const [editingRow, setEditingRow] = useState<T | null>(null); // State untuk data yang sedang diedit
 
   const handleDropdownClick = (rowIndex: number) => {
-    setOpenDropdown(prevIndex => (prevIndex === rowIndex ? null : rowIndex));
+    setOpenDropdown((prevIndex) => (prevIndex === rowIndex ? null : rowIndex));
   };
 
   const handleEditClick = (row: T, rowIndex: number) => {
@@ -34,7 +34,7 @@ const DataTable = <T,>({
   };
 
   const handleUpdate = (updatedRow: T) => {
-    console.log('Updating row:', updatedRow);
+    console.log("Updating row:", updatedRow);
     if (onEdit) {
       onEdit(updatedRow);
       setEditingRow(null);
@@ -42,45 +42,54 @@ const DataTable = <T,>({
   };
 
   return (
-    <div className="w-full lg:w-2/3 p-4 lg:p-6">
+    <div className="w-full lg:w-2/2 ">
       {/* <div className="bg-white rounded-lg shadow-md p-4 lg:p-6 border"> */}
-        {/* <div className="bg-slate-600 px-2 rounded-xl"> */}
-          <div className="overflow-x-auto">
-            {/* Tambahkan console.log di sini untuk memeriksa apakah data adalah array */}
-          {/* {console.log(Array.isArray(data), data)} */}
-            <table className="w-full text-left mt-4 border-collapse">
-              <thead>
-                <tr className="ml-2">
-                  {columns.map((column, index) => (
-                    <th className="p-2 sm:p-3 bg-slate-500 text-white" key={index}>
-                      {column.header}
-                    </th>
-                  ))}
-                  <th className="p-2 sm:p-3 bg-slate-500 text-white">Aksi</th>{/* Kolom aksi */}
-                </tr>
-              </thead>
-              <tbody>
-              {Array.isArray(data) && data.map((row, rowIndex) => (
-                  <tr key={rowIndex}>
-                    {columns.map((column, colIndex) => (
-                      <td className="p-3 sm:p-3 text-black border-b z-50" key={colIndex}>
-                        {row[column.accessor]}
-                      </td>
-                    ))}
-                    <td className="p-3 sm:p-3 text-black border-b">
-                      <DropdownMenu
-                        isOpen={openDropdown === rowIndex}
-                        onClick={() => handleDropdownClick(rowIndex)}
-                        onEdit={() => handleEditClick(row, rowIndex)}
-                        onDelete={() => handleDeleteClick(row)}
-                      />
+      {/* <div className="bg-slate-600 px-2 rounded-xl"> */}
+      <div className="overflow-x-auto">
+        {/* Tambahkan console.log di sini untuk memeriksa apakah data adalah array */}
+        {/* {console.log(Array.isArray(data), data)} */}
+        <table className="w-full text-left mt-4 border-collapse">
+          <thead>
+            <tr className="ml-2">
+              <th className="p-2 sm:p-3 bg-slate-500 text-white">No</th>
+              {columns.map((column, index) => (
+                <th className="p-2 sm:p-3 bg-slate-500 text-white" key={index}>
+                  {column.header}
+                </th>
+              ))}
+              <th className="p-2 sm:p-3 bg-slate-500 text-white">Aksi</th>
+              {/* Kolom aksi */}
+            </tr>
+          </thead>
+          <tbody>
+            {Array.isArray(data) &&
+              data.map((row, rowIndex) => (
+                <tr key={rowIndex}>
+                  <td className="p-3 sm:p-3 text-black border-b z-50">
+                    {rowIndex + 1} {/* Menampilkan nomor urut */}
+                  </td>
+                  {columns.map((column, colIndex) => (
+                    <td
+                      className="p-3 sm:p-3 text-black border-b z-50"
+                      key={colIndex}
+                    >
+                      {row[column.accessor]}
                     </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        {/* </div> */}
+                  ))}
+                  <td className="p-3 sm:p-3 text-black border-b">
+                    <DropdownMenu
+                      isOpen={openDropdown === rowIndex}
+                      onClick={() => handleDropdownClick(rowIndex)}
+                      onEdit={() => handleEditClick(row, rowIndex)}
+                      onDelete={() => handleDeleteClick(row)}
+                    />
+                  </td>
+                </tr>
+              ))}
+          </tbody>
+        </table>
+      </div>
+      {/* </div> */}
       {/* </div> */}
       {/* Tampilkan form edit jika ada data yang sedang diedit */}
       {editingRow && (

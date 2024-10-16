@@ -24,7 +24,7 @@ export const fetchTahunAjaran = async (): Promise<TahunAjaran[]> => {
 export const addTahunAjaran = async (tahunAjaranData: TahunAjaran) => {
   try {
     console.log("Mengirim data ke API:", tahunAjaranData); // Tambahkan log untuk data yang dikirim
-    const response = await axios.post(`${baseUrl}/tahun-pelajaran/new-tahun-pelajaran`, tahunAjaranData);
+    const response = await axios.post(`${baseUrl}/tahun-pelajaran/add-tahun-pelajaran`, tahunAjaranData);
     console.log("Respons dari API:", response.data); // Tambahkan log untuk respons dari API
     return response.data;
   } catch (error) {

@@ -13,6 +13,7 @@ export type Admin = {
 export const fetchAdmins = async (): Promise<Admin[]> => {
   try {
     const res = await axios.get(`${baseUrl}/admin/all-Admin`);
+    
     console.log(res)
     return res.data as Admin[];
   } catch (error) {

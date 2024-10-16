@@ -8,8 +8,7 @@ import { HomeIcon, AcademicCapIcon, UserGroupIcon, CogIcon } from '@heroicons/re
 import { ClipboardDocumentIcon, ChartBarIcon, CalendarIcon, UserCircleIcon, ChevronUpIcon, ChevronDownIcon, LogoutIcon } from '@heroicons/react/24/outline';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSignOutAlt } from '@fortawesome/free-solid-svg-icons'
-import { fetchAdmins, Admin } from '../../api/admin';
-import DataTable from '../dataTabel';
+import useUserInfo from '../useUserInfo';  // Pastikan path file sesuai
 
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -90,17 +89,8 @@ const handleLogout = async () => {
     console.error('Error during logout:', error);
   }
 };
-const [admins, setAdmins] = useState<Admin[]>([]);
 
-useEffect(() => {
-  const loadAdmins = async () => {
-    const response = await fetchAdmins();
-    console.log('API response:', response); // Debugging tambahan
-    const data = response.data; 
-    setAdmins(data);
-  };
-  loadAdmins();
-}, []);
+const { namaAdmin, status } = useUserInfo();
 
     return (
     <>
@@ -134,14 +124,8 @@ useEffect(() => {
                 <div className="block">
                     <div className="ml-4 flex items-center space-x-4">
                     <span className="hidden text-right md:block">
-                      
-                      {admins.map((admin) => (
-                        <p key={admin.id_admin}>
-                          <span className='text-sm font-medium'>{admin.nama_admin}</span>
-                          <span className='block text-xs'>{admin.status}</span>
-                          </p>
-                      ))}
-                      
+                      <span>{namaAdmin}</span>
+                      <span className='block text-xs'>{status}</span>
                       {/* <span className='block text-xs text-dark'>Admin</span> */}
                     </span>
                     <span className='w-10 h-10 rounded-full'>
