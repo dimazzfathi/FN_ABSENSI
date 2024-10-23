@@ -1,201 +1,155 @@
 "use client";
-import { useState, useEffect, useRef } from 'react';
-
+import { useState, useEffect, useRef } from "react";
+import DataTable from "../../../components/dataTabel";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import axios from "axios";
+import Cookies from "js-cookie"; // Import js-cookie
+import { useRouter } from "next/navigation";
+import {
+  addRombel,
+  fetchRombel,
+  deleteRombel,
+  updateRombel,
+  Rombel,
+} from "../../../api/rombel";
 export default function Rombel() {
   // State untuk menyimpan nilai input 
  
-  const [jurusanValue, setJurusanValue] = useState("");
-  const [editJurusanValue, setEditJurusanValue] = useState("");
-  const [isResettable, setIsResettable] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const jurusanInputRef = useRef(null);
-
-  // State untuk menyimpan data tabel
-  const [tableData, setTableData] = useState([]);
+  const [isRombelValid, setIsRombelValid] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [dataRombel, setDataRombel] = useState<Rombel[]>([]);
 
-  // State untuk dropdown dan modals
-  const [openDropdown, setOpenDropdown] = useState(null);
-  const [confirmDelete, setConfirmDelete] = useState({
-    visible: false,
-    id: null,
+  const [formData, setFormData] = useState({
+    nama_rombel: '',
   });
-  const [editData, setEditData] = useState(null);
-  const [showEditModal, setShowEditModal] = useState(false);
-
-  // State untuk pagination
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(5);
-
-  const [filterKelas, setFilterKelas] = useState("");
-  const [filterJurusan, setFilterJurusan] = useState("");
-  
-  // useEffect to monitor changes and update isResettable
-  useEffect(() => {
-    // Ambil data dari localStorage
-    const storedData = localStorage.getItem("tableDataJurusan");
-  
-    // Lakukan parsing hanya jika storedData ada dan bukan nilai kosong
-    let savedData = [];
-    try {
-      savedData = storedData ? JSON.parse(storedData) : [];
-    } catch (error) {
-      console.error("Error parsing JSON from localStorage:", error);
-      savedData = []; // Jika terjadi error parsing, tetap gunakan array kosong
-    }
-  
-    // Set data ke state
-    setTableData(savedData);
-  
-    // Cek kondisi filter untuk menentukan apakah tombol reset bisa diaktifkan
-    if (filterKelas || filterJurusan || searchTerm) {
-      setIsResettable(true);
-    } else {
-      setIsResettable(false);
-    }
-  }, [filterKelas, filterJurusan, searchTerm]);
-
-
-  // Handler untuk mereset filter
-  const handleResetClick = () => {
-    if (isResettable) {
-    setFilterKelas('');
-    setFilterJurusan('');
-    setSearchTerm('');
-    }
-  };
 
   useEffect(() => {
-    // Ambil data dari Local Storage saat komponen dimuat
-    const savedData = JSON.parse(localStorage.getItem("tableDataJurusan")) || [];
-    setTableData(savedData);
+    const loadRombel = async () => {
+      try {
+        const response = await fetchRombel();
+        console.log('API Rombel:', response);
+        const data = response.data;
+        setDataRombel(data);
+      } catch (error) {
+        console.error('Error fetching rombel:', error);
+      }
+    };
+    loadRombel();
   }, []);
 
-  const handleJurusanChange = (event) => {
-    setJurusanValue(event.target.value);
+  const rombelColumns = [
+    
+    { header: 'Nama Rombel', accessor: 'nama_rombel' as keyof Rombel },
+  ];
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
   };
 
-  // Fungsi untuk menyimpan data baru ke dalam tabel
-  const handleSaveClick = () => {
-    if (!jurusanValue) {
-      jurusanInputRef.current.focus();
-      jurusanInputRef.current.classList.add('border-red-500');
-      return; // Menghentikan eksekusi jika input kosong
+  const handleRombelSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.nama_rombel) {
+      toast.error('Nama rombel tidak boleh kosong');
+      return;
     }
 
-    // Lanjutkan penyimpanan data jika validasi berhasil
-    const newData = [
-      ...tableData,
-      {
-        no: tableData.length > 0 ? Math.max(...tableData.map(item => item.no)) + 1 : 1,
-        jurusan: jurusanValue,
-      },
-    ];
-
-    setTableData(newData);
-    localStorage.setItem('tableDataJurusan', JSON.stringify(newData)); // Simpan ke Local Storage
-
-    // Mengosongkan input setelah disimpan
-    setJurusanValue(''); // Mengosongkan input Jurusan
-  };
-  
-  
-
-  const handleDownloadFormatClick = () => {
-    // Logika untuk mengunduh file format
-    console.log('Unduh format');
+    try {
+      const response = await addRombel(formData);
+      console.log('API response:', response);
+      toast.success('Rombel berhasil ditambahkan!');
+      
+      // Update state dengan data baru
+      setDataRombel((prevRombel) => [...prevRombel, response.data]);
+      setFormData({ nama_rombel: '' });
+    } catch (error) {
+      console.error('Error adding rombel:', error);
+      toast.error('Terjadi kesalahan saat menambah data');
+    }
   };
 
-  const handleUploadFileClick = () => {
-    // Logika untuk mengunggah file
-    console.log('Upload file');
+  const handleEdit = async (updatedRow: Rombel) => {
+    try {
+      if (!updatedRow.id_rombel || !updatedRow.nama_rombel) {
+        throw new Error('ID Rombel atau Nama Rombel tidak ditemukan');
+      }
+
+      setDataRombel((prevRombel) =>
+        prevRombel.map((rombel) =>
+          rombel.id_rombel === updatedRow.id_rombel ? updatedRow : rombel
+        )
+      );
+
+      await updateRombel(updatedRow.id_rombel, updatedRow);
+      toast.success('Data rombel berhasil diperbarui!');
+    } catch (error) {
+      console.error('Gagal memperbarui data:', error);
+      toast.error('Gagal memperbarui data');
+    }
+  };
+
+  const handleDelete = async (deletedRow: Rombel) => {
+    const confirmed = window.confirm(`Apakah Anda yakin ingin menghapus rombel ${deletedRow.nama_rombel}?`);
+    if (confirmed) {
+      try {
+        await deleteRombel(deletedRow.id_rombel);
+
+        setDataRombel((prevRombel) =>
+          prevRombel.filter((rombel) => rombel.id_rombel !== deletedRow.id_rombel)
+        );
+        
+        toast.success('Rombel berhasil dihapus');
+      } catch (error) {
+        console.error('Error deleting Rombel:', error);
+        toast.error('Terjadi kesalahan saat menghapus data');
+      }
+    }
   };
 
 
-  const handleEditClick = (item) => {
-    setEditData(item);
-    setEditJurusanValue(item.jurusan);
-   setShowEditModal(true);
-  };
+ //tombol untuk filter, pindah halaman, search dan reset
+ const [itemsPerPage, setItemsPerPage] = useState(5); // Default value is 5
+ const [currentPage, setCurrentPage] = useState(1);
 
-  const handleSaveEdit = () => {
-    const updatedData = tableData.map((item) =>
-      item.no === editData.no
-        ? { ...item, editjurusan: editjurusanValue }
-        : item
-    );
-    setTableData(updatedData);
-    localStorage.setItem("tableDataJurusan", JSON.stringify(updatedData));
-    setShowEditModal(false);
-    setJurusanValue("");
-  };
+ const handleItemsPerPageChange = (e) => {
+   setItemsPerPage(Number(e.target.value));
+   setCurrentPage(1); //  Reset ke halaman pertama saat jumlah item per halaman berubah
+ };
 
-  const handleDeleteClick = (id) => {
-    setConfirmDelete({ visible: true, id });
-    setOpenDropdown(null); // Close dropdown when delete is clicked
-  };
+ // Memfilter data berdasarkan searchTerm
+ const filteredData = dataRombel.filter((item) => {
+   // Asumsikan 'kelas' memiliki properti 'kelas' untuk dicari
+   return (
+     item.nama_rombel.toLowerCase().includes(searchTerm.toLowerCase())
+     // item.id_admin.toLowerCase().includes(searchTerm.toLowerCase())
+   );
+ });
 
-  const handleConfirmDelete = () => {
-    const filteredData = tableData.filter(
-      (item) => item.no !== confirmDelete.id
-    );
-    const updatedData = filteredData.map((item, index) => ({
-      ...item,
-      no: index + 1,
-    }));
-    
-    setTableData(updatedData);
-    localStorage.setItem("tableDataJurusan", JSON.stringify(updatedData)); // Update localStorage
-    setConfirmDelete({ visible: false, id: null });
-  };
-  
+ // Menghitung pagination
+ const totalData = filteredData.length; // Total item setelah difilter
+ const startIndex = (currentPage - 1) * itemsPerPage; // Indeks awal untuk pagination
+ const paginatedData = filteredData.slice(
+   startIndex,
+   startIndex + itemsPerPage
+ ); // Data yang akan ditampilkan
+ const totalPages = Math.ceil(totalData / itemsPerPage); // Total halaman
 
-  const handleCancelDelete = () => {
-    setConfirmDelete({ visible: false, id: null });
-  };
+ const handlePageChange = (newPage) => {
+   setCurrentPage(newPage);
+ };
 
-  const handleDropdownClick = (id) => {
-    setOpenDropdown((prev) => (prev === id ? null : id));
-  };
+ // Fungsi untuk mengatur ulang pencarian
+ const handleResetClick = () => {
+   setSearchTerm(""); // Reset search term
+   setCurrentPage(1); // Reset ke halaman pertama
+ };
 
-  // Fungsi untuk menangani perubahan input pencarian
-  const handleSearchChange = (e) => {
-    setSearchTerm(e.target.value);
-  };
+ const isResettable = searchTerm.length > 0; // Tombol reset aktif jika ada input pencarian
 
-  
-
-  // Fungsi untuk menangani perubahan jumlah item per halaman
-  const handleItemsPerPageChange = (e) => {
-    setItemsPerPage(Number(e.target.value));
-    setCurrentPage(1); // Reset halaman ke 1 setelah mengubah jumlah item per halaman
-  };
-
-  // Filter dan pencarian logika
-  const filteredData = tableData.filter(item => {
-    const searchLowerCase = searchTerm.toLowerCase();
-
-    return (
-      (filterKelas ? item.kelas === filterKelas : true) &&
-      (filterJurusan ? item.jurusan === filterJurusan : true) &&
-      (searchTerm ? (
-        (typeof item.nisn === 'string' && item.nisn.toLowerCase().includes(searchLowerCase)) ||
-        (typeof item.namaSiswa === 'string' && item.namaSiswa.toLowerCase().includes(searchLowerCase)) ||
-        (typeof item.kelas === 'string' && item.kelas.toLowerCase().includes(searchLowerCase)) ||
-        (typeof item.jurusan === 'string' && item.jurusan.toLowerCase().includes(searchLowerCase)) ||
-        (typeof item.jk === 'string' && item.jk.toLowerCase().includes(searchLowerCase)) ||
-        (typeof item.namaWali === 'string' && item.namaWali.toLowerCase().includes(searchLowerCase)) ||
-        (typeof item.noWali === 'string' && item.noWali.toLowerCase().includes(searchLowerCase))
-      ) : true)
-    );
-  });
-
-  // Pagination logic
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-  const currentData = filteredData.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
 
   
 
@@ -234,26 +188,28 @@ export default function Rombel() {
         <div className="flex flex-col lg:flex-row">
           {/* Column 1: Input */}
           <div className="w-full lg:w-1/3 p-4 lg:p-6">
-            <div className="bg-white rounded-lg shadow-md p-4 lg:p-6 border">
+            <form onSubmit={handleRombelSubmit}
+              className="bg-white rounded-lg shadow-md p-4 lg:p-6 border"
+            >
             <h2 className="text-sm mb-2 sm:text-sm font-bold"> Rombel</h2>
-            <input
-                ref={jurusanInputRef}
+            <input 
                 type="text"
-                value={jurusanValue}
-                onChange={handleJurusanChange}
-                className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
-                placeholder="Rombel..."
+                name="nama_rombel"
+                value={formData.nama_rombel}
+                onChange={handleChange}
+                className="mt-1 p-2 border rounded-md w-full"
+                required
               />
               <div className="flex m-4 space-x-2">
                 <button
-                  onClick={handleSaveClick}
+                  type="submit"
                   className="ml-auto px-3 py-2 sm:px-4 sm:py-2 bg-teal-400 hover:bg-teal-500 text-white rounded text-sm sm:text-base"
                 >
                   Simpan
                 </button>
               </div>
-
-            </div>
+            </form>
+            <ToastContainer className="mt-14" />
           </div>
           
 
@@ -284,8 +240,7 @@ export default function Rombel() {
                     </select>
               </div>
             </div>
-            
-              <div className=" items-center lg:mb-0 space-x-2 lg:order-1">
+            <div className=" items-center lg:mb-0 space-x-2 lg:order-1">
                     <input
                       type="text"
                       placeholder="Cari..."
@@ -293,8 +248,8 @@ export default function Rombel() {
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base"
                     />
-              </div>
-                  <div className=" items-center lg:mb-0 space-x-2 lg:order-1">
+            </div>
+                <div className=" items-center lg:mb-0 space-x-2 lg:order-1">
                   <button
               onClick={handleResetClick}
               disabled={!isResettable}
@@ -306,131 +261,54 @@ export default function Rombel() {
             >
               <p>Reset</p>
             </button >
-                  </div>
+              </div>
             </div>
              
               <div className="overflow-x-auto">
-                <table className="w-full text-left mt-4 border-collapse">
-                  <thead>
-                    <tr className="ml-2">
-                      <th className="p-2 sm:p-3 rounded-l-lg  bg-slate-500 text-white">No</th>                    
-                      <th className="p-2 sm:p-3 bg-slate-500 text-white">
-                        Rombel
-                      </th>
-                      <th className="p-2 sm:p-3 bg-slate-500 rounded-r-xl text-white">
-                        Aksi
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {currentData.map((item) => (
-                      <tr key={item.no}>
-                        <td className="p-3 sm:p-3 text-white border-b">{item.no}</td>
-                        <td className="p-3 sm:p-3 text-white border-b">{item.jurusan}</td>
-                        <td className="p-3 sm:p-3 text-white  border-b "
-                        style={{ left: '-500px' }}>
-                        {/* // Komponen DropdownMenu yang ditampilkan dalam tabel untuk setiap baris data.
-                        // isOpen: Menentukan apakah dropdown saat ini terbuka berdasarkan nomor item.
-                        // onClick: Fungsi untuk menangani aksi klik pada dropdown untuk membuka atau menutupnya.
-                        // onDelete: Fungsi untuk memicu proses penghapusan data ketika opsi 'Hapus' dalam dropdown diklik. */}
-                         <DropdownMenu
-                            isOpen={openDropdown === item.no}
-                            onClick={() => handleDropdownClick(item.no)}
-                            onDelete={() => handleDeleteClick(item.no)}
-                            onEdit={() => handleEditClick(item)}
-                          />
-                        </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+              <DataTable
+                columns={rombelColumns}
+                data={paginatedData}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
+              </div>
                 {/* Pagination */}
                 <div className="mt-4 flex justify-between items-center pb-4">
                   <div className="text-sm text-gray-700 text-white">
                     Halaman {currentPage} dari {totalPages}
                   </div>
-                  <div className="flex space-x-2">
+                  <div className="flex overflow-hidden m-4 space-x-2">
                     <button
-                      onClick={() => setCurrentPage(currentPage - 1)}
                       disabled={currentPage === 1}
+                      onClick={() => handlePageChange(currentPage - 1)}
                       className={`px-2 py-1 border rounded ${
-                        currentPage === 1 ? "bg-gray-300" : "bg-teal-400 text-white"
-                      }`}
+                        currentPage === 1
+                          ? "bg-gray-300"
+                          : "bg-teal-400 hover:bg-teal-600 text-white"
+                      }  `}
                     >
                       Previous
                     </button>
                     <button
-                      onClick={() => setCurrentPage(currentPage + 1)}
-                      disabled={currentPage === totalPages}
+                      disabled={
+                        currentPage === totalPages || paginatedData.length === 0
+                      } // Disable tombol 'Next' jika sudah di halaman terakhir atau tidak ada data yang ditampilkan
+                      onClick={() => handlePageChange(currentPage + 1)}
                       className={`px-2 py-1 border rounded ${
-                        currentPage === totalPages ? "bg-gray-300" : "bg-teal-400 text-white"
-                      }`}
+                        currentPage === totalPages
+                          ? "bg-gray-300"
+                          : "bg-teal-400 hover:bg-teal-600 text-white"
+                      }  `}
                     >
                       Next
                     </button>
                   </div>
                 </div>
-              <div className="mt-4 flex justify-between items-center">
-              
-            </div>
             </div>
           </div>
         </div>
         <div>
         </div>
-        {/* Modal untuk konfirmasi penghapusan */}
-        {confirmDelete.visible && (
-          <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
-            <div className="bg-white p-4 rounded-lg shadow-lg">
-              <p>Apakah Anda yakin ingin menghapus item ini?</p>
-              <div className="flex justify-end mt-4">
-                <button
-                  onClick={handleCancelDelete}
-                  className="px-3 py-2 sm:px-4 sm:py-2 bg-gray-300 text-black rounded text-sm sm:text-base mr-2"
-                >
-                  Batal
-                </button>
-                <button
-                  onClick={handleConfirmDelete}
-                  className="px-3 py-2 sm:px-4 sm:py-2 bg-red-500 text-white rounded text-sm sm:text-base"
-                >
-                  Hapus
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-        {/* Modal untuk mengedit data */}
-        {showEditModal && (
-          <div className="fixed z-50 inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
-            <div className="bg-white p-4 rounded-lg shadow-lg">
-              <h2 className="text-sm pt-3 sm:text-2xl font-bold">Edit Data</h2>
-             
-              <input
-                type="text"
-                value={editJurusanValue}
-                onChange={(e) => setEditJurusanValue(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
-                placeholder="Kelas..."
-              />
-              <div className="flex justify-end mt-4">
-                <button
-                  onClick={() => setShowEditModal(false)}
-                  className="px-3 py-2 sm:px-4 sm:py-2 bg-gray-300 text-black rounded text-sm sm:text-base mr-2"
-                >
-                  Batal
-                </button>
-                <button
-                  onClick={handleSaveEdit}
-                  className="px-3 py-2 sm:px-4 sm:py-2 bg-teal-400 text-white rounded text-sm sm:text-base"
-                >
-                  Simpan
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
       </div>
     </>
@@ -439,122 +317,122 @@ export default function Rombel() {
 // isOpen: Properti boolean yang menentukan apakah menu dropdown saat ini terbuka.
 // onClick: Fungsi callback yang dipanggil saat tombol dropdown diklik, untuk membuka atau menutup menu.
 // onDelete: Fungsi callback yang dipanggil saat opsi 'Hapus' dipilih dari menu dropdown.
-function DropdownMenu({ isOpen, onClick, onEdit, onDelete, onClose }) {
-    const dropdownRef = useRef(null);
+// function DropdownMenu({ isOpen, onClick, onEdit, onDelete, onClose }) {
+//     const dropdownRef = useRef(null);
   
-    // Fungsi untuk menutup dropdown saat pengguna mengklik di luar dropdown.
-    const handleClickOutside = (event) => {
-      console.log('Clicked outside'); // Debugging
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        console.log('Outside detected'); // Debugging
-        if (typeof onClick === 'function') {
-          onClick(); // Memanggil fungsi onClose untuk menutup dropdown
-        }
-      }
-    };
+//     // Fungsi untuk menutup dropdown saat pengguna mengklik di luar dropdown.
+//     const handleClickOutside = (event) => {
+//       console.log('Clicked outside'); // Debugging
+//       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+//         console.log('Outside detected'); // Debugging
+//         if (typeof onClick === 'function') {
+//           onClick(); // Memanggil fungsi onClose untuk menutup dropdown
+//         }
+//       }
+//     };
   
-    useEffect(() => {
-      console.log('Effect ran', isOpen); // Debugging
-      // Menambahkan event listener untuk menangani klik di luar dropdown jika dropdown terbuka.
-      if (isOpen) {
-        document.addEventListener('mousedown', handleClickOutside);
-      } else {
-        // Menghapus event listener ketika dropdown ditutup.
-        document.removeEventListener('mousedown', handleClickOutside);
-      }
+//     useEffect(() => {
+//       console.log('Effect ran', isOpen); // Debugging
+//       // Menambahkan event listener untuk menangani klik di luar dropdown jika dropdown terbuka.
+//       if (isOpen) {
+//         document.addEventListener('mousedown', handleClickOutside);
+//       } else {
+//         // Menghapus event listener ketika dropdown ditutup.
+//         document.removeEventListener('mousedown', handleClickOutside);
+//       }
   
-      // Cleanup function untuk menghapus event listener saat komponen di-unmount atau isOpen berubah.
-      return () => {
-        document.removeEventListener('mousedown', handleClickOutside);
-        console.log('Cleanup'); // Debugging
-      };
-    }, [isOpen]);
+//       // Cleanup function untuk menghapus event listener saat komponen di-unmount atau isOpen berubah.
+//       return () => {
+//         document.removeEventListener('mousedown', handleClickOutside);
+//         console.log('Cleanup'); // Debugging
+//       };
+//     }, [isOpen]);
   
-    return (
-      <div className="relative" ref={dropdownRef}>
-        <button
-          onClick={onClick}
-          className="p-1 z-40  text-white text-xs sm:text-sm"
+//     return (
+//       <div className="relative" ref={dropdownRef}>
+//         <button
+//           onClick={onClick}
+//           className="p-1 z-40  text-white text-xs sm:text-sm"
 
-        >
-          &#8942;
-        </button>
-        {isOpen && (
-          <div
-            className="absolute z-50 mt-1 w-24 sm:w-32 bg-slate-600 border rounded-md shadow-lg"
-            style={{ left: '-62px', top: '20px' }} // Menggeser dropdown ke kiri
-          >
-            <button
-              className="block w-full px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm hover:bg-slate-500"
-              onClick={() => {
-                alert('Detail clicked');
-                if (typeof onClose === 'function') {
-                  onClose(); // Menutup dropdown setelah detail diklik
-                }
-              }}
-            >
-              Detail
-            </button>
-            <button
-              onClick={() => {
-                onEdit();
-                if (typeof onClose === 'function') {
-                  onClose(); // Menutup dropdown setelah edit diklik
-                }
-              }}
-              className="block w-full px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm hover:bg-slate-500"
-            >
-              Edit
-            </button>
-            <button
-              onClick={() => {
-                onDelete();
-                if (typeof onClose === 'function') {
-                  onClose(); // Menutup dropdown setelah delete diklik
-                }
-              }}
-              className="block w-full px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm hover:bg-slate-500"
-            >
-              Hapus
-            </button>
-          </div>
-        )}
-      </div>
-    );
-  }
+//         >
+//           &#8942;
+//         </button>
+//         {isOpen && (
+//           <div
+//             className="absolute z-50 mt-1 w-24 sm:w-32 bg-slate-600 border rounded-md shadow-lg"
+//             style={{ left: '-62px', top: '20px' }} // Menggeser dropdown ke kiri
+//           >
+//             <button
+//               className="block w-full px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm hover:bg-slate-500"
+//               onClick={() => {
+//                 alert('Detail clicked');
+//                 if (typeof onClose === 'function') {
+//                   onClose(); // Menutup dropdown setelah detail diklik
+//                 }
+//               }}
+//             >
+//               Detail
+//             </button>
+//             <button
+//               onClick={() => {
+//                 onEdit();
+//                 if (typeof onClose === 'function') {
+//                   onClose(); // Menutup dropdown setelah edit diklik
+//                 }
+//               }}
+//               className="block w-full px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm hover:bg-slate-500"
+//             >
+//               Edit
+//             </button>
+//             <button
+//               onClick={() => {
+//                 onDelete();
+//                 if (typeof onClose === 'function') {
+//                   onClose(); // Menutup dropdown setelah delete diklik
+//                 }
+//               }}
+//               className="block w-full px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm hover:bg-slate-500"
+//             >
+//               Hapus
+//             </button>
+//           </div>
+//         )}
+//       </div>
+//     );
+//   }
   
-function FileUpload() {
-    const [file, setFile] = useState(null);
-    const fileInputRef = useRef(null);
+// function FileUpload() {
+//     const [file, setFile] = useState(null);
+//     const fileInputRef = useRef(null);
   
-    const handleFileChange = (event) => {
-      const selectedFile = event.target.files[0];
-      setFile(selectedFile);
-    };
+//     const handleFileChange = (event) => {
+//       const selectedFile = event.target.files[0];
+//       setFile(selectedFile);
+//     };
   
-    const handleClearFile = () => {
-      setFile(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''; // Reset input file
-      }
-    };
+//     const handleClearFile = () => {
+//       setFile(null);
+//       if (fileInputRef.current) {
+//         fileInputRef.current.value = ''; // Reset input file
+//       }
+//     };
   
-    return (
-      <div>
-        <input
-          type="file"
-          ref={fileInputRef}
-          onChange={handleFileChange}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2"
-        />
-        {file && (
-          <img
-            src={URL.createObjectURL(file)}
-            alt="Preview"
-            className="w-full border border-gray-300 rounded-lg mt-4"
-          />
-        )}
-        <button onClick={handleClearFile}>Clear File</button>
-      </div>
-    );
-  }
+//     return (
+//       <div>
+//         <input
+//           type="file"
+//           ref={fileInputRef}
+//           onChange={handleFileChange}
+//           className="w-full border border-gray-300 rounded-lg px-3 py-2"
+//         />
+//         {file && (
+//           <img
+//             src={URL.createObjectURL(file)}
+//             alt="Preview"
+//             className="w-full border border-gray-300 rounded-lg mt-4"
+//           />
+//         )}
+//         <button onClick={handleClearFile}>Clear File</button>
+//       </div>
+//     );
+// }
