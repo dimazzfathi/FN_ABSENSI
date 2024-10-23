@@ -1,4 +1,5 @@
 "use client"
+import axios, { AxiosError } from 'axios';
 import React, { useState, useEffect } from 'react';
 import { addSiswa, fetchSiswa, Siswa  } from '../../../api/siswa';
 import { updateSiswa, deleteSiswa } from '../../../api/siswa';
@@ -23,13 +24,14 @@ const SiswaForm: React.FC<SiswaFormProps> = ({ onSubmit }) => {
     id_rombel: '',
     email: '',
     pass: '',
-    foto: null as File | null,
+    foto: null,
     barcode: '',
     nama_wali: '',
     nomor_wali: '',
   });
 
-  const [fotoPreview, setFotoPreview] = useState<string | null>(null);
+  const [fotoPreview, setFotoPreview] = useState(null);
+
 
   //stet untuk fecth siswa
   useEffect(() => {
@@ -45,7 +47,6 @@ const SiswaForm: React.FC<SiswaFormProps> = ({ onSubmit }) => {
   // fields untuk DataTabel
   const siswaColumns = [
     { header: 'ID', accessor: 'id_siswa' as keyof Siswa },
-    { header: 'Id', accessor: 'id_admin' as keyof Siswa },
     { header: 'Foto', accessor: 'foto' as keyof Siswa },
     { header: 'Nis', accessor: 'nis' as keyof Siswa },
     { header: 'Nama', accessor: 'nama_siswa' as keyof Siswa },
@@ -61,38 +62,29 @@ const SiswaForm: React.FC<SiswaFormProps> = ({ onSubmit }) => {
   ];
 
   //state untuk menghandle input
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
+   // Handler umum untuk input teks
+   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
+  };
 
-    if (type === "file") {
-      const file = (e.target as HTMLInputElement).files?.[0] || null;
-      setFormData({
-        ...formData,
-        [name]: file,
-      });
-
-      // Preview file jika ada
-      if (file) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setFotoPreview(reader.result as string);
-        };
-        reader.readAsDataURL(file);
-      } else {
-        setFotoPreview(null);
-      }
-    } else {
-      setFormData({
-        ...formData,
-        [name]: value,
-      });
+  // Handler khusus untuk input foto
+  const handleFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setFormData({ ...formData, foto: e.target.files[0] }); // Simpan file foto di formData
+      setFotoPreview(URL.createObjectURL(e.target.files[0])); // Untuk menampilkan preview
     }
   };
+  
+  
 
   //state untuk simpan
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+  
     // Validasi jika ada input yang kosong
     if (
       !formData.id_siswa ||
@@ -110,14 +102,17 @@ const SiswaForm: React.FC<SiswaFormProps> = ({ onSubmit }) => {
       toast.error('Data tidak boleh kosong');
       return;
     }
-
+  
     try {
       const response = await addSiswa(formData);
       console.log('API response:', response);
-      if (response?.exists) {
+      
+      // Cek apakah data sudah ada berdasarkan respons dari server
+      if (response?.data?.exists) { // Asumsikan response.data.exists bernilai true jika data sudah ada
         toast.error('Data sudah ada!');
       } else {
         toast.success('Siswa berhasil ditambahkan!');
+        // Reset form data setelah berhasil
         setFormData({
           id_siswa: '',
           id_admin: '',
@@ -138,7 +133,7 @@ const SiswaForm: React.FC<SiswaFormProps> = ({ onSubmit }) => {
       }
     } catch (error) {
       console.error('Error adding siswa:', error);
-
+  
       if (axios.isAxiosError(error)) {
         console.error('Error response:', error.response);
         if (error.response) {
@@ -153,6 +148,7 @@ const SiswaForm: React.FC<SiswaFormProps> = ({ onSubmit }) => {
       }
     }
   };
+  
 
   // Fungsi untuk menangani edit
   const handleEdit = async (updatedRow: Siswa) => {
@@ -197,6 +193,154 @@ const handleDelete = async (deletedRow) => {
       }
   }
 };
+
+const handleDownloadFormatClick = () => {
+  // Data yang akan diisikan ke dalam file Excel
+  const data = [
+    {
+      id_siswa: "",
+      nis: "",
+      nama_siswa: "",
+      jenis_kelamin: "",
+      tahun_pelajaran: "",
+      kelas: "",
+      rombel: "",
+      email: "",
+      pass: "",
+      foto: "",
+      barcode: "",
+      nama_wali: "",
+      nomor_wali: "",
+    },
+  ];
+
+  // Definisikan header file Excel
+  const headers = [
+    "id_siswa",
+    "nis",
+    "nama_siswa",
+    "jenis_kelamin",
+    "tahun_pelajaran",
+    "kelas",
+    "rombel",
+    "email",
+    "pass",
+    "foto",
+    "barcode",
+    "nama_wali",
+    "nomor_wali",
+  ];
+
+  // Membuat worksheet
+  const worksheet = XLSX.utils.json_to_sheet(data, { header: headers });
+
+  // Membuat workbook
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Siswa");
+
+  // Menghasilkan file Excel
+  const excelBuffer = XLSX.write(workbook, {
+    bookType: "xlsx",
+    type: "array",
+  });
+
+  // Membuat Blob untuk mengunduh
+  const blob = new Blob([excelBuffer], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
+
+  // Membuat link download
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "format_siswa.xlsx"; // Nama file yang diunduh
+  link.click();
+};
+
+const handleUploadFileClick = () => {
+  // Memicu klik pada elemen input file
+  fileInputRef.current.click();
+};
+
+const handleFileChange = (event) => {
+  const file = event.target.files[0];
+
+  if (file) {
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: "array" });
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+
+      // Mengubah sheet ke format JSON
+      const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+
+      // Mengonversi JSON ke bentuk yang sesuai dengan struktur tabel
+      const formattedData = jsonData
+        .slice(1)
+        .map((row, index) => ({
+          no: currentDataa.length + index + 1,
+          foto: "",
+          idSiswa: row[0] || "", // Kolom ID Siswa
+          nisn: row[1] || "", // Kolom NISN
+          namaSiswa: row[2] || "", // Kolom Nama Siswa
+          jk: row[3] || "", // Kolom Jenis Kelamin
+          kelas: row[5] || "", // Kolom Kelas
+          jurusan: row[6] || "", // Kolom Jurusan
+          namaWali: row[11] || "", // Kolom Nama Wali
+          noWali: row[12] || "", // Kolom No Wali
+        }))
+        // Filter untuk baris yang memiliki setidaknya satu kolom yang tidak kosong
+        .filter((item) =>
+          Object.values(item).some(
+            (value) => typeof value === "string" && value.trim() !== ""
+          )
+        );
+      // Menyimpan data ke state jika ada data yang valid
+      // Menyimpan data ke state jika ada data yang valid
+      if (formattedData.length > 0) {
+        setCurrentDataa((prevData) => [...prevData, ...formattedData]);
+        // Simpan ke local storage jika perlu
+        saveToLocalStorage("tableDataSiswa", [
+          ...currentDataa,
+          ...formattedData,
+        ]);
+      } else {
+        console.log("Tidak ada data valid yang dimasukkan.");
+      }
+    };
+
+    reader.readAsArrayBuffer(file);
+  }
+};
+
+const filteredData = tableData.filter((item) => {
+  const searchLowerCase = searchTerm.toLowerCase();
+
+  return (
+    (filterKelas ? item.kelas === filterKelas : true) &&
+    (filterJurusan ? item.jurusan === filterJurusan : true) &&
+    (searchTerm
+      ? (typeof item.idSiswa === "string" &&
+          item.idSiswa.toLowerCase().includes(searchLowerCase)) ||
+        (typeof item.nisn === "string" &&
+          item.nisn.toLowerCase().includes(searchLowerCase)) ||
+        (typeof item.namaSiswa === "string" &&
+          item.namaSiswa.toLowerCase().includes(searchLowerCase)) ||
+        (typeof item.kelas === "string" &&
+          item.kelas.toLowerCase().includes(searchLowerCase)) ||
+        (typeof item.jurusan === "string" &&
+          item.jurusan.toLowerCase().includes(searchLowerCase)) ||
+        (typeof item.jk === "string" &&
+          item.jk.toLowerCase().includes(searchLowerCase)) ||
+        (typeof item.namaWali === "string" &&
+          item.namaWali.toLowerCase().includes(searchLowerCase)) ||
+        (typeof item.noWali === "string" &&
+          item.noWali.toLowerCase().includes(searchLowerCase))
+      : true)
+  );
+});
+
 
   return (
 <>
@@ -319,7 +463,7 @@ const handleDelete = async (deletedRow) => {
             type="file"
             name="foto"
             accept="image/*"
-            onChange={handleChange}
+            onChange={handleFotoChange}
             className="mt-1 p-2 border rounded-md w-full"
           />
           {fotoPreview && <img src={fotoPreview} alt="Preview Foto" className="mt-2 h-20 w-20" />}

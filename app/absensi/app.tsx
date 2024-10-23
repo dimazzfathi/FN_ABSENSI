@@ -13,6 +13,7 @@ const Filters = () => {
 
   useEffect(() => {
     const today = new Date();
+    console.log(today)
     const monthNames = [
       'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
       'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'

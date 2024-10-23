@@ -6,6 +6,9 @@ import Navbar from "../../../components/navbar/page"
 import Footer from "../../../components/footer/page"
 import Jurusan from '../jurusan/hal';
 
+
+
+
   const Page = () => {
     const [isOpen, setIsOpen] = useState(false);
 
