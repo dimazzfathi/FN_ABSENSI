@@ -46,6 +46,17 @@ export const updateTahunAjaran = async (id: number, updatedData: Partial<TahunAj
   }
 };
 
+export const deleteTahunAjaran = async (id: number): Promise<void> => {
+  try {
+    console.log(`Deleting data at: ${baseUrl}/tahun-pelajaran/hapus-tahun-pelajaran/${id}`);
+    await axios.delete(`${baseUrl}/tahun-pelajaran/hapus-tahun-pelajaran/${id}`);
+    console.log(`Tahun ajaran with ID ${id} deleted successfully.`);
+  } catch (error) {
+    console.error('Error deleting tahun ajaran:', error);
+    throw error; // Melempar kembali error agar bisa ditangani di tempat lain
+  }
+};
+
 
 
 

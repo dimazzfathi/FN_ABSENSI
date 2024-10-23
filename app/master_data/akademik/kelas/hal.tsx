@@ -16,14 +16,19 @@ import {
 import { fetchAdmins, Admin } from "../../../api/admin";
 
 export default function _Kelas() {
-  const [isKelasValid, setIsKelasValid] = useState(true);
-  const [isJurusanValid, setIsJurusanValid] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
   const [filterKelas, setFilterKelas] = useState("");
   const [filterJurusan, setFilterJurusan] = useState("");
-  const [kelas, setKelas] = useState<Kelas[]>([]);
+  const [isJurusanValid, setIsJurusanValid] = useState(true);
   const router = useRouter();
   const [admins, setAdmins] = useState<Admin[]>([]);
+  const [isKelasValid, setIsKelasValid] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [kelas, setKelas] = useState<Kelas[]>([]);
+  const [editData, setEditData] = useState<Kelas | null>(null);
+  const [openDropdownId, setOpenDropdownId] = useState<number | null>(null); // Menyimpan ID baris yang dropdown-nya terbuka
+  const [isModalOpen, setIsModalOpen] = useState(false); // State untuk mengontrol modal
+  const [selectedRow, setSelectedRow] = useState(null);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   useEffect(() => {
     //   const token = Cookies.get('token');
@@ -64,8 +69,54 @@ export default function _Kelas() {
   const kelasColumns = [
     // { header: "No", accessor: (_: any, index: number) => index + 1 },
     // { header: "Admin", accessor: "id_admin" as keyof Admin },
-    { header: "jurusan", accessor: "kelas" as keyof Kelas },
+    { header: "Kelas", accessor: "kelas" as keyof Kelas },
+    {
+      header: "Aksi",
+      Cell: ({ row }: { row: Kelas }) => {
+        return (
+          <div>
+            <button
+              className="px-4 py-2 rounded"
+              onClick={() => handleToggleDropdown(row.id_kelas)}
+            >
+              &#8942; {/* Simbol menu */}
+            </button>
+            {openDropdownId === row.id_kelas && ( // Hanya tampilkan dropdown jika id_kelas sesuai
+              <div className="absolute mt-2 w-48 bg-white border rounded shadow-md">
+                <button
+                  onClick={() => handleEditClick(row)}
+                  className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-200"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDeleteClickk(row)}
+                  className="block w-full px-4 py-2 text-left text-sm text-red-700 hover:bg-gray-200"
+                >
+                  Hapus
+                </button>
+                <button
+                  onClick={() => handleDetailClick(row)}
+                  className="block px-4 py-2"
+                >
+                  Detail
+                </button>
+              </div>
+            )}
+          </div>
+        );
+      },
+    },
   ];
+
+  const handleDetailClick = (row: Kelas) => {
+    alert(`Detail Kelas: ${JSON.stringify(row)}`);
+    setOpenDropdownId(null); // Tutup dropdown setelah melihat detail
+  };
+
+  const handleToggleDropdown = (id_kelas: string) => {
+    setOpenDropdownId(openDropdownId === id_kelas ? null : id_kelas); // Toggle dropdown
+  };
 
   const [kelasData, setKelasData] = useState({
     id_admin: "",
@@ -79,7 +130,7 @@ export default function _Kelas() {
       [name]: value,
     });
   };
-
+  //handle menambah data
   const handleKelasSubmit = async (e) => {
     e.preventDefault();
 
@@ -98,6 +149,10 @@ export default function _Kelas() {
         toast.error("Data sudah ada!"); // Menampilkan pesan jika data sudah ada
       } else {
         toast.success("Tahun kelas berhasil ditambahkan!"); // Menampilkan pesan sukses
+        // Tambahkan kelas baru ke dalam kelasList
+        setKelas((prevKelasList) => [...prevKelasList, response.data]);
+
+        // Reset form
         setKelasData({
           id_admin: "",
           kelas: "",
@@ -106,69 +161,83 @@ export default function _Kelas() {
     } catch (error) {
       // Tangani kesalahan di sini
       console.error("Error adding kelas:", error);
-      
+
       // Cek apakah error berasal dari response API
       if (error.response) {
-          // Anda bisa menambahkan logika khusus di sini berdasarkan error dari API
-          toast.error("Terjadi kesalahan saat menambah kelas: " + error.response.data.message);
-      } else {
-          toast.error("Terjadi kesalahan saat menambah kelas");
-      }
-  }
-  };
-  const handleEdit = async (updatedRow) => {
-    try {
-      // Pastikan updatedRow memiliki id_kelas
-      if (!updatedRow.id_kelas) {
-        throw new Error("ID Kelas tidak ditemukan");
-      }
-
-      // Update state di frontend
-      setKelas((prevKelas) =>
-        prevKelas.map((kelas) =>
-          kelas.id_kelas === updatedRow.id_kelas ? updatedRow : kelas
-        )
-      );
-
-      // Kirim request ke backend dengan id yang benar
-      const updatedKelas = await updateKelas(updatedRow.id_kelas, updatedRow);
-      toast.success("Data berhasil diperbarui!");
-    } catch (error) {
-      // Tampilkan lebih banyak detail error dari response server
-      console.error(
-        "Gagal memperbarui data di backend:",
-        error.response?.data || error.message
-      );
-      toast.error(
-        `Gagal memperbarui data: ${
-          error.response?.data?.message || error.message
-        }`
-      );
-    }
-  };
-
-  const handleDelete = async (deletedRow) => {
-    const confirmed = window.confirm(
-      `Apakah Anda yakin ingin menghapus kelas ${
-        (deletedRow.id_admin, deletedRow.kelas)
-      }?`
-    );
-    if (confirmed) {
-      try {
-        // Panggil fungsi delete kelas untuk menghapus di backend
-        await deleteKelas(deletedRow.id_kelas);
-
-        // Setelah sukses, update state di frontend
-        setKelas((prevKelas) =>
-          prevKelas.filter((Kelas) => Kelas.id_kelas !== deletedRow.id_kelas)
+        // Anda bisa menambahkan logika khusus di sini berdasarkan error dari API
+        toast.error(
+          "Terjadi kesalahan saat menambah kelas: " +
+            error.response.data.message
         );
-        toast.success("kelas berhasil dihapus");
-      } catch (error) {
-        console.error("Error deleting kelas:", error);
-        // Anda bisa menambahkan notifikasi atau pesan error di sini
+      } else {
+        toast.error("Terjadi kesalahan saat menambah kelas");
       }
     }
   };
+  const handleDeleteClickk = (row) => {
+    setSelectedRow(row); // Simpan data yang ingin dihapus
+    setIsConfirmOpen(true); // Buka modal
+  };
+  //handle hapus
+  const handleConfirmDelete = async () => {
+    try {
+      // Panggil fungsi delete kelas untuk menghapus di backend
+      await deleteKelas(selectedRow.id_kelas);
+
+      // Setelah sukses, update state di frontend
+      setKelas((prevKelas) =>
+        prevKelas.filter((kelas) => kelas.id_kelas !== selectedRow.id_kelas)
+      );
+      toast.success(`Kelas ${selectedRow.kelas} berhasil dihapus`);
+      setIsConfirmOpen(false); // Tutup modal
+      setSelectedRow(null); // Reset selectedRow
+    } catch (error) {
+      console.error("Error deleting kelas:", error);
+      toast.error("Gagal menghapus kelas");
+    }
+  };
+  const handleCancel = () => {
+    setIsConfirmOpen(false); // Tutup modal tanpa hapus
+    setSelectedRow(null); // Reset selectedRow
+  };
+
+  // Fungsi untuk handle klik edit
+  const handleEditClick = (row: Kelas) => {
+    setEditData(row); // Set data yang dipilih ke form edit
+    setIsModalOpen(true); // Buka modal saat tombol edit diklik
+  };
+  // Handle perubahan input pada form edit
+  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEditData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+  // Handle update data setelah form edit disubmit
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    if (editData) {
+      // Validasi sebelum mengupdate
+      if (editData.kelas.trim() === "") {
+        setIsKelasValid(false);
+        return;
+      }
+
+      try {
+        await updateKelas(editData.id_kelas, editData);
+        setKelas((prev) =>
+          prev.map((kelas) =>
+            kelas.id_kelas === editData.id_kelas
+              ? { ...kelas, ...editData }
+              : kelas
+          )
+        );
+        toast.success("Data berhasil diperbarui!");
+        setIsModalOpen(false); // Tutup modal setelah sukses
+        setOpenDropdownId(null); // Menutup dropdown setelah edit
+      } catch (error) {
+        toast.error("Terjadi kesalahan saat mengedit data");
+      }
+    }
+  };
+
   //tombol untuk filter, pindah halaman, search dan reset
   const [itemsPerPage, setItemsPerPage] = useState(5); // Default value is 5
   const [currentPage, setCurrentPage] = useState(1);
@@ -181,10 +250,8 @@ export default function _Kelas() {
   // Memfilter data berdasarkan searchTerm
   const filteredData = kelas.filter((item) => {
     // Asumsikan 'kelas' memiliki properti 'kelas' untuk dicari
-    return (
-      item.kelas.toLowerCase().includes(searchTerm.toLowerCase())
-      // item.id_admin.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    return item.kelas.toLowerCase().includes(searchTerm.toLowerCase());
+    // item.id_admin.toLowerCase().includes(searchTerm.toLowerCase())
   });
 
   // Menghitung pagination
@@ -270,7 +337,7 @@ export default function _Kelas() {
                 className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${
                   isKelasValid ? "border-gray-300" : "border-red-500"
                 }`}
-                placeholder="Kelas"
+                placeholder="Kelas..."
               />
               {/* <select
                 name="kelas"
@@ -351,12 +418,72 @@ export default function _Kelas() {
                   </div>
                 </div>
                 <div className="w-full overflow-x-auto">
-                  <DataTable
-                    columns={kelasColumns}
-                    data={paginatedData}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                  />
+                  <div>
+                    <DataTable
+                      columns={kelasColumns}
+                      data={paginatedData}
+                      // onEdit={handleEditClick}
+                      // onDelete={handleDeleteClickk}
+                    />
+                    {isModalOpen && (
+                      <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                        <div className="bg-white rounded p-4 shadow-lg">
+                          <h3 className="pb-2">Edit Data Kelas</h3>
+                          <form onSubmit={handleEditSubmit}>
+                            <input
+                              type="text"
+                              name="kelas"
+                              value={editData ? editData.kelas : ""}
+                              onChange={handleEditChange}
+                              className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${
+                                isKelasValid
+                                  ? "border-gray-300"
+                                  : "border-red-500"
+                              }`}
+                              placeholder="Kelas..."
+                            />
+                            <button
+                              type="submit"
+                              className="py-2 sm:px-4 sm:py-2 bg-teal-400 hover:bg-teal-500 text-white rounded text-sm sm:text-base"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setIsModalOpen(false); // Tutup modal
+                                setOpenDropdownId(null); // Tutup dropdown juga
+                              }}
+                              className="ml-2 py-2 sm:px-4 sm:py-2 bg-gray-400 hover:bg-gray-500 text-white rounded text-sm sm:text-base"
+                            >
+                              Tutup
+                            </button>
+                          </form>
+                        </div>
+                      </div>
+                    )}
+                    {isConfirmOpen && (
+                      <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-50">
+                        <div className="bg-white p-6 rounded shadow-md">
+                          <p>Apakah kamu yakin ingin menghapus item ini?</p>
+                          <div className="mt-4 flex justify-end">
+                            <button
+                              onClick={handleCancel}
+                              className="px-4 py-2 mr-2 bg-gray-300 rounded hover:bg-gray-400"
+                            >
+                              Batal
+                            </button>
+                            <button
+                              onClick={handleConfirmDelete}
+                              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                            >
+                              Hapus
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="mt-4 flex justify-between items-center">
                   <div className="text-sm text-gray-700 text-white">

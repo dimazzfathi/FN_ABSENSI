@@ -51,13 +51,13 @@ const DataTable = <T,>({
         <table className="w-full text-left mt-4 border-collapse">
           <thead>
             <tr className="ml-2">
-              <th className="p-2 sm:p-3 bg-slate-500 text-white">No</th>
+              <th className=" p-2 sm:p-3 bg-slate-500 text-white">No</th>
               {columns.map((column, index) => (
                 <th className="p-2 sm:p-3 bg-slate-500 text-white" key={index}>
                   {column.header}
                 </th>
               ))}
-              <th className="p-2 sm:p-3 bg-slate-500 text-white">Aksi</th>
+              {/* <th className="p-2 sm:p-3 bg-slate-500 text-white">Aksi</th> */}
               {/* Kolom aksi */}
             </tr>
           </thead>
@@ -65,25 +65,26 @@ const DataTable = <T,>({
             {Array.isArray(data) &&
               data.map((row, rowIndex) => (
                 <tr key={rowIndex}>
-                  <td className="p-3 sm:p-3 text-black border-b z-50">
+                  <td className="p-3 sm:p-3 text-gray border-b z-50">
                     {rowIndex + 1} {/* Menampilkan nomor urut */}
                   </td>
                   {columns.map((column, colIndex) => (
-                    <td
-                      className="p-3 sm:p-3 text-black border-b z-50"
-                      key={colIndex}
-                    >
-                      {row[column.accessor]}
-                    </td>
+                    <td className="p-3 sm:p-3 text-gray border-b z-50" key={column.header}>
+                    {/* Pastikan column.Cell ada sebelum mengaksesnya */}
+                    {typeof column.Cell === 'function' 
+                      ? column.Cell({ row }) 
+                      : row[column.accessor] ? row[column.accessor] : 'N/A'} {/* Menampilkan data atau 'N/A' */}
+                  </td>
                   ))}
-                  <td className="p-3 sm:p-3 text-black border-b">
+                  
+                  {/* <td className="p-3 sm:p-3 text-gray border-b">
                     <DropdownMenu
                       isOpen={openDropdown === rowIndex}
                       onClick={() => handleDropdownClick(rowIndex)}
                       onEdit={() => handleEditClick(row, rowIndex)}
                       onDelete={() => handleDeleteClick(row)}
                     />
-                  </td>
+                  </td> */}
                 </tr>
               ))}
           </tbody>

@@ -12,6 +12,7 @@ import DataTable from "../../components/dataTabel";
 
 const AddKelasForm = () => {
   const [kelas, setKelas] = useState<Kelas[]>([]);
+  const [editData, setEditData] = useState<Kelas | null>(null); // State untuk data yang akan di-edit
 
   useEffect(() => {
     const loadKelas = async () => {
@@ -27,6 +28,15 @@ const AddKelasForm = () => {
     // { header: "ID", accessor: (_: any, index: number) => index + 1, },
     { header: "Kelas", accessor: "id_admin" as keyof Admin },
     { header: "jurusan", accessor: "kelas" as keyof Kelas },
+    {
+      header: "Aksi",
+      Cell: ({ row }: { row: Kelas }) => (
+        <div>
+          <button onClick={() => handleEditClick(row)}>Edit</button>
+          <button onClick={() => handleDelete(row)}>Delete</button>
+        </div>
+      ),
+    },
   ];
 
   const [kelasData, setKelasData] = useState({
@@ -69,35 +79,33 @@ const AddKelasForm = () => {
     }
   };
 
-  const handleEdit = async (updatedRow) => {
-    try {
-      // Pastikan updatedRow memiliki id_tahun_ajaran
-      if (!updatedRow.id_kelas) {
-        throw new Error("ID Tahun Ajaran tidak ditemukan");
-      }
+  // Fungsi untuk handle klik edit
+  const handleEditClick = (row: Kelas) => {
+    setEditData(row); // Set data yang dipilih ke form edit
+  };
 
-      // Update state di frontend
-      setKelas((prevKelas) =>
-        prevKelas.map((tahun) =>
-          tahun.id_kelas === updatedRow.id_kelas ? updatedRow : tahun
+  // Handle update data setelah form edit disubmit
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    if (!editData) return;
+
+    try {
+      const updatedKelas = await updateKelas(editData.id_kelas, editData);
+      setKelas((prev) =>
+        prev.map((kelas) =>
+          kelas.id_kelas === editData.id_kelas ? updatedKelas.data : kelas
         )
       );
-
-      // Kirim request ke backend dengan id yang benar
-      const updatedKelas = await updateKelas(updatedRow.id_kelas, updatedRow);
       toast.success("Data berhasil diperbarui!");
+      setEditData(null); // Reset form edit setelah sukses
     } catch (error) {
-      // Tampilkan lebih banyak detail error dari response server
-      console.error(
-        "Gagal memperbarui data di backend:",
-        error.response?.data || error.message
-      );
-      toast.error(
-        `Gagal memperbarui data: ${
-          error.response?.data?.message || error.message
-        }`
-      );
+      toast.error("Terjadi kesalahan saat mengedit data");
     }
+  };
+  // Handle perubahan input pada form edit
+  const handleEditChange = (e) => {
+    const { name, value } = e.target;
+    setEditData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleDelete = async (deletedRow) => {
@@ -149,10 +157,30 @@ const AddKelasForm = () => {
         </select>
         <button type="submit">Tambah Kelas</button>
       </form>
+      {/* Form Edit */}
+      {editData && (
+        <form onSubmit={handleEditSubmit}>
+          <h3>Edit Data Kelas</h3>
+          <select
+            name="kelas"
+            value={editData.kelas}
+            onChange={handleEditChange}
+            required
+          >
+            <option value="">Pilih Kelas</option>
+            <option value="TKJ">Teknik Komputer Jaringan</option>
+            <option value="DKV">Desain Komunikasi Visual</option>
+            <option value="BD">Bisnis Digital</option>
+            <option value="SIJA">Sistem Informasi Jaringan Aplikasi</option>
+            <option value="TSM">Teknik Sepeda Motor</option>
+          </select>
+          <button type="submit">Perbarui Kelas</button>
+        </form>
+      )}
       <DataTable
         columns={kelasColumns}
         data={kelas}
-        onEdit={handleEdit}
+        onEdit={handleEditClick}
         onDelete={handleDelete}
       />
     </>

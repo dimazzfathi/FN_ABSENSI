@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { updateTahunAjaran, deleteTahunAjaran } from "../../../api/tahunAjaran";
-
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import {
@@ -15,6 +14,13 @@ export default function Tahun_Ajaran() {
   const [statusValue, setStatusValue] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [tahunAjaran, setTahunAjaran] = useState<TahunAjaran[]>([]);
+  const [isTahunAjaranValid, setIsTahunAjaranValid] = useState(true);
+  const [editData, setEditData] = useState<TahunAjaran | null>(null);
+  const [openDropdownId, setOpenDropdownId] = useState<number | null>(null); // Menyimpan ID baris yang dropdown-nya terbuka
+  const [isModalOpen, setIsModalOpen] = useState(false); // State untuk mengontrol modal
+  const [selectedRow, setSelectedRow] = useState(null);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+
   useEffect(() => {
     const loadTahunAjaran = async () => {
       const response = await fetchTahunAjaran();
@@ -28,64 +34,52 @@ export default function Tahun_Ajaran() {
     // { header: "No", accessor: "id_tahun_pelajaran" as keyof TahunAjaran },
     { header: "Tahun Ajaran", accessor: "tahun" as keyof TahunAjaran },
     { header: "Status", accessor: "aktif" as keyof TahunAjaran },
-  ];
-  const handleEdit = async (updatedRow) => {
-    try {
-      // Pastikan updatedRow memiliki id_tahun_ajaran
-      if (!updatedRow.id_tahun_pelajaran) {
-        throw new Error("ID Tahun Ajaran tidak ditemukan");
-      }
-
-      // Update state di frontend
-      setTahunAjaran((prevTahunAjaran) =>
-        prevTahunAjaran.map((tahun) =>
-          tahun.id_tahun_pelajaran === updatedRow.id_tahun_pelajaran
-            ? updatedRow
-            : tahun
-        )
-      );
-
-      // Kirim request ke backend dengan id yang benar
-      const updatedTahunAjaran = await updateTahunAjaran(
-        updatedRow.id_tahun_pelajaran,
-        updatedRow
-      );
-      toast.success("Data berhasil diperbarui!");
-    } catch (error) {
-      // Tampilkan lebih banyak detail error dari response server
-      console.error(
-        "Gagal memperbarui data di backend:",
-        error.response?.data || error.message
-      );
-      toast.error(
-        `Gagal memperbarui data: ${
-          error.response?.data?.message || error.message
-        }`
-      );
-    }
-  };
-  const handleDelete = async (deletedRow) => {
-    const confirmed = window.confirm(
-      `Apakah Anda yakin ingin menghapus tahun ajaran ${deletedRow.nama_tahun_ajaran}?`
-    );
-    if (confirmed) {
-      try {
-        // Panggil fungsi deleteTahunAjaran untuk menghapus di backend
-        await deleteTahunAjaran(deletedRow.id_tahun_pelajaran);
-
-        // Setelah sukses, update state di frontend
-        setTahunAjaran((prevTahunAjaran) =>
-          prevTahunAjaran.filter(
-            (tahun) =>
-              tahun.id_tahun_pelajaran !== deletedRow.id_tahun_pelajaran
-          )
+    {
+      header: "Aksi",
+      Cell: ({ row }: { row: TahunAjaran }) => {
+        return (
+          <div>
+            <button
+              className="px-4 py-2 rounded"
+              onClick={() => handleToggleDropdown(row.id_tahun_pelajaran)}
+            >
+              &#8942; {/* Simbol menu */}
+            </button>
+            {openDropdownId === row.id_tahun_pelajaran && ( // Hanya tampilkan dropdown jika id_tahun_pelajaran sesuai
+              <div className="absolute mt-2 w-48 bg-white border rounded shadow-md">
+                <button
+                  onClick={() => handleEditClick(row)}
+                  className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-200"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDeleteClick(row)}
+                  className="block w-full px-4 py-2 text-left text-sm text-red-700 hover:bg-gray-200"
+                >
+                  Hapus
+                </button>
+                <button
+                  onClick={() => handleDetailClick(row)}
+                  className="block px-4 py-2"
+                >
+                  Detail
+                </button>
+              </div>
+            )}
+          </div>
         );
-        console.log("Tahun ajaran berhasil dihapus");
-      } catch (error) {
-        console.error("Error deleting tahun ajaran:", error);
-        // Anda bisa menambahkan notifikasi atau pesan error di sini
-      }
-    }
+      },
+    },
+  ];
+  const handleDetailClick = (row: Kelas) => {
+    alert(`Detail Kelas: ${JSON.stringify(row)}`);
+    setOpenDropdownId(null); // Tutup dropdown setelah melihat detail
+  };
+  const handleToggleDropdown = (id_tahun_pelajaran: string) => {
+    setOpenDropdownId(
+      openDropdownId === id_tahun_pelajaran ? null : id_tahun_pelajaran
+    ); // Toggle dropdown
   };
   //.......untuk add data
   // State untuk menyimpan data input
@@ -125,6 +119,10 @@ export default function Tahun_Ajaran() {
         toast.error("Data sudah ada!"); // Menampilkan pesan jika data sudah ada
       } else {
         toast.success("Tahun ajaran berhasil ditambahkan!"); // Menampilkan pesan sukses
+        setTahunAjaran((prevTahunAjaran) => [
+          ...prevTahunAjaran,
+          response.data,
+        ]);
         // Reset form setelah submit
         setFormData({
           id_tahun_pelajaran: "",
@@ -136,6 +134,74 @@ export default function Tahun_Ajaran() {
     } catch (error) {
       console.error("Error adding tahun ajaran:", error);
       toast.error("Data sudah ada"); // Menampilkan pesan error
+    }
+  };
+  //handle hapus
+  const handleDeleteClick = (row) => {
+    setSelectedRow(row); // Simpan data yang ingin dihapus
+    setIsConfirmOpen(true); // Buka modal
+  };
+  const handleConfirmDelete = async () => {
+    try {
+      // Panggil fungsi delete tahun ajaran untuk menghapus di backend
+      await deleteTahunAjaran(selectedRow.id_tahun_pelajaran);
+
+      // Setelah sukses, update state di frontend
+      setTahunAjaran((prevTahunAjaran) =>
+        prevTahunAjaran.filter(
+          (tahunAjaran) =>
+            tahunAjaran.id_tahun_pelajaran !== selectedRow.id_tahun_pelajaran
+        )
+      );
+      toast.success(`Tahun ajaran ${selectedRow.tahun} berhasil dihapus`);
+      setIsConfirmOpen(false); // Tutup modal
+      setSelectedRow(null); // Reset selectedRow
+    } catch (error) {
+      console.error("Error deleting tahun ajaran:", error);
+      toast.error("Gagal menghapus tahun ajaran");
+    }
+  };
+  const handleCancel = () => {
+    setIsConfirmOpen(false); // Tutup modal tanpa hapus
+    setSelectedRow(null); // Reset selectedRow
+  };
+  // Fungsi untuk handle klik edit
+  const handleEditClick = (row: TahunAjaran) => {
+    setEditData(row); // Set data yang dipilih ke form edit
+    setIsModalOpen(true); // Buka modal saat tombol edit diklik
+  };
+  // Handle perubahan input pada form edit
+  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEditData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+  // Handle update data setelah form edit disubmit
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    if (editData) {
+      // Validasi sebelum mengupdate
+      if (editData.tahun.trim() === "") {
+        setIsTahunAjaranValid(false);
+        return;
+      }
+
+      try {
+        await updateTahunAjaran(editData.id_tahun_pelajaran, {
+          tahun: editData.tahun,
+          aktif: editData.aktif,
+        });
+        setTahunAjaran((prev) =>
+          prev.map((tahunAjaran) =>
+            tahunAjaran.id_tahun_pelajaran === editData.id_tahun_pelajaran
+              ? { ...tahunAjaran, ...editData } // Update tahun dan aktif
+              : tahunAjaran
+          )
+        );
+        toast.success("Data berhasil diperbarui!");
+        setIsModalOpen(false); // Tutup modal setelah sukses
+        setOpenDropdownId(null); // Menutup dropdown setelah edit
+      } catch (error) {
+        toast.error("Terjadi kesalahan saat mengedit data");
+      }
     }
   };
   //tombol untuk filter, pindah halaman, search dan reset
@@ -326,11 +392,88 @@ export default function Tahun_Ajaran() {
                   <DataTable
                     columns={tahunAjaranColumns}
                     data={paginatedData}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
+                    // onEdit={handleEdit}
+                    // onDelete={handleDelete}
                   />
-                </div>
+                  {isModalOpen && (
+                    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                      <div className="bg-white rounded p-4 shadow-lg">
+                        <h3 className="pb-2">Edit Data Tahun Ajaran</h3>
+                        <form onSubmit={handleEditSubmit}>
+                          {/* Input untuk Tahun Ajaran */}
+                          <input
+                            type="text"
+                            name="tahun"
+                            value={editData ? editData.tahun : ""}
+                            onChange={handleEditChange}
+                            className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${
+                              isTahunAjaranValid
+                                ? "border-gray-300"
+                                : "border-red-500"
+                            }`}
+                            placeholder="Tahun Ajaran..."
+                          />
 
+                          {/* Dropdown untuk Aktif */}
+                          <div className="mb-2">
+                            <label className="block text-sm sm:text-base">
+                              Status Aktif
+                            </label>
+                            <select
+                              name="aktif"
+                              value={editData ? editData.aktif : ""}
+                              onChange={handleEditChange}
+                              className="w-full p-2 border rounded text-sm sm:text-base"
+                            >
+                              <option value="">Pilih Status</option>
+                              <option value="Aktif">Aktif</option>
+                              <option value="Lulus">Lulus</option>
+                            </select>
+                          </div>
+
+                          {/* Tombol Edit dan Tutup */}
+                          <button
+                            type="submit"
+                            className="py-2 sm:px-4 sm:py-2 bg-teal-400 hover:bg-teal-500 text-white rounded text-sm sm:text-base"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsModalOpen(false); // Tutup modal
+                              setOpenDropdownId(null); // Tutup dropdown juga
+                            }}
+                            className="ml-2 py-2 sm:px-4 sm:py-2 bg-gray-400 hover:bg-gray-500 text-white rounded text-sm sm:text-base"
+                          >
+                            Tutup
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+                  )}
+                  {isConfirmOpen && (
+                      <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-50">
+                        <div className="bg-white p-6 rounded shadow-md">
+                          <p>Apakah kamu yakin ingin menghapus item ini?</p>
+                          <div className="mt-4 flex justify-end">
+                            <button
+                              onClick={handleCancel}
+                              className="px-4 py-2 mr-2 bg-gray-300 rounded hover:bg-gray-400"
+                            >
+                              Batal
+                            </button>
+                            <button
+                              onClick={handleConfirmDelete}
+                              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                            >
+                              Hapus
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                </div>
                 {/* Pagination */}
                 <div className="mt-4 flex justify-between items-center pb-4">
                   <div className="text-sm text-gray-700 text-white">
@@ -349,7 +492,9 @@ export default function Tahun_Ajaran() {
                       Previous
                     </button>
                     <button
-                      odisabled={currentPage === totalPages}
+                      disabled={
+                        currentPage === totalPages || paginatedData.length === 0
+                      }
                       onClick={() => handlePageChange(currentPage + 1)}
                       className={`px-2 py-1 border rounded ${
                         currentPage === totalPages
