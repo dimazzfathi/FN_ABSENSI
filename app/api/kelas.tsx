@@ -4,7 +4,7 @@ const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export type Kelas = {
     id_kelas: string;
-    id_admin: number;
+    id_admin: string;
     kelas: string; // Anda bisa menambahkan properti lain sesuai kebutuhan
   };
   

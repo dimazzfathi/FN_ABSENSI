@@ -21,6 +21,6 @@
       "@/*": ["./*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "app/master_data/akademik/thn_ajaran/PlusIcons.jsx", "app/master_data/akademik/kelas/hal.js"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "app/master_data/akademik/thn_ajaran/PlusIcons.jsx", "app/master_data/akademik/kelas/hal.js", "app/master_data/akademik/kelas/hal.jsx", "app/master_data/guru/data_guru/tes.tsx"],
   "exclude": ["node_modules"]
 }

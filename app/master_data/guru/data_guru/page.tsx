@@ -1,5 +1,6 @@
 "use client";
 import Guru from './hal';
+import Tes from './tes';
 import React, { useState } from 'react'
 import Navbar from "../../../components/navbar/page"
 import Footer from "../../../components/footer/page"
@@ -24,6 +25,7 @@ import Footer from "../../../components/footer/page"
       <div className="flex-1 p-6">
           <div className="min-h-screen">
             <Guru />
+            {/* <Tes /> */}
           </div>
       </div>
     </main>

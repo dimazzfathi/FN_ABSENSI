@@ -1,4 +1,8 @@
 import React, { useState } from 'react';
+import Cookies from 'js-cookie';
+import axios from 'axios';
+
+const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 const DropdownMenu = () => {
   const [isDropdownOpen, setDropdownOpen] = useState(false);
@@ -8,10 +12,27 @@ const DropdownMenu = () => {
   };
   const [showPopup, setShowPopup] = useState(false);
 
-  const handleLogout = () => {
-    // Tambahkan logika logout di sini
-    alert('Logged out!');
-    setShowPopup(false);
+  const handleLogout = async () => {
+    // Hapus token dari cookie
+    Cookies.remove('token');
+    Cookies.remove('nama_admin');
+    Cookies.remove('status');
+    Cookies.remove('id_admin');
+    try {
+      // Panggil endpoint logout di backend
+      const response = await axios.post(`${baseUrl}/api/logout`, {
+        withCredentials: true, // Pastikan cookies dikirim dengan permintaan
+      });
+  
+      console.log('Logout response:', response);
+  
+      if (response.status === 200) {
+        // Redirect ke halaman login setelah logout
+        window.location.href = '/login';
+      }
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
   };
 
   return (
@@ -40,7 +61,7 @@ const DropdownMenu = () => {
           <ul className="py-1">
             <li>
               <a
-                href="../../administrator/profile"
+                href="../../../profile"
                 className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
               >
                 Profile
@@ -56,7 +77,7 @@ const DropdownMenu = () => {
             </li>
             <li>
               <a
-                href="/settings"
+                href="../../../setting"
                 className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
               >
                 Settings

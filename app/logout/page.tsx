@@ -1,12 +1,33 @@
 "use client";
 import React, { useState } from 'react';
+import Cookies from 'js-cookie';
+import axios from 'axios';
+
+const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 const [showPopup, setShowPopup] = useState(false);
 
   const handleLogout = () => {
-    // Tambahkan logika logout di sini
-    alert('Logged out!');
-    setShowPopup(false);
+    // Hapus token dari cookie
+    Cookies.remove('token');
+    Cookies.remove('nama_admin');
+    Cookies.remove('status');
+    Cookies.remove('id_admin');
+    try {
+      // Panggil endpoint logout di backend
+      const response = await axios.post(`${baseUrl}/api/logout`, {
+        withCredentials: true, // Pastikan cookies dikirim dengan permintaan
+      });
+  
+      console.log('Logout response:', response);
+  
+      if (response.status === 200) {
+        // Redirect ke halaman login setelah logout
+        window.location.href = '/login';
+      }
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
   };
 
 function page() {

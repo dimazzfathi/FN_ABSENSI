@@ -73,7 +73,7 @@ const DataTable = <T,>({
                     {/* Pastikan column.Cell ada sebelum mengaksesnya */}
                     {typeof column.Cell === 'function' 
                       ? column.Cell({ row }) 
-                      : row[column.accessor] ? row[column.accessor] : 'N/A'} {/* Menampilkan data atau 'N/A' */}
+                      : row[column.accessor] ? row[column.accessor] : ''} {/* Menampilkan data atau 'N/A' */}
                   </td>
                   ))}
                   

@@ -37,3 +37,11 @@ catatan : dalam scrip tidak ada error tapi banyak peringatan yang harus di benah
 
 (sejauh ini sudah bagus dan keren perkembangan projek SAS, hanya Perlu di ingat setiap scrip yang dituliskan harus dimengerti
 dan dipahami serta jalur foldernya. komentar setiap scrip yang penting juga perlu dicatat)
+
+REVISI KE
+1.
+2.
+3. Di tabel mapel, untuk rombel dan id_kelas di hilangkan
+4.
+5. -Di tabel siswa, untuk email, pass, foto dan barcode dilewati terlebih dahulu
+   -Di tabel guru, untuk id_mapel, email, pass, foto, walas, barcode, id_kelas dan rombel juga dilewati terlebih dahulu

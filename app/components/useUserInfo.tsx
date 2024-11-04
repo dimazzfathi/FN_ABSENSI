@@ -4,10 +4,12 @@ import Cookies from 'js-cookie';
 const useUserInfo = () => {
   const [namaAdmin, setNamaAdmin] = useState('');
   const [status, setStatus] = useState('');
+  const [idAdmin, setIdAdmin] = useState('');
 
   useEffect(() => {
     const storedNamaAdmin = Cookies.get('nama_admin');
     const storedStatus = Cookies.get('status');
+    const storedIdAdmin = Cookies.get('id_admin');
     
     if (storedNamaAdmin) {
       setNamaAdmin(storedNamaAdmin);
@@ -15,9 +17,12 @@ const useUserInfo = () => {
     if (storedStatus) {
       setStatus(storedStatus);
     }
+    if (storedIdAdmin) {
+      setIdAdmin(storedIdAdmin);
+    }
   }, []);
 
-  return { namaAdmin, status };
+  return { namaAdmin, status, idAdmin };
 };
 
 export default useUserInfo;

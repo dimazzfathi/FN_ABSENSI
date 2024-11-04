@@ -9,7 +9,11 @@ import {
   TahunAjaran,
 } from "../../../api/tahunAjaran";
 import DataTable from "../../../components/dataTabel";
-
+import axios from "axios";
+import Cookies from "js-cookie"; // Import js-cookie
+import Swal from "sweetalert2";
+import useUserInfo from "@/app/components/useUserInfo";
+const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 export default function Tahun_Ajaran() {
   const [statusValue, setStatusValue] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -20,7 +24,21 @@ export default function Tahun_Ajaran() {
   const [isModalOpen, setIsModalOpen] = useState(false); // State untuk mengontrol modal
   const [selectedRow, setSelectedRow] = useState(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const { namaAdmin, status, idAdmin } = useUserInfo();
+  const [admins, setAdmins] = useState<{ id_admin: string; nama_admin: string }[]>([]);
 
+  useEffect(() => {
+    const fetchAdmin = async () => {
+    try{
+      const response = await axios.get(`${baseUrl}/admin/all-Admin`); // Ganti dengan endpoint Anda
+      console.log("admin", response);
+      setAdmins(response.data.data); // Simpan semua admin ke dalam state
+    } catch (error) {
+      console.error("Error fetching admins:", error);
+    }
+    };
+    fetchAdmin();
+  }, []);
   useEffect(() => {
     const loadTahunAjaran = async () => {
       const response = await fetchTahunAjaran();
@@ -30,8 +48,10 @@ export default function Tahun_Ajaran() {
     };
     loadTahunAjaran();
   }, []);
+
   const tahunAjaranColumns = [
     // { header: "No", accessor: "id_tahun_pelajaran" as keyof TahunAjaran },
+    // { header: "Admin", accessor: "id_admin" as keyof TahunAjaran },
     { header: "Tahun Ajaran", accessor: "tahun" as keyof TahunAjaran },
     { header: "Status", accessor: "aktif" as keyof TahunAjaran },
     {
@@ -61,7 +81,7 @@ export default function Tahun_Ajaran() {
                 </button>
                 <button
                   onClick={() => handleDetailClick(row)}
-                  className="block px-4 py-2"
+                  className="block w-full px-4 py-2 text-left text-sm text-black-700 hover:bg-gray-200"
                 >
                   Detail
                 </button>
@@ -72,8 +92,24 @@ export default function Tahun_Ajaran() {
       },
     },
   ];
-  const handleDetailClick = (row: Kelas) => {
-    alert(`Detail Kelas: ${JSON.stringify(row)}`);
+  const handleDetailClick = (row: TahunAjaran) => {
+    const admin = admins.find(admin => admin.id_admin === row.id_admin); // Cari admin berdasarkan id_admin
+    console.log("id admin", admin)
+    const namaAdmin = admin ? admin.nama_admin : "Tidak ada"; // Jika ditemukan, ambil nama_admin
+    console.log("iki admin", namaAdmin)
+    Swal.fire({
+      html: `
+        <div style="text-align: center;">
+          <p>Tahun ajaran: ${JSON.stringify(row.tahun) || "Tidak ada"}</p>
+          <p>Ditambah oleh: ${namaAdmin || "Tidak ada"}</p>
+        </div>
+      `,
+      icon: "info",
+      iconColor: "#009688",
+      confirmButtonText: "Tutup",
+      width: "400px", // Mengatur lebar popup agar lebih kecil
+      confirmButtonColor: "#38b2ac", // Mengatur warna tombol OK (gunakan kode warna yang diinginkan)
+    });
     setOpenDropdownId(null); // Tutup dropdown setelah melihat detail
   };
   const handleToggleDropdown = (id_tahun_pelajaran: string) => {
@@ -84,19 +120,26 @@ export default function Tahun_Ajaran() {
   //.......untuk add data
   // State untuk menyimpan data input
   const [formData, setFormData] = useState({
-    id_tahun_pelajaran: "",
-    id_admin: "",
+    id_admin: idAdmin || "",
     tahun: "",
-    aktif: "no",
+    aktif: "",
   });
   // Handle perubahan input
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
       [name]: value,
     });
   };
+  useEffect(() => {
+    if (idAdmin) {
+      setFormData((prevData) => ({
+        ...prevData,
+        id_admin: idAdmin,
+      }));
+    }
+  }, [idAdmin]);
   // Handle submit form
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,7 +147,7 @@ export default function Tahun_Ajaran() {
     console.log("Form data:", formData); // Log data yang dikirim
 
     // Validasi: Pastikan 'aktif' tidak kosong
-    if (!formData.aktif || !formData.tahun) {
+    if (!formData.aktif.trim() || !formData.tahun.trim()) {
       toast.error("Data tidak boleh kosong"); // Menampilkan pesan error
       return; // Tidak melanjutkan jika 'aktif' kosong
     }
@@ -125,15 +168,25 @@ export default function Tahun_Ajaran() {
         ]);
         // Reset form setelah submit
         setFormData({
-          id_tahun_pelajaran: "",
-          id_admin: "",
+          id_admin: idAdmin,
           tahun: "",
           aktif: "",
         });
       }
     } catch (error) {
-      console.error("Error adding tahun ajaran:", error);
-      toast.error("Data sudah ada"); // Menampilkan pesan error
+      // Tangani kesalahan di sini
+      console.error("Error adding kelas:", error);
+
+      // Cek apakah error berasal dari response API
+      if (error.response) {
+        // Anda bisa menambahkan logika khusus di sini berdasarkan error dari API
+        toast.error(
+          "Terjadi kesalahan saat menambah kelas: " +
+            error.response.data.message
+        );
+      } else {
+        toast.error("Terjadi kesalahan saat menambah kelas");
+      }
     }
   };
   //handle hapus
@@ -179,21 +232,25 @@ export default function Tahun_Ajaran() {
     e.preventDefault();
     if (editData) {
       // Validasi sebelum mengupdate
-      if (editData.tahun.trim() === "") {
+      if (editData.id_tahun_pelajaran.trim() === "") {
         setIsTahunAjaranValid(false);
         return;
       }
 
+      // Cek apakah ada perubahan
+      const existingTahun = tahunAjaran.find(tahun => tahun.id_tahun_pelajaran === editData.id_tahun_pelajaran);
+      if (existingTahun && existingTahun.aktif === editData.aktif) {
+        toast.error("Tidak ada perubahan data yang dilakukan.");
+        return;
+      }
+
       try {
-        await updateTahunAjaran(editData.id_tahun_pelajaran, {
-          tahun: editData.tahun,
-          aktif: editData.aktif,
-        });
+        await updateTahunAjaran(editData.id_tahun_pelajaran, editData);
         setTahunAjaran((prev) =>
-          prev.map((tahunAjaran) =>
-            tahunAjaran.id_tahun_pelajaran === editData.id_tahun_pelajaran
-              ? { ...tahunAjaran, ...editData } // Update tahun dan aktif
-              : tahunAjaran
+          prev.map((tahun) =>
+            tahun.id_tahun_pelajaran === editData.id_tahun_pelajaran
+              ? { ...tahun, aktif: editData.aktif } // Update tahun dan aktif
+              : tahun
           )
         );
         toast.success("Data berhasil diperbarui!");
@@ -291,6 +348,14 @@ export default function Tahun_Ajaran() {
               className="bg-white rounded-lg shadow-md p-4 lg:p-6 border"
             >
               <label
+                name="id_admin"
+                value={formData.id_admin}
+                onChange={handleChange}
+                hidden="none"
+              >
+                id_admin
+              </label>
+              <label
                 htmlFor="id_tahun_pelajaran"
                 className="block text-sm mb-2 sm:text-sm font-bold"
               >
@@ -306,7 +371,6 @@ export default function Tahun_Ajaran() {
                 placeholder="Tahun ajaran..."
               />
               <label
-                htmlFor="aktif"
                 className="block text-sm pt-3 mb-2 sm:text-sm font-bold"
               >
                 Status
@@ -406,11 +470,7 @@ export default function Tahun_Ajaran() {
                             name="tahun"
                             value={editData ? editData.tahun : ""}
                             onChange={handleEditChange}
-                            className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${
-                              isTahunAjaranValid
-                                ? "border-gray-300"
-                                : "border-red-500"
-                            }`}
+                            className="w-full p-2 border rounded text-sm sm:text-base mb-2 "
                             placeholder="Tahun Ajaran..."
                           />
 

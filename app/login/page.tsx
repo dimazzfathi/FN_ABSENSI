@@ -20,15 +20,16 @@ const LoginForm = () => {
       });
       console.log('Full Response:', response);  // Log seluruh respons
     console.log('Token:', response.data.token);  // Pastikan token ada
-    console.log('Nama Admin:', response.data.data.nama_admin);  // Pastikan nama admin ada
+    console.log('Nama Admin:', response.data.nama_admin);  // Pastikan nama admin ada
     
       if (response.status === 200) {
         // Menyimpan token ke dalam cookie dengan waktu kadaluarsa 5 menit
         const expireDate = new Date();
-        expireDate.setTime(expireDate.getTime() + (5 * 60 * 1000)); // 5 menit dalam milidetik
+        expireDate.setTime(expireDate.getTime() + (30 * 60 * 1000)); // 5 menit dalam milidetik
         Cookies.set('token', response.data.token, { expires: expireDate });
         Cookies.set('nama_admin', response.data.data.nama_admin, { expires: expireDate });
-        Cookies.set('status', response.data.status, { expires: expireDate });
+        Cookies.set('status', response.data.data.status, { expires: expireDate });
+        Cookies.set('id_admin', response.data.data.id_admin, { expires: expireDate });
         window.location.href = '../dash';
       }
     } catch (error) {

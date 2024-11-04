@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import Pw from "./pass";
+import bcrypt from "bcryptjs"; // Pastikan bcryptjs sudah terinstal
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -12,6 +13,8 @@ import {
   Admin,
 } from "../../api/admin";
 import DataTable from "../../components/dataTabel";
+import useUserInfo from "@/app/components/useUserInfo";
+import Swal from "sweetalert2";
 
 export default function DataSiswa() {
   const [passwordVisible, setPasswordVisible] = useState(false);
@@ -28,6 +31,7 @@ export default function DataSiswa() {
   const togglePasswordVisibility = () => {
     setPasswordVisible((prev) => !prev); // Toggle state
   };
+  const { namaAdmin, status, idAdmin } = useUserInfo();
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [formData, setFormData] = useState({
     id_admin: "",
@@ -53,14 +57,14 @@ export default function DataSiswa() {
   }, []);
 
   const adminColumns = [
-    // { header: "ID", accessor: "id_admin" as keyof Admin },
+    { header: "ID", accessor: "id_admin" as keyof Admin },
     { header: "Nama", accessor: "nama_admin" as keyof Admin },
     { header: "Alamat", accessor: "alamat" as keyof Admin },
     { header: "Jk", accessor: "jenis_kelamin" as keyof Admin },
     { header: "No Tlpn", accessor: "no_telp" as keyof Admin },
     { header: "Email", accessor: "email" as keyof Admin },
     // { header: 'Username', accessor: 'username' as keyof Admin },
-    // { header: 'Password', accessor: 'pass' as keyof Admin },
+    // { header: "Password", accessor: "pass" as keyof Admin },
     { header: "Foto", accessor: "foto" as keyof Admin },
     { header: "Status", accessor: "status" as keyof Admin },
     {
@@ -101,10 +105,46 @@ export default function DataSiswa() {
       },
     },
   ];
-  const handleDetailClick = (row: Kelas) => {
-    alert(`Detail Kelas: ${JSON.stringify(row)}`);
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [password, setPassword] = useState("");
+  const [isDetailPopupOpen, setIsDetailPopupOpen] = useState(false); // Kontrol pop-up detail
+  const [matchedAdmin, setMatchedAdmin] = useState(null); // Simpan admin yang cocok
+  const handleDetailClick = (row: Admin) => {
+    setIsPopupOpen(true); // Buka pop-up
     setOpenDropdownId(null); // Tutup dropdown setelah melihat detail
   };
+  const handlePassSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const enteredPassword = password.trim();
+
+    let foundAdmin = null;
+
+    // Loop untuk mencari admin dengan password yang sesuai
+    for (const admin of admins) {
+      const isMatch = await bcrypt.compare(enteredPassword, admin.pass);
+      if (isMatch) {
+        foundAdmin = admin;
+        break; // Hentikan pencarian jika ditemukan
+      }
+    }
+
+    if (foundAdmin) {
+      console.log("Password benar, akses diberikan:", foundAdmin);
+      setMatchedAdmin(foundAdmin); // Simpan admin yang ditemukan
+      setIsPopupOpen(false); // Tutup pop-up login
+      setIsDetailPopupOpen(true); // Tampilkan pop-up detail
+    } else {
+      console.error("Password salah atau admin tidak ditemukan!");
+      toast("Password yang dimasukkan salah atau admin tidak ditemukan!");
+    }
+  };
+  // Fungsi untuk menutup pop-up detail
+  const handleCloseDetailPopup = () => {
+    setIsDetailPopupOpen(false);
+  };
+
+  // console.log('Daftar Password Admin:', admins.map(admin => admin.pass));
+  //$2b$11$Tbc4/cpJ8aSIZkEw7HK3e.OQHKgFQ3jaOkFj.61B8YJJXiAmiFtDa
 
   const handleToggleDropdown = (id_kelas: string) => {
     setOpenDropdownId(openDropdownId === id_kelas ? null : id_kelas); // Toggle dropdown
@@ -206,7 +246,7 @@ export default function DataSiswa() {
   };
 
   // Fungsi untuk handle klik edit
-  const handleEditClick = (row: Kelas) => {
+  const handleEditClick = (row: Admin) => {
     setEditData(row); // Set data yang dipilih ke form edit
     setIsModalOpen(true); // Buka modal saat tombol edit diklik
   };
@@ -221,6 +261,18 @@ export default function DataSiswa() {
       // Validasi sebelum mengupdate
       if (editData.nama_admin.trim() === "") {
         setIsAdminsValid(false);
+        return;
+      }
+
+      // Cek apakah ada perubahan
+      const existingAdmin = admins.find(
+        (admin) => admin.id_admin === editData.id_admin
+      );
+      if (
+        existingAdmin &&
+        JSON.stringify(existingAdmin) === JSON.stringify(editData)
+      ) {
+        toast.error("Tidak ada perubahan data yang dilakukan.");
         return;
       }
 
@@ -253,7 +305,9 @@ export default function DataSiswa() {
 
       // Setelah sukses, update state di frontend
       setAdmins((prevAdmins) =>
-        prevAdmins.filter((admin) => admin.nama_admin !== selectedRow.nama_admin)
+        prevAdmins.filter(
+          (admin) => admin.nama_admin !== selectedRow.nama_admin
+        )
       );
       toast.success(`Admin ${selectedRow.nama_admin} berhasil dihapus`);
       setIsConfirmOpen(false); // Tutup modal
@@ -359,7 +413,6 @@ export default function DataSiswa() {
                 onChange={handleChange}
                 placeholder="Nama Admin..."
                 className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                required
               />
               <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold">
                 {" "}
@@ -372,7 +425,6 @@ export default function DataSiswa() {
                 onChange={handleChange}
                 placeholder="Alamat..."
                 className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                required
               />
               <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold">
                 {" "}
@@ -383,7 +435,6 @@ export default function DataSiswa() {
                 value={formData.jenis_kelamin}
                 onChange={handleChange}
                 className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                required
               >
                 <option value="">Pilih Jenis Kelamin</option>
                 <option value="Laki-laki">Laki-laki</option>
@@ -400,7 +451,6 @@ export default function DataSiswa() {
                 onChange={handleChange}
                 placeholder="No Telepon..."
                 className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                required
               />
               <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold">
                 {" "}
@@ -413,7 +463,6 @@ export default function DataSiswa() {
                 onChange={handleChange}
                 placeholder="Email..."
                 className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                required
               />
               <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold">
                 {" "}
@@ -426,7 +475,6 @@ export default function DataSiswa() {
                 onChange={handleChange}
                 placeholder="Username..."
                 className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                required
               />
               <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold">
                 {" "}
@@ -440,7 +488,6 @@ export default function DataSiswa() {
                   onChange={handleChange}
                   placeholder="Password..."
                   className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                  required
                 />
                 <span
                   onClick={togglePasswordVisibility}
@@ -459,7 +506,6 @@ export default function DataSiswa() {
                 onChange={handleChange}
                 className="w-full p-2 border rounded text-sm sm:text-base mb-2"
                 accept="image/*"
-                required
               />
               <h2 className="text-sm pt-3 mb-2 sm:text-sm font-bold">
                 {" "}
@@ -470,7 +516,6 @@ export default function DataSiswa() {
                 value={formData.status}
                 onChange={handleChange}
                 className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                required
               >
                 <option value="">Pilih Status</option>
                 <option value="Administrator">Administrator</option>
@@ -603,7 +648,7 @@ export default function DataSiswa() {
 
                           <input
                             type="text"
-                            name="no_tlpn"
+                            name="no_telp"
                             value={editData ? editData.no_telp : ""}
                             onChange={handleEditChange}
                             className="w-full p-2 border rounded text-sm sm:text-base mb-2"
@@ -636,7 +681,6 @@ export default function DataSiswa() {
                               onChange={handleChange}
                               placeholder="Password..."
                               className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                              required
                             />
                             <span
                               onClick={togglePasswordVisibility}
@@ -686,26 +730,77 @@ export default function DataSiswa() {
                     </div>
                   )}
                   {isConfirmOpen && (
-                      <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-50">
-                        <div className="bg-white p-6 rounded shadow-md">
-                          <p>Apakah kamu yakin ingin menghapus item ini?</p>
-                          <div className="mt-4 flex justify-end">
-                            <button
-                              onClick={handleCancel}
-                              className="px-4 py-2 mr-2 bg-gray-300 rounded hover:bg-gray-400"
-                            >
-                              Batal
-                            </button>
-                            <button
-                              onClick={handleConfirmDelete}
-                              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-                            >
-                              Hapus
-                            </button>
-                          </div>
+                    <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-50">
+                      <div className="bg-white p-6 rounded shadow-md">
+                        <p>Apakah kamu yakin ingin menghapus item ini?</p>
+                        <div className="mt-4 flex justify-end">
+                          <button
+                            onClick={handleCancel}
+                            className="px-4 py-2 mr-2 bg-gray-300 rounded hover:bg-gray-400"
+                          >
+                            Batal
+                          </button>
+                          <button
+                            onClick={handleConfirmDelete}
+                            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                          >
+                            Hapus
+                          </button>
                         </div>
                       </div>
-                    )}
+                    </div>
+                  )}
+                  {isPopupOpen && (
+                    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-300 ease-in-out">
+                      <div className="bg-white p-6 rounded-lg shadow-lg transform transition-transform duration-300 ease-in-out scale-95 opacity-100">
+                        <h2 className="text-lg font-bold">Masukkan Password</h2>
+                        <form onSubmit={handlePassSubmit}>
+                          <input
+                            type="password"
+                            name="pass"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="border p-2 mb-4 w-full rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Password Administrator..."
+                            required
+                          />
+                          <button
+                            type="submit"
+                            className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition duration-200"
+                          >
+                            Submit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setIsPopupOpen(false)}
+                            className="ml-2 bg-red-500 text-white p-2 rounded hover:bg-red-600 transition duration-200"
+                          >
+                            Batal
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+                  )}
+                  {isDetailPopupOpen && matchedAdmin && (
+                    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-300 ease-in-out">
+                      <div className="bg-white p-6 rounded-lg shadow-lg">
+                        <h2 className="text-lg font-bold">Detail Admin</h2>
+                        <p>
+                          <strong>Username:</strong> {matchedAdmin.username}
+                        </p>
+                        <p>
+                          <strong>Password:</strong> {matchedAdmin.pass}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={handleCloseDetailPopup}
+                          className="mt-4 bg-gray-500 text-white p-2 rounded hover:bg-gray-600 transition duration-200"
+                        >
+                          Tutup
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="mt-4 flex justify-between items-center">
                   <div className="text-sm text-gray-700 text-white">

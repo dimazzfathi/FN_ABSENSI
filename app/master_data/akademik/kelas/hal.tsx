@@ -14,13 +14,17 @@ import {
   Kelas,
 } from "../../../api/kelas";
 import { fetchAdmins, Admin } from "../../../api/admin";
+import useUserInfo from "@/app/components/useUserInfo";
+import Swal from "sweetalert2";
+
+const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export default function _Kelas() {
   const [filterKelas, setFilterKelas] = useState("");
   const [filterJurusan, setFilterJurusan] = useState("");
   const [isJurusanValid, setIsJurusanValid] = useState(true);
   const router = useRouter();
-  const [admins, setAdmins] = useState<Admin[]>([]);
+  const [admins, setAdmins] = useState<{ id_admin: string; nama_admin: string }[]>([]);
   const [isKelasValid, setIsKelasValid] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [kelas, setKelas] = useState<Kelas[]>([]);
@@ -29,7 +33,8 @@ export default function _Kelas() {
   const [isModalOpen, setIsModalOpen] = useState(false); // State untuk mengontrol modal
   const [selectedRow, setSelectedRow] = useState(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-
+  const { namaAdmin, status, idAdmin } = useUserInfo();
+  
   useEffect(() => {
     //   const token = Cookies.get('token');
     //   console.log(token)
@@ -48,69 +53,64 @@ export default function _Kelas() {
     loadKelas();
   }, []);
 
+  // useEffect(() => {
+  //   //   const token = Cookies.get('token');
+  //   //   console.log(token)
+  //   // if (!token) {
+  //   //   router.push('../../../login');
+  //   //   return;
+  //   // }
+
+  //   // axios.defaults.headers.common['Authorization'] = token;
+  //   const loadKelas = async () => {
+  //     const response = await fetchKelas();
+  //     console.log("API Kelas:", response); // Debugging tambahan
+  //     const data = response.data;
+  //     setKelas(data);
+  //   };
+  //   loadKelas();
+  // }, []);
+
+  // Mengambil data admins dari API
   useEffect(() => {
-    //   const token = Cookies.get('token');
-    //   console.log(token)
-    // if (!token) {
-    //   router.push('../../../login');
-    //   return;
-    // }
-
-    // axios.defaults.headers.common['Authorization'] = token;
-    const loadKelas = async () => {
-      const response = await fetchKelas();
-      console.log("API Kelas:", response); // Debugging tambahan
-      const data = response.data;
-      setKelas(data);
+    const fetchAdmin = async () => {
+    try{
+      const response = await axios.get(`${baseUrl}/admin/all-Admin`); // Ganti dengan endpoint Anda
+      console.log("admin", response);
+      setAdmins(response.data.data); // Simpan semua admin ke dalam state
+    } catch (error) {
+      console.error("Error fetching admins:", error);
+    }
     };
-    loadKelas();
+    fetchAdmin();
   }, []);
-
-  const kelasColumns = [
-    // { header: "No", accessor: (_: any, index: number) => index + 1 },
-    // { header: "Admin", accessor: "id_admin" as keyof Admin },
-    { header: "Kelas", accessor: "kelas" as keyof Kelas },
-    {
-      header: "Aksi",
-      Cell: ({ row }: { row: Kelas }) => {
-        return (
-          <div>
-            <button
-              className="px-4 py-2 rounded"
-              onClick={() => handleToggleDropdown(row.id_kelas)}
-            >
-              &#8942; {/* Simbol menu */}
-            </button>
-            {openDropdownId === row.id_kelas && ( // Hanya tampilkan dropdown jika id_kelas sesuai
-              <div className="absolute mt-2 w-48 bg-white border rounded shadow-md">
-                <button
-                  onClick={() => handleEditClick(row)}
-                  className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-200"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDeleteClickk(row)}
-                  className="block w-full px-4 py-2 text-left text-sm text-red-700 hover:bg-gray-200"
-                >
-                  Hapus
-                </button>
-                <button
-                  onClick={() => handleDetailClick(row)}
-                  className="block px-4 py-2"
-                >
-                  Detail
-                </button>
-              </div>
-            )}
-          </div>
-        );
-      },
-    },
-  ];
+  useEffect(() => {
+    if (idAdmin) {
+      setKelasData((prevData) => ({
+        ...prevData,
+        id_admin: idAdmin,
+      }));
+    }
+  }, [idAdmin]);
 
   const handleDetailClick = (row: Kelas) => {
-    alert(`Detail Kelas: ${JSON.stringify(row)}`);
+    const admin = admins.find(admin => admin.id_admin === row.id_admin); // Cari admin berdasarkan id_admin
+    console.log("id admin", admin)
+    const namaAdmin = admin ? admin.nama_admin : "Tidak ada"; // Jika ditemukan, ambil nama_admin
+    console.log("iki admin", namaAdmin)
+    Swal.fire({
+      html: `
+        <div style="text-align: center;">
+          <p>Kelas: ${JSON.stringify(row.kelas) || "Tidak ada"}</p>
+          <p>Ditambah oleh: ${namaAdmin  || "Tidak ada"}</p>
+        </div>
+      `,
+      icon: "info",
+      iconColor: "#009688",
+      confirmButtonText: "Tutup",
+      width: "400px", // Mengatur lebar popup agar lebih kecil
+      confirmButtonColor: "#38b2ac", // Mengatur warna tombol OK (gunakan kode warna yang diinginkan)
+    });
     setOpenDropdownId(null); // Tutup dropdown setelah melihat detail
   };
 
@@ -119,7 +119,7 @@ export default function _Kelas() {
   };
 
   const [kelasData, setKelasData] = useState({
-    id_admin: "",
+    id_admin: idAdmin || "",
     kelas: "",
   });
 
@@ -154,7 +154,7 @@ export default function _Kelas() {
 
         // Reset form
         setKelasData({
-          id_admin: "",
+          id_admin: idAdmin,
           kelas: "",
         });
       }
@@ -200,7 +200,6 @@ export default function _Kelas() {
     setIsConfirmOpen(false); // Tutup modal tanpa hapus
     setSelectedRow(null); // Reset selectedRow
   };
-
   // Fungsi untuk handle klik edit
   const handleEditClick = (row: Kelas) => {
     setEditData(row); // Set data yang dipilih ke form edit
@@ -217,6 +216,13 @@ export default function _Kelas() {
       // Validasi sebelum mengupdate
       if (editData.kelas.trim() === "") {
         setIsKelasValid(false);
+        return;
+      }
+
+      // Cek apakah ada perubahan
+      const existingKelas = kelas.find(kelas => kelas.id_kelas === editData.id_kelas);
+      if (existingKelas && JSON.stringify(existingKelas) === JSON.stringify(editData)) {
+        toast.error("Tidak ada perubahan data yang dilakukan.");
         return;
       }
 
@@ -237,6 +243,50 @@ export default function _Kelas() {
       }
     }
   };
+
+  const kelasColumns = [
+    //adalah istilah yang digunakan dalam konteks tabel, terutama saat menggunakan pustaka seperti React Table, untuk menunjukkan kunci atau nama properti dalam data yang akan diambil dan ditampilkan di kolom tabel tertentu
+    // { header: "No", accessor: (_: any, index: number) => index + 1 },
+    // { header: "Admin", accessor: "id_admin" as keyof Kelas },
+    { header: "Kelas", accessor: "kelas" as keyof Kelas },
+    {
+      header: "Aksi",
+      Cell: ({ row }: { row: Kelas }) => {
+        return (
+          <div>
+            <button
+              className="px-4 py-2 rounded"
+              onClick={() => handleToggleDropdown(row.id_kelas)}
+            >
+              &#8942; {/* Simbol menu */}
+            </button>
+            {openDropdownId === row.id_kelas && ( // Hanya tampilkan dropdown jika id_kelas sesuai
+              <div className="absolute mt-2 w-48 bg-white border rounded shadow-md">
+                <button
+                  onClick={() => handleEditClick(row)}
+                  className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-200"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDeleteClickk(row)}
+                  className="block w-full px-4 py-2 text-left text-sm text-red-700 hover:bg-gray-200"
+                >
+                  Hapus
+                </button>
+                <button
+                  onClick={() => handleDetailClick(row)}
+                  className="block w-full px-4 py-2 text-left text-sm text-black-700 hover:bg-gray-200"
+                >
+                  Detail
+                </button>
+              </div>
+            )}
+          </div>
+        );
+      },
+    },
+  ];
 
   //tombol untuk filter, pindah halaman, search dan reset
   const [itemsPerPage, setItemsPerPage] = useState(5); // Default value is 5
@@ -328,6 +378,14 @@ export default function _Kelas() {
               className="bg-white rounded-lg shadow-md p-4 lg:p-6 border"
             >
               <h2 className="text-sm mb-2 sm:text-sm font-bold"></h2>
+              <label
+                name="id_admin"
+                value={kelasData.id_admin}
+                onChange={handleKelasChange}
+                hidden="none"
+              >
+                id_admin
+              </label>
               <h2 className="text-sm mb-2 sm:text-sm font-bold"> Kelas</h2>
               <input
                 type="text"
@@ -339,21 +397,6 @@ export default function _Kelas() {
                 }`}
                 placeholder="Kelas..."
               />
-              {/* <select
-                name="kelas"
-                value={kelasData.kelas}
-                onChange={handleKelasChange}
-                className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${
-                  isJurusanValid ? "border-gray-300" : "border-red-500"
-                }`}
-              >
-                <option value="">Pilih Kelas</option>
-                <option value="TKJ">Teknik Komputer Jaringan</option>
-                <option value="DKV">Desain Komunikasi Visual</option>
-                <option value="BD">Bisnis Digital</option>
-                <option value="SIJA">Sistem Informasi Jaringan Aplikasi</option>
-                <option value="TSM">Teknik Sepeda Motor</option>
-              </select> */}
               <div className="flex m-4 space-x-2">
                 <button
                   type="submit"
