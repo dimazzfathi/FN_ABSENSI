@@ -1,5 +1,5 @@
 "use client";
-import Siswa from './tes';
+import Siswa from './anyar';
 import React, { useState } from 'react'
 import Navbar from "../../../components/navbar/page"
 import Footer from "../../../components/footer/page"

@@ -71,13 +71,6 @@ const DataTable = <T,>({
                   </td>
                   {columns.map((column, colIndex) => (
                     <td className="p-3 sm:p-3 text-gray border-b z-50" key={column.header}>
-<<<<<<< HEAD
-                    {/* Pastikan column.Cell ada sebelum mengaksesnya */}
-                    {typeof column.Cell === 'function' 
-                      ? column.Cell({ row }) 
-                      : row[column.accessor] ? row[column.accessor] : ''} {/* Menampilkan data atau 'N/A' */}
-                  </td>
-=======
                       {/* Pastikan column.Cell ada sebelum mengaksesnya */}
                       {typeof column.Cell === "function" 
                         ? column.Cell({ row }) 
@@ -90,7 +83,6 @@ const DataTable = <T,>({
                           ) : row[column.accessor] ? row[column.accessor] : ""
                       }
                     </td>
->>>>>>> b5f4dff4bc880a81688092c0b267cf5f5cc1d6ef
                   ))}
 
                   
