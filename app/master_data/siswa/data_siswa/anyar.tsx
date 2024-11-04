@@ -1,101 +1,118 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState , useEffect, useRef } from 'react';
 import axios from 'axios';
-import { addSiswa } from '../../../api/siswa';
+import DataTable from '../../../components/dataTabel';
+import {
+  addTes,
+  fetchTes,
+  deleteTes,
+  updateTes,
+  Tes,
+} from "../../../api/tes";
 
-const FormInputSiswa = () => {
-  const [idSiswa, setIdSiswa] = useState('');
-  const [namaSiswa, setNamaSiswa] = useState('');
-  const [tahunAjaran, setTahunAjaran] = useState('');
-  const [listTahunAjaran, setListTahunAjaran] = useState([]);
 
-  // Mengambil data tahun ajaran dari API
+const UploadForm = () => {
+  const [dataTes, setDataTes] = useState<Tes[]>([]);
+  const [nama, setNama] = useState('');
+  const [gambar, setGambar] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState('');
+
+  //stet untuk fecth siswa
   useEffect(() => {
-    const fetchTahunAjaran = async () => {
-      try {
-        const response = await axios.get('http://localhost:3005/tahun-pelajaran/all-tahun-pelajaran');
-        setListTahunAjaran(response.data.data); // Set data tahun ajaran dari API
-      } catch (error) {
-        console.error('Error fetching tahun ajaran:', error);
-      }
+    const loadTes = async () => {
+      const response = await fetchTes();
+      // console.log('API Tes:', response); // Debugging tambahan
+      const data = response.data; 
+      setDataTes(data);
     };
-
-    fetchTahunAjaran();
+    loadTes();
   }, []);
+
+  const tesColumns = [        
+    
+    { header: 'Nama', accessor: 'nama' as keyof Tes },
+    { header: 'Foto', accessor: 'gambar' as keyof Tes }
+    
+  ];
+
+  const handleNamaChange = (e) => setNama(e.target.value);
+
+  const handleGambarChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setGambar(e.target.files[0]);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const dataSiswa = {
-      id_siswa: idSiswa,
-      nama_siswa: namaSiswa,
-      id_tahun_pelajaran: tahunAjaran
-    };
+    setIsUploading(true);
 
     try {
-      const response = await addSiswa('http://localhost:3005/siswa/add-siswa', dataSiswa);
-      console.log(response.data);
-      // Reset form setelah submit
-      setIdSiswa('');
-      setNamaSiswa('');
-      setTahunAjaran('');
+      const formData = new FormData();
+      formData.append('nama', nama);
+      if (gambar) formData.append('gambar', gambar);
+
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/tes/add-tes`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+
+      console.log('Data berhasil dikirim:', response.data);
+      setUploadStatus('Upload berhasil!');
+      setNama('');
+      setGambar(null);
+
     } catch (error) {
-      console.error('Error adding siswa:', error);
+      console.error('Gagal mengirim data:', error);
+      setUploadStatus('Upload gagal.');
+    } finally {
+      setIsUploading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-md mx-auto p-4 shadow-lg rounded-lg">
-      <div className="mb-4">
-        <label htmlFor="id_siswa" className="block text-sm font-medium text-gray-700">ID Siswa</label>
-        <input
-          type="text"
-          id="id_siswa"
-          value={idSiswa}
-          onChange={(e) => setIdSiswa(e.target.value)}
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500"
-          
-        />
-      </div>
-
-      <div className="mb-4">
-        <label htmlFor="nama_siswa" className="block text-sm font-medium text-gray-700">Nama Siswa</label>
-        <input
-          type="text"
-          id="nama_siswa"
-          value={namaSiswa}
-          onChange={(e) => setNamaSiswa(e.target.value)}
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500"
-          
-        />
-      </div>
-
-      <div className="mb-4">
-        <label htmlFor="tahun_ajaran" className="block text-sm font-medium text-gray-700">Tahun Ajaran</label>
-        <select
-          id="tahun_ajaran"
-          value={tahunAjaran}
-          onChange={(e) => setTahunAjaran(e.target.value)}
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500"
-          
-        >
-          <option value="">Pilih Tahun Ajaran</option>
-          {listTahunAjaran.map((tahun) => (
-            <option key={tahun.id_tahun_pelajaran} value={tahun.id_tahun_pelajaran}>
-              {tahun.tahun}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div>
+    <div className="upload-form">
+      <h2 className="text-xl font-semibold mb-4">Unggah Data</h2>
+      <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
+        <label className="block">
+          <span>Nama:</span>
+          <input
+            type="text"
+            value={nama}
+            onChange={handleNamaChange}
+            className="w-full p-2 border border-gray-300 rounded mt-1"
+            required
+          />
+        </label>
+        <label className="block">
+          <span>Gambar:</span>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleGambarChange}
+            className="w-full mt-1"
+          />
+        </label>
         <button
           type="submit"
-          className="w-full bg-teal-500 text-white py-2 px-4 rounded-md hover:bg-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-500"
+          className="bg-blue-500 text-white px-4 py-2 rounded"
+          disabled={isUploading}
         >
-          Simpan
+          {isUploading ? 'Uploading...' : 'Unggah'}
         </button>
-      </div>
-    </form>
+        {uploadStatus && <p className="text-sm text-gray-700">{uploadStatus}</p>}
+      </form>
+      <DataTable
+        columns ={tesColumns}
+        data={dataTes}
+      />
+    </div>
   );
 };
 
-export default FormInputSiswa;
+export default UploadForm;

@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import axios, { AxiosError } from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { FaEye, FaEyeSlash } from "react-icons/fa"
 import {
   addSiswa,
   fetchSiswa,
@@ -16,17 +17,30 @@ import '@fortawesome/fontawesome-free/css/all.min.css';
 import imageCompression from 'browser-image-compression';
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 export default function DataSiswa() {
-
-  
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const togglePasswordVisibility = () => {
+    setPasswordVisible((prev) => !prev); // Toggle state
+  };
+  const [editData, setEditData] = useState<Siswa | null>(null);
+  const [openDropdownId, setOpenDropdownId] = useState<number | null>(null); // Menyimpan ID baris yang dropdown-nya terbuka
+  const [isSiswaValid, setIsSiswaValid] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false); // State untuk mengontrol modal
+  const [selectedRow, setSelectedRow] = useState(null);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isIdSiswaValid, setIsIdSiswaValid] = useState(true);
   const [tahunPelajaran, setTahunPelajaran] = useState([]);
+  const [tahunEditPelajaran, setTahunEditPelajaran] = useState([]);
   const [selectedTahun, setSelectedTahun] = useState('');
+  const [selectedEditTahun, setSelectedEditTahun] = useState('');
   const [kelas, setKelas] = useState([]);
   const [selectedKelas, setSelectedKelas] = useState('');
+  const [selectedEditKelas, setSelectedEditKelas] = useState('');
   const [rombel, setRombel] = useState([]);
   const [selectedRombel, setSelectedRombel] = useState('');
+  const [selectedEditRombel, setSelectedEditRombel] = useState('');
   const [dataSiswa, setDataSiswa] = useState<Siswa[]>([]);
+  const [foto, setFoto] = useState(null);
   const [formData, setFormData] = useState({
     id_siswa: '',
     id_admin: '',
@@ -38,7 +52,6 @@ export default function DataSiswa() {
     id_rombel: '',
     email: '',
     pass: '',
-    foto: null,
     barcode: '',
     nama_wali: '',
     nomor_wali: '',
@@ -72,10 +85,33 @@ export default function DataSiswa() {
 
     fetchTahunPelajaran();
 }, []);
+    useEffect(() => {
+      const fetchTahunPelajaran = async () => {
+          try {
+              const response = await axios.get('http://localhost:3005/tahun-pelajaran/all-tahun-pelajaran'); // Sesuaikan dengan URL API Anda
+              setTahunEditPelajaran(response.data.data);
+              console.log('data berhasil di fetch', response);
+          } catch (error) {
+              console.error('Error fetching tahun pelajaran:', error);
+          }
+      };
+
+      fetchTahunPelajaran();
+    }, []);
 
 const handleTahunChange = (event) => {
   const value = event.target.value;
   setSelectedTahun(value);
+  setFormData((prevData) => ({
+      ...prevData,
+      id_tahun_pelajaran: value // Memperbarui formData
+  }));
+};
+
+const handleEditTahunChange = (event) => {
+  const value = event.target.value;
+  console.log("Tahun Pelajaran yang dipilih:", value); // Debugging
+  setSelectedEditTahun(value);
   setFormData((prevData) => ({
       ...prevData,
       id_tahun_pelajaran: value // Memperbarui formData
@@ -105,6 +141,16 @@ const handleKelasChange = (event) => {
   }));
 };
 
+const handleEditKelasChange = (event) => {
+  const value = event.target.value;
+  console.log("Kelas yang dipilih:", value);
+  setSelectedEditKelas(value);
+  setFormData((prevData) => ({
+      ...prevData,
+      id_kelas: value // Memperbarui formData
+  }));
+};
+
 useEffect(() => {
   const fetchRombel = async () => {
       try {
@@ -128,9 +174,19 @@ const handleRombelChange = (event) => {
   }));
 };
 
+const handleEditRombelChange = (event) => {
+  const value = event.target.value;
+  console.log("Rombel yang dipilih:", value);
+  setSelectedEditRombel(value);
+  setFormData((prevData) => ({
+      ...prevData,
+      id_rombel: value // Memperbarui formData
+  }));
+};
+
   // fields untuk DataTabel
   const siswaColumns = [
-    { header: 'ID', accessor: 'id_siswa' as keyof Siswa },
+    
     { header: 'Foto', accessor: 'foto' as keyof Siswa },
     { header: 'Nis', accessor: 'nis' as keyof Siswa },
     { header: 'Nama', accessor: 'nama_siswa' as keyof Siswa },
@@ -139,11 +195,139 @@ const handleRombelChange = (event) => {
     { header: 'Kelas', accessor: 'id_kelas' as keyof Siswa },
     { header: 'Jurusan', accessor: 'id_rombel' as keyof Siswa },
     { header: 'Email', accessor: 'email' as keyof Siswa },
-    { header: 'Password', accessor: 'pass' as keyof Siswa },
     { header: 'Barcode', accessor: 'barcode' as keyof Siswa },
     { header: 'Nama Wali', accessor: 'nama_wali' as keyof Siswa },
     { header: 'No Wali', accessor: 'nomor_wali' as keyof Siswa },
+    {
+      header: "Aksi",
+      Cell: ({ row }: { row: Siswa }) => {
+        return (
+          <div>
+            <button
+              className="px-4 py-2 rounded"
+              onClick={() => handleToggleDropdown(row.id_siswa)}
+            >
+              &#8942; {/* Simbol menu */}
+            </button>
+            {openDropdownId === row.id_siswa && ( // Hanya tampilkan dropdown jika id_siswa sesuai
+              <div className="absolute -ml-64 mt-2 w-48 bg-white border rounded shadow-md">
+                <button
+                  onClick={() => handleEditClick(row)}
+                  className="block w-full  px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-200"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDeleteClickk(row)}
+                  className="block w-full px-4 py-2 text-left text-sm text-red-700 hover:bg-gray-200"
+                >
+                  Hapus
+                </button>
+                <button
+                  onClick={() => handleDetailClick(row)}
+                  className="block px-4 py-2"
+                >
+                  Detail
+                </button>
+              </div>
+            )}
+          </div>
+        );
+      },
+    },
   ];
+
+  const handleDetailClick = (row: Siswa) => {
+    alert(`Detail Siswa: ${JSON.stringify(row)}`);
+    setOpenDropdownId(null); // Tutup dropdown setelah melihat detail
+  };
+
+  const handleToggleDropdown = (id_siswa: string) => {
+    setOpenDropdownId(openDropdownId === id_siswa ? null : id_siswa); // Toggle dropdown
+  };
+
+  // Fungsi untuk handle klik edit
+  const handleEditClick = (row: Siswa) => {
+    setEditData(row); // Set data yang dipilih ke form edit
+    setIsModalOpen(true);// Buka modal saat tombol edit diklik
+    setSelectedEditTahun(dataSiswa.id_tahun_pelajaran); // Menyimpan tahun pelajaran yang terpilih
+    setSelectedEditKelas(dataSiswa.id_kelas);           // Menyimpan kelas yang terpilih
+    setSelectedEditRombel(dataSiswa.id_rombel); 
+  };
+  // Handle perubahan input pada form edit
+  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEditData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (editData) {
+      // Validasi sebelum mengupdate
+      if (editData.nama_siswa.trim() === "" || editData.nis.trim() === "") {
+        setIsSiswaValid(false);
+        toast.error("Nama siswa dan NIS harus diisi.");
+        return;
+      }
+  
+      try {
+        // Mengirim permintaan update dengan id_siswa dan nis
+        const response = await updateSiswa(editData.id_siswa, editData.nis, editData);
+        console.log("Response dari server:", response);
+        
+        // Memperbarui state data siswa di frontend
+        setDataSiswa((prev) => {
+          console.log("Sebelum update:", prev);
+          const updatedSiswa = prev.map((siswa) =>
+            siswa.id_siswa === editData.id_siswa && siswa.nis === editData.nis
+              ? { ...siswa, ...editData }
+              : siswa
+          );
+          console.log("Setelah update:", updatedSiswa);
+          return updatedSiswa;
+        });
+        
+        // Menampilkan notifikasi sukses dan menutup modal
+        toast.success("Data berhasil diperbarui!");
+        setIsModalOpen(false); // Tutup modal setelah sukses
+        setOpenDropdownId(null); // Menutup dropdown setelah edit
+        
+      } catch (error) {
+        console.error("Error saat memperbarui data:", error.response?.data || error.message);
+        toast.error(error.response?.data?.message || "Terjadi kesalahan saat mengedit data");
+      }
+    }
+  };
+
+  const handleDeleteClickk = (row) => {
+    setSelectedRow(row); // Simpan data yang ingin dihapus
+    setIsConfirmOpen(true); // Buka modal
+  };
+
+  const handleConfirmDelete = async () => {
+    try {
+      // Panggil fungsi delete Admin untuk menghapus di backend
+      await deleteSiswa(selectedRow.id_siswa);
+
+      // Setelah sukses, update state di frontend
+      setDataSiswa((prevSiswa) =>
+        prevSiswa.filter((siswa) => siswa.nama_siswa !== selectedRow.nama_siswa)
+      );
+      toast.success(`Siswa ${selectedRow.nama_siswa} berhasil dihapus`);
+      setIsConfirmOpen(false); // Tutup modal
+      setSelectedRow(null); // Reset selectedRow
+    } catch (error) {
+      console.error("Error deleting siswa:", error);
+      toast.error("Gagal menghapus siswa");
+    }
+  };
+  const handleCancel = () => {
+    setIsConfirmOpen(false); // Tutup modal tanpa hapus
+    setSelectedRow(null); // Reset selectedRow
+  };
+  
+
+ 
 
   //state untuk menghandle input
    // Handler umum untuk input teks
@@ -154,17 +338,22 @@ const handleRombelChange = (event) => {
       [name]: value,
     });
   };
-
   // Handler khusus untuk input foto
-  const handleFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleEditFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setFormData({ ...formData, foto: e.target.files[0] }); // Simpan file foto di formData
       setFotoPreview(URL.createObjectURL(e.target.files[0])); // Untuk menampilkan preview
     }
   };
-  
-  
 
+  // Handler khusus untuk input foto
+  const handleFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setFoto(e.target.files[0]);// Simpan file foto di formData
+      setFotoPreview(URL.createObjectURL(e.target.files[0])); // Untuk menampilkan preview
+    }
+  };
+  
   //state untuk simpan
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -185,16 +374,41 @@ const handleRombelChange = (event) => {
     //   toast.error('Data tidak boleh kosong');
     //   return;
     // }
+
+    const dataToSubmit = new FormData();
+    for (const key in formData) {
+      dataToSubmit.append(key, formData[key]);
+    }
+    if (foto) {
+      dataToSubmit.append('foto', foto); // Menambahkan file foto
+    }
+
   
     try {
-      const response = await addSiswa(formData);
+      const response = await addSiswa(dataToSubmit);
       console.log('API response:', response);
+      const { id_siswa, id_admin, nis, nama_siswa, jenis_kelamin, id_tahun_pelajaran, id_kelas, id_rombel, email, pass, barcode, nama_wali, nomor_wali } = response.data;
       
       // Cek apakah data sudah ada berdasarkan respons dari server
       if (response?.data?.exists) { // Asumsikan response.data.exists bernilai true jika data sudah ada
         toast.error('Data sudah ada!');
       } else {
         toast.success('Siswa berhasil ditambahkan!');
+        setDataSiswa((prevDataSiswaList) => [...prevDataSiswaList, {
+          id_siswa,
+          id_admin,
+          nis,
+          nama_siswa,
+          jenis_kelamin,
+          id_tahun_pelajaran,
+          id_kelas,
+          id_rombel,
+          email,
+          pass,
+          barcode,
+          nama_wali,
+          nomor_wali,
+        }]);
         // Reset form data setelah berhasil
         setFormData({
           id_siswa: '',
@@ -207,11 +421,11 @@ const handleRombelChange = (event) => {
           id_rombel: '',
           email: '',
           pass: '',
-          foto: null,
           barcode: '',
           nama_wali: '',
           nomor_wali: '',
         });
+        setFoto(null);
         setFotoPreview(null);
       }
     } catch (error) {
@@ -249,6 +463,7 @@ const handleRombelChange = (event) => {
     );
     // Kirim request ke backend dengan id dan nis yang benar
     const updatedSiswa = await updateSiswa(updatedRow.id_siswa, updatedRow.nis, updatedRow);
+    console.log('Response from backend:', updatedSiswa);
     toast.success('Data siswa berhasil diperbarui!');
   } catch (error) {
     // Tampilkan lebih banyak detail error dari response server
@@ -290,13 +505,11 @@ const handleDelete = async (deletedRow) => {
   // Memfilter data berdasarkan searchTerm
   const filteredData = dataSiswa.filter((item) => {
     return (
-      (item.nis?.toLowerCase().includes(searchTerm.toLowerCase()) || "") ||
-      (item.nama_siswa?.toLowerCase().includes(searchTerm.toLowerCase()) || "") ||
-      (item.jenis_kelamin?.toLowerCase().includes(searchTerm.toLowerCase()) || "") ||
-      (item.id_kelas?.toLowerCase().includes(searchTerm.toLowerCase()) || "") ||
-      (item.id_rombel?.toLowerCase().includes(searchTerm.toLowerCase()) || "") ||
-      (item.nama_wali?.toLowerCase().includes(searchTerm.toLowerCase()) || "") ||
-      (item.nomor_wali?.toLowerCase().includes(searchTerm.toLowerCase()) || "")
+      (item.nis?.toString().toLowerCase().includes(searchTerm.toLowerCase()) || '') ||
+      (item.nama_siswa ? item.nama_siswa.toString().toLowerCase().includes(searchTerm.toLowerCase()) : false) ||
+      (item.jenis_kelamin ? item.jenis_kelamin.toLowerCase().includes(searchTerm.toLowerCase()) : false) ||
+      (item.id_kelas ? item.id_kelas.toString().toLowerCase().includes(searchTerm.toLowerCase()) : false) ||
+      (item.id_rombel ? item.id_rombel.toString().toLowerCase().includes(searchTerm.toLowerCase()) : false)
     );
   });
   
@@ -385,63 +598,63 @@ const handleDelete = async (deletedRow) => {
   };
   
   const handleUploadFileClick = () => {
-    // Memicu klik pada elemen input file
-    fileInputRef.current.click();
+    if (fileInputRef.current) {
+      fileInputRef.current.click(); // Trigger input file secara manual
+    }
   };
   
   const handleFileChange = (event) => {
     const file = event.target.files[0];
-  
     if (file) {
       const reader = new FileReader();
-  
+      
       reader.onload = async (e) => {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: "array" });
-        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-        const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
-  
-        const formattedData = jsonData
-          .slice(1)
-          .map((row, index) => ({
-            no: dataSiswa.length + index + 1,
-            foto: "",
-            idSiswa: row[0] || "",
-            nisn: row[1] || "",
-            namaSiswa: row[2] || "",
-            jk: row[3] || "",
-            kelas: row[5] || "",
-            jurusan: row[6] || "",
-            namaWali: row[11] || "",
-            noWali: row[12] || "",
-          }))
-          .filter((item) =>
-            Object.values(item).some((value) => typeof value === "string" && value.trim() !== "")
-          );
-  
-        if (formattedData.length > 0) {
-          // Kirim data ke server
-          try {
-            const response = await axios.post(`${baseUrl}/siswa/add-siswa`, formattedData, {
-              headers: {
-                'Content-Type': 'application/json',
-              },
-            });
-  
-            if (response.ok) {
-              console.log('Data berhasil disimpan ke database');
-              setDataSiswa((prevData) => [...prevData, ...formattedData]);
-            } else {
-              console.error('Gagal menyimpan data', response.statusText);
-            }
-          } catch (error) {
-            console.error('Error:', error);
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const sheetName = workbook.SheetNames[0];
+          const sheet = workbook.Sheets[sheetName];
+          const jsonData = XLSX.utils.sheet_to_json(sheet).map((row) => ({
+            id_siswa: row.id_siswa || 'default_value',
+            id_admin: row.id_admin || 'default_value',
+            nis: row.nis || 'default_value',
+            nama_siswa: row.nama_siswa || 'default_value',
+            jenis_kelamin: row.jenis_kelamin || 'default_value',
+            id_tahun_pelajaran: row.id_tahun_pelajaran || 'default_value',
+            id_kelas: row.id_kelas || 'default_value',
+            id_rombel: row.id_rombel || 'default_value',
+            email: row.email || 'default_value',
+            pass: row.pass || 'default_value',
+            foto: row.foto || 'default_value',
+            barcode: row.barcode || 'default_value',
+            nama_wali: row.nama_wali || 'default_value',
+            nomor_wali: row.nomor_wali || 'default_value',
+          }));
+
+          console.log('Data dari Excel:', jsonData); // Log data dari Excel
+          setDataSiswa(jsonData); // Simpan data ke state
+
+          // Lakukan pengiriman data ke server setelah file diproses
+          const response = await fetch('http://localhost:3005/siswa/add-siswa', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(jsonData),
+          });
+
+          const result = await response.json();
+          
+          if (response.ok) {
+            console.log('Data berhasil dikirim', result);
+          } else {
+            console.error('Gagal mengirim data:', result.error || response.statusText);
           }
-        } else {
-          console.log("Tidak ada data valid yang dimasukkan.");
+        } catch (error) {
+          console.error('Error membaca file Excel atau mengirim data:', error);
         }
       };
-  
+
       reader.readAsArrayBuffer(file);
     }
   };
@@ -603,15 +816,21 @@ const handleDelete = async (deletedRow) => {
                   className="mt-1 p-2 border rounded-md w-full"
                 />
               </div>
-              <div>
+              <div className="relative w-full">
                 <label className="block text-sm font-medium">Password</label>
                 <input
-                  type="password"
+                  type={passwordVisible ? "text" : "password"} // Ubah tipe input berdasarkan state
                   name="pass"
                   value={formData.pass}
                   onChange={handleChange}
-                  className="mt-1 p-2 border rounded-md w-full"
+                  className="w-full p-2 border rounded text-sm sm:text-base mb-2"
                 />
+                <span
+                  onClick={togglePasswordVisibility}
+                  className="absolute inset-y-0 right-2 pt-3 flex items-center cursor-pointer text-gray-600"
+                >
+                  {passwordVisible ? <FaEye /> : <FaEyeSlash />}
+                </span>
               </div>
               <div>
                 <label className="block text-sm font-medium">Foto</label>
@@ -784,9 +1003,189 @@ const handleDelete = async (deletedRow) => {
                 <DataTable 
                   columns={siswaColumns}
                   data={paginatedData}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                />
+                  // onEdit={handleEdit}
+                  // onDelete={handleDelete}
+                /> 
+                {isModalOpen && (
+                    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                      <div className="bg-white rounded p-4 shadow-lg">
+                        <h3 className="pb-2">Edit Data Siswa</h3>
+                        <form onSubmit={handleEditSubmit}>
+                          <input
+                            type="text"
+                            name="nama_siswa"
+                            value={editData ? editData.nama_siswa : ""}
+                            onChange={handleEditChange}
+                            className="w-full p-2 border rounded text-sm sm:text-base mb-2"
+                            placeholder="Nama Siswa..."
+                          />
+
+                          <input
+                            type="text"
+                            name="nis"
+                            value={editData ? editData.nis : ""}
+                            onChange={handleEditChange}
+                            className="w-full p-2 border rounded text-sm sm:text-base mb-2"
+                            placeholder="Nis..."
+                          />
+
+                          <select
+                            name="jenis_kelamin"
+                            value={editData ? editData.jenis_kelamin : ""}
+                            onChange={handleEditChange}
+                            className="w-full p-2 border rounded text-sm sm:text-base mb-2"
+                          >
+                            <option value="">Pilih Jenis Kelamin</option>
+                            <option value="Laki-laki">Laki-laki</option>
+                            <option value="Perempuan">Perempuan</option>
+                          </select>
+
+                          <select
+                              name="id_tahun_pelajaran"
+                              value={selectedEditTahun}
+                              onChange={handleEditTahunChange}
+                              className="mt-1 p-2 border rounded-md w-full"
+                          >
+                              <option>Pilih Tahun Pelajaran</option>
+                              {tahunEditPelajaran.map((tahun) => (
+                                  <option key={tahun.id_tahun_pelajaran} value={tahun.tahun}>
+                                      {tahun.tahun}
+                                  </option>
+                              ))}
+                          </select>
+
+                          <select
+                              name="id_kelas"
+                              value={selectedEditKelas}
+                              onChange={handleEditKelasChange}
+                              className="mt-1 p-2 border rounded-md w-full"
+                          >
+                              <option>Pilih Kelas</option>
+                              {kelas.map((kelas) => (
+                                  <option key={kelas.id_kelas} value={kelas.kelas}>
+                                      {kelas.kelas}
+                                  </option>
+                              ))}
+                          </select>
+
+                          <select
+                              name="id_rombel"
+                              value={selectedEditRombel}
+                              onChange={handleEditRombelChange}
+                              className="mt-1 p-2 border rounded-md w-full"
+                          >
+                              <option>Pilih Rombel</option>
+                              {rombel.map((rombel) => (
+                                  <option key={rombel.id_rombel} value={rombel.nama_rombel}>
+                                      {rombel.nama_rombel}
+                                  </option>
+                              ))}
+                          </select>
+
+                          <input
+                            type="email"
+                            name="email"
+                            value={editData ? editData.email : ""}
+                            onChange={handleEditChange}
+                            className="w-full p-2 border rounded text-sm sm:text-base mb-2"
+                            placeholder="Email..."
+                          />
+
+                          <div className="relative w-full">
+                            <input
+                              type={passwordVisible ? "text" : "password"} // Ubah tipe input berdasarkan state
+                              name="pass"
+                              value={formData.pass}
+                              onChange={handleChange}
+                              placeholder="Password..."
+                              className="w-full p-2 border rounded text-sm sm:text-base mb-2"
+                              
+                            />
+                            <span
+                              onClick={togglePasswordVisibility}
+                              className="absolute inset-y-0 right-2 pb-2 flex items-center cursor-pointer text-gray-600"
+                            >
+                              {passwordVisible ? <FaEye /> : <FaEyeSlash />}
+                            </span>
+                          </div>
+
+                          <input
+                            type="file"
+                            name="foto"
+                            accept="image/*"
+                            onChange={handleFotoChange}
+                            className="mt-1 p-2 border rounded-md w-full"
+                          />
+                          {fotoPreview && <img src={fotoPreview} alt="Preview Foto" className="mt-2 h-20 w-20" />}
+
+                          <input
+                            type="text"
+                            name="barcode"
+                            value={editData ? editData.barcode : ""}
+                            onChange={handleEditChange}
+                            className="w-full p-2 border rounded text-sm sm:text-base mb-2"
+                            placeholder="Barcode..."
+                          />
+
+                          <input
+                            type="text"
+                            name="nama_wali"
+                            value={editData ? editData.nama_wali : ""}
+                            onChange={handleEditChange}
+                            className="w-full p-2 border rounded text-sm sm:text-base mb-2"
+                            placeholder="Nama wali..."
+                          />
+
+                          <input
+                            type="text"
+                            name="nomor_wali"
+                            value={editData ? editData.nomor_wali : ""}
+                            onChange={handleEditChange}
+                            className="w-full p-2 border rounded text-sm sm:text-base mb-2"
+                            placeholder="Nomor wali..."
+                          />
+
+                          <button
+                            type="submit"
+                            className="py-2 sm:px-4 sm:py-2 bg-teal-400 hover:bg-teal-500 text-white rounded text-sm sm:text-base"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsModalOpen(false); // Tutup modal
+                              setOpenDropdownId(null); // Tutup dropdown juga
+                            }}
+                            className="ml-2 py-2 sm:px-4 sm:py-2 bg-gray-400 hover:bg-gray-500 text-white rounded text-sm sm:text-base"
+                          >
+                            Tutup
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+                  )}
+                  {isConfirmOpen && (
+                      <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-50">
+                        <div className="bg-white p-6 rounded shadow-md">
+                          <p>Apakah kamu yakin ingin menghapus item ini?</p>
+                          <div className="mt-4 flex justify-end">
+                            <button
+                              onClick={handleCancel}
+                              className="px-4 py-2 mr-2 bg-gray-300 rounded hover:bg-gray-400"
+                            >
+                              Batal
+                            </button>
+                            <button
+                              onClick={handleConfirmDelete}
+                              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                            >
+                              Hapus
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                 </div>
 
                 <div className="mt-4 flex justify-between items-center">

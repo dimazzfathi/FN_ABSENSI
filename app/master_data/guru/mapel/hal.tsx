@@ -65,47 +65,52 @@ export default function _Mapel() {
   };
 
   const handleUploadFileClick = () => {
-    // Memicu klik pada elemen input file
-    fileInputRef.current.click();
+    if (fileInputRef.current) {
+      fileInputRef.current.click(); // Trigger input file secara manual
+    }
   };
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
-  
     if (file) {
       const reader = new FileReader();
-  
-      reader.onload = (e) => {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: "array" });
-        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-  
-        // Mengubah sheet ke format JSON
-        const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
-        console.log("JSON Data:", jsonData); // Log data JSON
-  
-        // Mengonversi JSON ke bentuk yang sesuai dengan struktur tabel
-        const formattedData = jsonData
-        .slice(1) // Menghapus header
-        .map((row) => ({
-          mapel: row[1] || "",
-        }));
+      
+      reader.onload = async (e) => {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const sheetName = workbook.SheetNames[0];
+          const sheet = workbook.Sheets[sheetName];
+          const jsonData = XLSX.utils.sheet_to_json(sheet).map((row) => ({
+            id_mapel: row.id_mapel || 'default_value',
+            id_admin: row.id_admin || 'default_value',
+            nama_mapel: row.nama_mapel || 'default_value',
+          }));
 
-      console.log("Formatted Data:", formattedData); // Log data terformat
+          console.log('Data dari Excel:', jsonData); // Log data dari Excel
+          setMapel(jsonData); // Simpan data ke state
 
-      const validData = formattedData.filter((item) =>
-        Object.values(item).some(
-          (value) => typeof value === "string" && value.trim() !== ""
-        )
-      );
+          // Lakukan pengiriman data ke server setelah file diproses
+          const response = await fetch('http://localhost:5000/mapel/add-mapel', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(jsonData),
+          });
 
-      if (validData.length > 0) {
-        setMapel((prevData) => [...prevData, ...validData]);
-      } else {
-        console.log("Tidak ada data valid yang dimasukkan.");
-      }
+          const result = await response.json();
+          
+          if (response.ok) {
+            console.log('Data berhasil dikirim', result);
+          } else {
+            console.error('Gagal mengirim data:', result.error || response.statusText);
+          }
+        } catch (error) {
+          console.error('Error membaca file Excel atau mengirim data:', error);
+        }
       };
-  
+
       reader.readAsArrayBuffer(file);
     }
   };
@@ -365,62 +370,6 @@ const isResettable = searchTerm.length > 0; // Tombol reset aktif jika ada input
                 className=" w-full p-2 border rounded text-sm sm:text-base mb-2"
                 placeholder="Mapel..."
               />
-              {/* <h2 className="text-sm mb-2 sm:text-sm font-bold">Kelas</h2>
-              <select
-                id="kelasInput"
-                value={kelasValue}
-                onChange={handleKelasChange}
-                className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${
-                  kelasError ? "border-red-500" : "border-gray-300"
-                }`}
-              >
-                <option value="">Pilih Kelas...</option>
-                {kelasOptions.map((option, index) => (
-                  <option key={index} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select> */}
-
-              {/* Tombol On/Off Geser */}
-              {/* <label className="inline-flex mt-4 items-center mb-2">
-                <input
-                  type="checkbox"
-                  checked={isJurusanAktif}
-                  onChange={handleToggleJurusan}
-                  className="hidden"
-                />
-                <span
-                  className={`w-10 h-5 flex items-center bg-gray-300 rounded-full p-1 cursor-pointer transition-colors duration-300 ${
-                    isJurusanAktif ? "bg-teal-400" : ""
-                  }`}
-                >
-                  <span
-                    className={`bg-white w-4 h-4 rounded-full shadow-md transform duration-300 ${
-                      isJurusanAktif ? "translate-x-5" : ""
-                    }`}
-                  />
-                </span>
-                <span className="ml-2 text-sm">Aktifkan Input Jurusan</span>
-              </label>
-
-              <h2 className="text-sm mb-2 sm:text-sm font-bold">Jurusan</h2>
-              <select
-                id="jurusanInput"
-                value={jurusanValue}
-                onChange={handleJurusanChange}
-                className={`w-full p-2 border rounded text-sm sm:text-base mb-2 ${
-                  jurusanError ? "border-red-500" : "border-gray-300"
-                }`}
-                disabled={!isJurusanAktif}
-              >
-                <option value="">Pilih Jurusan...</option>
-                {jurusanOptions.map((option, index) => (
-                  <option key={index} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select> */}
               <div className="mt-4">
                 {/* Tombol Simpan */}
                 <div className="flex justify-end m-4 space-x-2">
