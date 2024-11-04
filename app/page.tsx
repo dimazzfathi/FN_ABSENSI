@@ -1,6 +1,21 @@
 "use client";
 import { useState, useEffect, useRef } from 'react';
 import Navbar from './header'
+import DataTable from './components/dataTabel';
+import {
+    addSiswa,
+    fetchSiswa,
+    deleteSiswa,
+    updateSiswa,
+    Siswa,
+  } from "./api/siswa";
+  import {
+    addKelas,
+    fetchKelas,
+    deleteKelas,
+    updateKelas,
+    Kelas,
+  } from "./api/kelas";
 const Page = () => {
     // State untuk kontrol popup Sakit
     const [isPopupVisibleSakit, setIsPopupVisibleSakit] = useState(false);
@@ -284,11 +299,25 @@ const Page = () => {
   });
 
   // data untuk tabel absensi 
-  const [tableData, setTableData] = useState([
-    { no: 1, kelas: '1 A', jumlah: 30, h: 0, s: 0, i: 0, a: 0, t: 0, walas: 'Mr. A', barcode: ['(242)501013', '(242)501069'] },
-    { no: 2, kelas: '1 B', jumlah: 28, h: 0, s: 0, i: 0, a: 0, t: 0, walas: 'Ms. B', barcode: ['(242)501006', '(242)501084'] },
-    { no: 3, kelas: '11 D', jumlah: 25, h: 0, s: 0, i: 0, a: 0, t: 0, walas: 'Dimaz', barcode: ['(K242501029)', '(242)501039'] }
-]);
+//   const [tableData, setTableData] = useState([
+//     { no: 1, kelas: '1 A', jumlah: 30, h: 0, s: 0, i: 0, a: 0, t: 0, walas: 'Mr. A', barcode: ['(242)501013', '(242)501069'] },
+//     { no: 2, kelas: '1 B', jumlah: 28, h: 0, s: 0, i: 0, a: 0, t: 0, walas: 'Ms. B', barcode: ['(242)501006', '(242)501084'] },
+//     { no: 3, kelas: '11 D', jumlah: 25, h: 0, s: 0, i: 0, a: 0, t: 0, walas: 'Dimaz', barcode: ['(K242501029)', '(242)501039'] }
+// ]);
+
+const tableColumns = [
+    
+    { header: 'Kelas', accessor: 'kelas' as keyof Kelas },
+    { header: 'Jumlah siswa', accessor: 'jumlah siswa' as keyof Siswa },
+    { header: 'H', accessor: 'h' as keyof Siswa },
+    { header: 'S', accessor: 's' as keyof Siswa },
+    { header: 'I', accessor: 'i' as keyof Siswa },
+    { header: 'A', accessor: 'a' as keyof Siswa },
+    { header: 'T', accessor: 't' as keyof Siswa },
+    { header: 'Walas', accessor: 'walas' as keyof Siswa },
+    { header: 'Barcode', accessor: 'barcode' as keyof Siswa },
+    
+  ];
 
 
   //variabel  dan function untuk barcode 
@@ -334,7 +363,7 @@ const handleBarcodeChange = (e) => {
         console.log("Barcode yang dipindai:", barcode);
     
         // Cari item di tableData yang memiliki barcode yang sesuai
-        const existingItem = tableData.find(item => {
+        const existingItem = tableColumns.find(item => {
             console.log(`Memeriksa barcodes di kelas ${item.kelas}:`, item.barcode);
             return item.barcode.includes(barcode);
         });
@@ -346,7 +375,7 @@ const handleBarcodeChange = (e) => {
             if (existingItem.lastAbsen === today) {
                 showPopup(`Sudah absen: ${existingItem.walas}, kelas ${existingItem.kelas}`);
             } else {
-                const updatedData = tableData.map((item) => {
+                const updatedData = tableColumns.map((item) => {
                     if (item.barcode.includes(barcode)) {
                         const hadirCount = (item.h || 0) + 1;
                         return { 
@@ -733,7 +762,10 @@ const handleBarcodeChange = (e) => {
                         </h2>
                     </div>
                     <div className="overflow-x-auto">
-                        <table className="w-full text-left mt-4 border-collapse">
+                        <DataTable
+                            columns={tableColumns}
+                        />
+                        {/* <table className="w-full text-left mt-4 border-collapse">
                             <thead>
                                 <tr className="ml-2">
                                 <th className="p-2 sm:p-3 rounded-l-lg bg-slate-500 text-white">No</th>
@@ -771,7 +803,7 @@ const handleBarcodeChange = (e) => {
                                 </tr>
                             ))}
                             </tbody>     
-                        </table>                  
+                        </table>                   */}
                     </div>
                 </div>             
             </div>

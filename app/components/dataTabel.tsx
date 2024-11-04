@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import DropdownMenu from "./dropdown";
 import EditForm from "./EditForm"; // Import komponen EditForm
+const BASE_URL = "http://localhost:3005/";
 
 type DataTableProps<T> = {
   columns: { header: string; accessor: keyof T }[];
@@ -70,12 +71,20 @@ const DataTable = <T,>({
                   </td>
                   {columns.map((column, colIndex) => (
                     <td className="p-3 sm:p-3 text-gray border-b z-50" key={column.header}>
-                    {/* Pastikan column.Cell ada sebelum mengaksesnya */}
-                    {typeof column.Cell === 'function' 
-                      ? column.Cell({ row }) 
-                      : row[column.accessor] ? row[column.accessor] : 'N/A'} {/* Menampilkan data atau 'N/A' */}
-                  </td>
+                      {/* Pastikan column.Cell ada sebelum mengaksesnya */}
+                      {typeof column.Cell === "function" 
+                        ? column.Cell({ row }) 
+                        : column.accessor === 'gambar' && row[column.accessor] ? (
+                            <img
+                              src={`${BASE_URL}img/${row[column.accessor]}`}
+                              alt={row.nama}
+                              className="w-16 h-16 object-cover"
+                            />
+                          ) : row[column.accessor] ? row[column.accessor] : ""
+                      }
+                    </td>
                   ))}
+
                   
                   {/* <td className="p-3 sm:p-3 text-gray border-b">
                     <DropdownMenu
@@ -90,6 +99,7 @@ const DataTable = <T,>({
           </tbody>
         </table>
       </div>
+    
       {/* </div> */}
       {/* </div> */}
       {/* Tampilkan form edit jika ada data yang sedang diedit */}

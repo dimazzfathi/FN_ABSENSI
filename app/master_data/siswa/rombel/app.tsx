@@ -1,91 +1,112 @@
 "use client";
+import DataTable from '../../../components/dataTabel';
 import React, { useState, useEffect, useRef } from "react";
+import {
+  addSiswa,
+  fetchSiswa,
+  deleteSiswa,
+  updateSiswa,
+  Siswa,
+} from "../../../api/siswa";
+import {
+  addRombel,
+  fetchRombel,
+  deleteRombel,
+  updateRombel,
+  Rombel,
+} from "../../../api/rombel";
+import {
+  addKelas,
+  fetchKelas,
+  deleteKelas,
+  updateKelas,
+  Kelas,
+} from "../../../api/kelas";
+import {
+  addTahunAjaran,
+  fetchTahunAjaran,
+  TahunAjaran,
+} from "../../../api/tahunAjaran";
 
-function DropdownMenu({ isOpen, onClick, onEdit, onDelete, onClose }) {
-  const dropdownRef = useRef(null);
 
-  // Fungsi untuk menutup dropdown saat pengguna mengklik di luar dropdown.
-  const handleClickOutside = (event) => {
-    if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-      if (typeof onClose === 'function') {
-        onClose();
-      }
-    }
-  };
+// function DropdownMenu({ isOpen, onClick, onEdit, onDelete, onClose }) {
+//   const dropdownRef = useRef(null);
 
-  useEffect(() => {
-    // Menambahkan event listener untuk menangani klik di luar dropdown jika dropdown terbuka.
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    } else {
-      // Menghapus event listener ketika dropdown ditutup.
-      document.removeEventListener('mousedown', handleClickOutside);
-    }
+//   // Fungsi untuk menutup dropdown saat pengguna mengklik di luar dropdown.
+//   const handleClickOutside = (event) => {
+//     if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+//       if (typeof onClose === 'function') {
+//         onClose();
+//       }
+//     }
+//   };
 
-    // Cleanup function untuk menghapus event listener saat komponen di-unmount atau isOpen berubah.
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isOpen]);
+//   useEffect(() => {
+//     // Menambahkan event listener untuk menangani klik di luar dropdown jika dropdown terbuka.
+//     if (isOpen) {
+//       document.addEventListener('mousedown', handleClickOutside);
+//     } else {
+//       // Menghapus event listener ketika dropdown ditutup.
+//       document.removeEventListener('mousedown', handleClickOutside);
+//     }
 
-  return (
-    <div className="relative" ref={dropdownRef}>
-      <button
-        onClick={onClick}
-        className="p-1 z-50 text-white text-xs sm:text-sm"
-      >
-        &#8942;
-      </button>
-      {isOpen && (
-        <div className="absolute z-50 mt-1 w-24 sm:w-32 bg-slate-600 border rounded-md shadow-lg">
-          <button
-            className="block w-full px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm hover:bg-slate-500"
-            onClick={() => {
-              alert('Detail clicked');
-              if (typeof onClose === 'function') {
-                onClose(); // Menutup dropdown setelah detail diklik
-              }
-            }}
-          >
-            Detail
-          </button>
-          <button
-            onClick={() => {
-              onEdit();
-              if (typeof onClose === 'function') {
-                onClose(); // Menutup dropdown setelah edit diklik
-              }
-            }}
-            className="block w-full px-2 py-1 sm:px-4 sm:py-2 text-xs text-green-600 sm:text-sm hover:bg-slate-500"
-          >
-            Edit
-          </button>
-          <button
-            onClick={() => {
-              onDelete();
-              if (typeof onClose === 'function') {
-                onClose(); // Menutup dropdown setelah delete diklik
-              }
-            }}
-            className="block w-full px-2 py-1 sm:px-4 sm:py-2 text-xs text-red-600 sm:text-sm hover:bg-slate-500"
-          >
-            Hapus
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
+//     // Cleanup function untuk menghapus event listener saat komponen di-unmount atau isOpen berubah.
+//     return () => {
+//       document.removeEventListener('mousedown', handleClickOutside);
+//     };
+//   }, [isOpen]);
 
-export default function Kelas() {
+//   return (
+//     <div className="relative" ref={dropdownRef}>
+//       <button
+//         onClick={onClick}
+//         className="p-1 z-50 text-white text-xs sm:text-sm"
+//       >
+//         &#8942;
+//       </button>
+//       {isOpen && (
+//         <div className="absolute z-50 mt-1 w-24 sm:w-32 bg-slate-600 border rounded-md shadow-lg">
+//           <button
+//             className="block w-full px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm hover:bg-slate-500"
+//             onClick={() => {
+//               alert('Detail clicked');
+//               if (typeof onClose === 'function') {
+//                 onClose(); // Menutup dropdown setelah detail diklik
+//               }
+//             }}
+//           >
+//             Detail
+//           </button>
+//           <button
+//             onClick={() => {
+//               onEdit();
+//               if (typeof onClose === 'function') {
+//                 onClose(); // Menutup dropdown setelah edit diklik
+//               }
+//             }}
+//             className="block w-full px-2 py-1 sm:px-4 sm:py-2 text-xs text-green-600 sm:text-sm hover:bg-slate-500"
+//           >
+//             Edit
+//           </button>
+//           <button
+//             onClick={() => {
+//               onDelete();
+//               if (typeof onClose === 'function') {
+//                 onClose(); // Menutup dropdown setelah delete diklik
+//               }
+//             }}
+//             className="block w-full px-2 py-1 sm:px-4 sm:py-2 text-xs text-red-600 sm:text-sm hover:bg-slate-500"
+//           >
+//             Hapus
+//           </button>
+//         </div>
+//       )}
+//     </div>
+//   );
+// }
+
+export default function DataRombel() {
   const [selectedItem, setSelectedItem] = useState(null);
-  const [kelasValue, setKelasValue] = useState("");
-  const [jurusanValue, setJurusanValue] = useState("");
-  const [selectedJurusan, setSelectedJurusan] = useState('');
-  const [jurusanOptions, setJurusanOptions] = useState([]);
-  const [thnValue, setThnValue] = useState("");
-  const [jmlsiswaValue, setJmlSiswaValue] = useState("");
-  const [walasValue, setWalasValue] = useState("");
   const [tableData, setTableData] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterKelas, setFilterKelas] = useState("");
@@ -99,188 +120,125 @@ export default function Kelas() {
   });
   const [editData, setEditData] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(5);
-  const [isResettable, setIsResettable] = useState(false);
-  
-  useEffect(() => {
-    const storedJurusan = localStorage.getItem('tableDataJurusan');
-    
-    // Pastikan data ada di localStorage dan mengonversinya menjadi array
-    if (storedJurusan) {
-      // Jika data berupa array objek, pastikan akses nilai `jurusan` di setiap objek
-      const parsedData = JSON.parse(storedJurusan);
-      const jurusanList = parsedData.map((item) => item.jurusan); // Mengambil hanya properti `jurusan`
-      setJurusanOptions(jurusanList);
-    }
-  }, []);
 
-   // useEffect to monitor changes and update isResettable
-   useEffect(() => {
-    const savedData = JSON.parse(localStorage.getItem("tableDataKelas")) || [];
-    setTableData(savedData);
-    if (filterKelas || filterJurusan || filterThn || searchTerm) {
-      setIsResettable(true);
-    } else {
-      setIsResettable(false);
-    }
-  }, [filterKelas, filterJurusan, filterThn, searchTerm]);
+  // fields untuk DataTabel
+  const rombelColumns = [
+    { header: 'Kelas', accessor: 'id_kelas' as keyof Kelas },
+    { header: 'Jurusan', accessor: 'id_rombel' as keyof Rombel },
+    { header: 'Tahun Ajaran', accessor: 'id_tahun_pelajaran' as keyof Siswa },
+    // {
+    //   header: "Aksi",
+    //   Cell: ({ row }: { row: Siswa }) => {
+    //     return (
+    //       <div>
+    //         <button
+    //           className="px-4 py-2 rounded"
+    //           onClick={() => handleToggleDropdown(row.id_siswa)}
+    //         >
+    //           &#8942; {/* Simbol menu */}
+    //         </button>
+    //         {openDropdownId === row.id_siswa && ( // Hanya tampilkan dropdown jika id_siswa sesuai
+    //           <div className="absolute -ml-64 mt-2 w-48 bg-white border rounded shadow-md">
+    //             <button
+    //               onClick={() => handleEditClick(row)}
+    //               className="block w-full  px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-200"
+    //             >
+    //               Edit
+    //             </button>
+    //             <button
+    //               onClick={() => handleDeleteClickk(row)}
+    //               className="block w-full px-4 py-2 text-left text-sm text-red-700 hover:bg-gray-200"
+    //             >
+    //               Hapus
+    //             </button>
+    //             <button
+    //               onClick={() => handleDetailClick(row)}
+    //               className="block px-4 py-2"
+    //             >
+    //               Detail
+    //             </button>
+    //           </div>
+    //         )}
+    //       </div>
+    //     );
+    //   },
+    // },
+  ];
+  
+  // useEffect(() => {
+  //   const storedJurusan = localStorage.getItem('tableDataJurusan');
+    
+  //   // Pastikan data ada di localStorage dan mengonversinya menjadi array
+  //   if (storedJurusan) {
+  //     // Jika data berupa array objek, pastikan akses nilai `jurusan` di setiap objek
+  //     const parsedData = JSON.parse(storedJurusan);
+  //     const jurusanList = parsedData.map((item) => item.jurusan); // Mengambil hanya properti `jurusan`
+  //     setJurusanOptions(jurusanList);
+  //   }
+  // }, []);
+
+  //  // useEffect to monitor changes and update isResettable
+  //  useEffect(() => {
+  //   const savedData = JSON.parse(localStorage.getItem("tableDataKelas")) || [];
+  //   setTableData(savedData);
+  //   if (filterKelas || filterJurusan || filterThn || searchTerm) {
+  //     setIsResettable(true);
+  //   } else {
+  //     setIsResettable(false);
+  //   }
+  // }, [filterKelas, filterJurusan, filterThn, searchTerm]);
 
   // useEffect(() => {
   //   const savedData = JSON.parse(localStorage.getItem("tableDataKelas")) || [];
   //   setTableData(savedData);
   // }, []);
 
-  const handleFilterChange = (setter) => (e) => {
-    setter(e.target.value);
-    setCurrentPage(1);
-  };
+   //tombol untuk filter, pindah halaman, search dan reset
+   const [itemsPerPage, setItemsPerPage] = useState(5); // Default value is 5
+   const [currentPage, setCurrentPage] = useState(1);
+ 
+   const handleItemsPerPageChange = (e) => {
+     setItemsPerPage(Number(e.target.value));
+     setCurrentPage(1); //  Reset ke halaman pertama saat jumlah item per halaman berubah
+   };
+ 
+   // Memfilter data berdasarkan searchTerm
+   const filteredData = tableData.filter((item) => {
+     return (
+       (item.nis?.toString().toLowerCase().includes(searchTerm.toLowerCase()) || '') ||
+       (item.nama_siswa ? item.nama_siswa.toString().toLowerCase().includes(searchTerm.toLowerCase()) : false) ||
+       (item.jenis_kelamin ? item.jenis_kelamin.toLowerCase().includes(searchTerm.toLowerCase()) : false) ||
+       (item.id_kelas ? item.id_kelas.toString().toLowerCase().includes(searchTerm.toLowerCase()) : false) ||
+       (item.id_rombel ? item.id_rombel.toString().toLowerCase().includes(searchTerm.toLowerCase()) : false)
+     );
+   });
+   
+ 
+   // Menghitung pagination
+   const totalData = filteredData.length; // Total item setelah difilter
+   const startIndex = (currentPage - 1) * itemsPerPage; // Indeks awal untuk pagination
+   const paginatedData = filteredData.slice(
+     startIndex,
+     startIndex + itemsPerPage
+   ); // Data yang akan ditampilkan
+   const totalPages = Math.ceil(totalData / itemsPerPage); // Total halaman
+ 
+   const handlePageChange = (newPage) => {
+     setCurrentPage(newPage);
+   };
+ 
+   // Fungsi untuk mengatur ulang pencarian
+   const handleResetClick = () => {
+     setSearchTerm(""); // Reset search term
+     setCurrentPage(1); // Reset ke halaman pertama
+   };
+ 
+   const isResettable = searchTerm.length > 0;
 
-  // Filter dan pencarian logika
-  const filteredData = tableData.filter(item => {
-    const nama = typeof item.kelas === 'string' ? item.kelas.toLowerCase() : '';
-  const searchLowerCase = searchTerm.toLowerCase();
-    return (
-      (filterKelas ? item.kelas === filterKelas : true) &&
-      (filterJurusan ? item.jurusan === filterJurusan : true) &&
-      (filterThn ? item.thn === filterThn : true) &&
-      (searchTerm ? nama.includes(searchLowerCase) : true)
-    );
-  });
-  
-  const handleSaveClick = () => {
-    const validTableData = Array.isArray(tableData) ? tableData : [];
-  const newData = [
-    ...validTableData,
-    {
-      no: validTableData.length > 0 
-        ? Math.max(...validTableData.map((item) => item.no)) + 1 
-        : 1,
-      kelas: kelasValue,
-      jurusan: jurusanValue,
-      thn: thnValue,
-      walas: walasValue,
-      
-    }
-  ];
-
-    setTableData(newData);
-    localStorage.setItem("tableDataKelas", JSON.stringify(newData));
-
-    setKelasValue("");
-    setJurusanValue("");
-    setThnValue("");
-    setJmlSiswaValue("");
-    setWalasValue("");
-  };
-  // Handler untuk mereset filter
-  const handleResetClick = () => {
-    if (isResettable) {
-    setFilterKelas('');
-    setFilterJurusan('');
-    setFilterThn('');
-    setSearchTerm('');
-    }
-  };
-  
-
-  const handleEditClick = (item) => {
-    setEditData(item);
-    setKelasValue(item.kelas);
-    setJurusanValue(item.jurusan);
-    setThnValue(item.thn);
-    setJmlSiswaValue(item.jmlsiswa);
-    setWalasValue(item.walas);
-    setShowEditModal(true);
-  };
-  const handleKelasChange = (e) => {
-    setKelasValue(e.target.value);
-  };
-  const handleJurusanChange = (e) => {
-    setJurusanValue(e.target.value);
-  };
-  const handleThnChange = (e) => {
-    setThnValue(e.target.value);
-  };
-  const handleSaveEdit = () => {
-    const updatedData = tableData.map((item) =>
-      item.no === editData.no
-        ? {
-            ...item,
-            kelas: kelasValue,
-            jurusan: jurusanValue,
-            thn: thnValue,
-            jmlsiswa: jmlsiswaValue,
-            walas: walasValue,
-          }
-        : item
-    );
-    setTableData(updatedData);
-    localStorage.setItem("tableDataKelas", JSON.stringify(updatedData));
-    setShowEditModal(false);
-    setKelasValue("");
-    setJurusanValue("");
-    setThnValue("");
-    setJmlSiswaValue("");
-    setWalasValue("");
-  };
-
-  const handleDeleteClick = (id) => {
-    setConfirmDelete({ visible: true, id });
-    setOpenDropdown(null);
-  };
-
-  const handleConfirmDelete = () => {
-    const filteredData = tableData.filter((item) => item.no !== confirmDelete.id);
-    const updatedData = filteredData.map((item, index) => ({
-      ...item,
-      no: index + 1,
-    }));
-    setTableData(updatedData);
-    localStorage.setItem("tableDataKelas", JSON.stringify(updatedData));
-    setConfirmDelete({ visible: false, id: null });
-  };
-
-  const handleCancelDelete = () => {
-    setConfirmDelete({ visible: false, id: null });
-  };
-
-  const handleCancelEdit = () => {
-    setShowEditModal(false);
-    // Logika untuk menangani pembatalan edit
-  };
-
-  const handleDropdownClick = (id) => {
-    setOpenDropdown(openDropdown === id ? null : id);
-  };
-
-  const handleItemsPerPageChange = (e) => {
-    setItemsPerPage(Number(e.target.value));
-    setCurrentPage(1);
-  };
-
-  const handleRowClick = (item) => {
-    setSelectedItem(item);
-  };
 
   const handleCloseClick = () => {
     setSelectedItem(null);
   };
-
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-  const currentData = filteredData.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  
-  const kelasOptions = Array.isArray(tableData) && tableData.length > 0
-  ? [...new Set(tableData.map((item) => item.kelas))]
-  : [];
-  const thnOptions = ["2023/2024", "2024/2025", "2025/2026"];
-  const walasOptions = Array.isArray(tableData) && tableData.length > 0
-  ? [...new Set(tableData.map((item) => item.walas))]
-  : [];
  
   return (
     <>
@@ -358,9 +316,9 @@ export default function Kelas() {
                   </div>
                   
                 </div>
-              <div>
+              {/* <div>
                 <label htmlFor="filterKelas" className="block text-sm font-medium text-gray-700">
-                  {/* Filter Kelas */}
+                  {/* Filter Kelas 
                 </label>
                 <select
                     id="filterKelas"
@@ -379,7 +337,7 @@ export default function Kelas() {
 
               <div>
                 <label htmlFor="filterJurusan" className="block text-sm font-medium text-gray-700">
-                  {/* Filter Jurusan */}
+                  {/* Filter Jurusan 
                 </label>
                 <select
                   id="filterJurusan"
@@ -398,7 +356,7 @@ export default function Kelas() {
 
               <div>
                 <label htmlFor="filterThn" className="block text-sm font-medium text-gray-700">
-                  {/* Filter Tahun Ajaran */}
+                  {/* Filter Tahun Ajaran 
                 </label>
                 <select
                   id="filterThn"
@@ -413,7 +371,7 @@ export default function Kelas() {
                     </option>
                   ))}
                 </select>
-              </div>
+              </div> */}
 
               <div className=" items-center lg:mb-0 space-x-2 lg:order-1">
                     <input
@@ -442,43 +400,9 @@ export default function Kelas() {
 
             {/* Tabel */}
             <div className="overflow-x-auto">
-              <table className="w-full mt-4">
-                <thead>
-                  <tr className="bg-slate-500 text-white">
-                    <th className="p-2 text-left text-sm sm:text-xs rounded-l-lg">No</th>
-                    <th className="p-2 text-left text-sm sm:text-xs">Kelas</th>
-                    <th className="p-2 text-left text-sm sm:text-xs">Jurusan</th>
-                    <th className="p-2 text-left text-sm sm:text-xs">Tahun Ajaran</th>
-                    <th className="p-2 text-left text-sm sm:text-xs">Jumlah Siswa</th>
-                    <th className="p-2 text-left text-sm sm:text-xs">Wali Kelas</th>
-                    <th className="p-2 text-left text-sm sm:text-xs rounded-r-lg">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {currentData.map((item) => (
-                    <tr
-                      key={item.no}
-                      className="text-center cursor-pointer hover:bg-slate-400"
-                      onClick={() => handleRowClick(item)}
-                    >
-                      <td className="px-4 py-2 text-white border-b text-sm sm:text-xs">{item.no}</td>
-                      <td className="px-4 py-2 text-white border-b text-sm sm:text-xs">{item.kelas}</td>
-                      <td className="px-4 py-2 text-white text-left border-b text-sm sm:text-xs">{item.jurusan}</td>
-                      <td className="px-4 py-2 text-white border-b text-sm sm:text-xs">{item.thn}</td>
-                      <td className="px-4 py-2 text-white border-b text-sm sm:text-xs">{item.jmlsiswa}</td>
-                      <td className="px-4 py-2 text-white border-b text-sm sm:text-xs">{item.walas}</td>
-                      <td className="px-4 py-2 text-white text-left border-b text-sm sm:text-xs" style={{}}>
-                        <DropdownMenu
-                          isOpen={openDropdown === item.no}
-                          onClick={() => handleDropdownClick(item.no)}
-                          onEdit={() => handleEditClick(item)}
-                          onDelete={() => handleDeleteClick(item.no)}
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              < DataTable
+                columns= {rombelColumns}
+                />
             </div>
 
             {/* Pagination */}
@@ -507,109 +431,6 @@ export default function Kelas() {
                 </button>
               </div>
             </div>
-
-            {/* Delete Confirmation Modal */}
-            {confirmDelete.visible && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-                <div className="bg-white rounded-lg p-6">
-                  <p className="text-sm text-gray-700">
-                    Apakah Anda yakin ingin menghapus data ini?
-                  </p>
-                  <div className="flex justify-end mt-4">
-                    <button
-                      onClick={handleCancelDelete}
-                      className="mr-2 bg-gray-300 px-4 py-2 rounded text-sm"
-                    >
-                      Batal
-                    </button>
-                    <button
-                      onClick={handleConfirmDelete}
-                      className="bg-red-500 text-white px-4 py-2 rounded text-sm"
-                    >
-                      Hapus
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Edit Modal */}
-            {showEditModal && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-                <div className="bg-white rounded-lg p-6">
-                  <h2 className="text-lg font-semibold mb-4">Edit Data Kelas</h2>
-                  <div className="mb-4">
-                    <label htmlFor="kelasEdit" className="block text-sm font-medium text-gray-700">
-                      Kelas
-                    </label>
-                    <input
-                      id="kelasEdit"
-                      value={kelasValue}
-                      onChange={(e) => setKelasValue(e.target.value)}
-                      className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base"
-                    />
-                  </div>
-                  <div className="mb-4">
-                    <label htmlFor="jurusanEdit" className="block text-sm font-medium text-gray-700">
-                      Jurusan
-                    </label>
-                    <input
-                      id="jurusanEdit"
-                      value={jurusanValue}
-                      onChange={(e) => setJurusanValue(e.target.value)}
-                      className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base"
-                    />
-                  </div>
-                  <div className="mb-4">
-                    <label htmlFor="thnEdit" className="block text-sm font-medium text-gray-700">
-                      Tahun Ajaran
-                    </label>
-                    <input
-                      id="thnEdit"
-                      value={thnValue}
-                      onChange={(e) => setThnValue(e.target.value)}
-                      className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base"
-                    />
-                  </div>
-                  <div className="mb-4">
-                    <label htmlFor="jmlsiswaEdit" className="block text-sm font-medium text-gray-700">
-                      Jumlah Siswa
-                    </label>
-                    <input
-                      id="jmlsiswaEdit"
-                      value={jmlsiswaValue}
-                      onChange={(e) => setJmlSiswaValue(e.target.value)}
-                      className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base"
-                    />
-                  </div>
-                  <div className="mb-4">
-                    <label htmlFor="walasEdit" className="block text-sm font-medium text-gray-700">
-                      Wali Kelas
-                    </label>
-                    <input
-                      id="walasEdit"
-                      value={walasValue}
-                      onChange={(e) => setWalasValue(e.target.value)}
-                      className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base"
-                    />
-                  </div>
-                  <div className="flex justify-end">
-                    <button
-                      onClick={handleCancelEdit}
-                      className="mr-2 bg-gray-300 px-4 py-2 rounded text-sm"
-                    >
-                      Batal
-                    </button>
-                    <button
-                      onClick={handleSaveEdit}
-                      className="bg-teal-400 text-white px-4 py-2 rounded text-sm"
-                    >
-                      Simpan
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
           </div>
         </div>

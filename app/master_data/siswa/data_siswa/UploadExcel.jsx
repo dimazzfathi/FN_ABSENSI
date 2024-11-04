@@ -17,6 +17,16 @@ const UploadExcel = ({ onUpload }) => {
           id_admin: row.id_admin || 'default_value', // Sesuaikan dengan kolom Excel
           nis: row.nis || 'default_value', // Sesuaikan dengan kolom Excel
           nama_siswa: row.nama_siswa || 'default_value',
+          jenis_kelamin: row.jenis_kelamin || 'default_value',
+          id_tahun_pelajaran: row.id_tahun_pelajaran || 'default_value',
+          id_kelas: row.id_kelas || 'default_value',
+          id_rombel: row.id_rombel || 'default_value',
+          email: row.email || 'default_value',
+          pass: row.pass || 'default_value',
+          foto: row.foto || 'default_value',
+          barcode: row.barcode || 'default_value',
+          nama_wali: row.nama_wali || 'default_value',
+          nomor_wali: row.nomor_wali || 'default_value',
         }));
         
         console.log('Data dari Excel:', jsonData); // Log data dari Excel

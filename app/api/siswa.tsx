@@ -22,7 +22,7 @@ export type Siswa = {
 // Fungsi untuk mengambil daftar siswa
 export const fetchSiswa = async (): Promise<Siswa[]> => {
   try {
-    const response = await axios.get(`${baseUrl}/siswa/all-Siswa`);
+    const response = await axios.get(`${baseUrl}/siswa/all-siswa`);
     console.log('fetch siswa',response)
     return response.data as Siswa[];
   } catch (error) {
