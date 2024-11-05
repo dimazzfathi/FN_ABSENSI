@@ -50,9 +50,9 @@ export default function DataSiswa() {
     id_tahun_pelajaran: '',
     id_kelas: '',
     id_rombel: '',
-    email: '',
-    pass: '',
-    barcode: '',
+    // email: '',
+    // pass: '',
+    // barcode: '',
     nama_wali: '',
     nomor_wali: '',
   });
@@ -108,15 +108,12 @@ const handleTahunChange = (event) => {
   }));
 };
 
-const handleEditTahunChange = (event) => {
-  const value = event.target.value;
-  console.log("Tahun Pelajaran yang dipilih:", value); // Debugging
-  setSelectedEditTahun(value);
-  setFormData((prevData) => ({
-      ...prevData,
-      id_tahun_pelajaran: value // Memperbarui formData
-  }));
+const handleEditTahunChange = (e) => {
+  const { value } = e.target;
+  setSelectedEditTahun(value); // Update state untuk dropdown tahun ajaran
+  setEditData((prev) => ({ ...prev, id_tahun_pelajaran: value })); // Update id_tahun_pelajaran di editData
 };
+
 
 useEffect(() => {
   const fetchKelas = async () => {
@@ -141,15 +138,12 @@ const handleKelasChange = (event) => {
   }));
 };
 
-const handleEditKelasChange = (event) => {
-  const value = event.target.value;
-  console.log("Kelas yang dipilih:", value);
-  setSelectedEditKelas(value);
-  setFormData((prevData) => ({
-      ...prevData,
-      id_kelas: value // Memperbarui formData
-  }));
+const handleEditKelasChange = (e) => {
+  const { value } = e.target;
+  setSelectedEditKelas(value); // Update state untuk dropdown kelas
+  setEditData((prev) => ({ ...prev, id_kelas: value })); // Update id_kelas di editData
 };
+
 
 useEffect(() => {
   const fetchRombel = async () => {
@@ -174,15 +168,12 @@ const handleRombelChange = (event) => {
   }));
 };
 
-const handleEditRombelChange = (event) => {
-  const value = event.target.value;
-  console.log("Rombel yang dipilih:", value);
-  setSelectedEditRombel(value);
-  setFormData((prevData) => ({
-      ...prevData,
-      id_rombel: value // Memperbarui formData
-  }));
+const handleEditRombelChange = (e) => {
+  const { value } = e.target;
+  setSelectedEditRombel(value); // Update state untuk dropdown rombel
+  setEditData((prev) => ({ ...prev, id_rombel: value })); // Update id_rombel di editData
 };
+
 
   // fields untuk DataTabel
   const siswaColumns = [
@@ -248,56 +239,63 @@ const handleEditRombelChange = (event) => {
 
   // Fungsi untuk handle klik edit
   const handleEditClick = (row: Siswa) => {
-    setEditData(row); // Set data yang dipilih ke form edit
-    setIsModalOpen(true);// Buka modal saat tombol edit diklik
-    setSelectedEditTahun(dataSiswa.id_tahun_pelajaran); // Menyimpan tahun pelajaran yang terpilih
-    setSelectedEditKelas(dataSiswa.id_kelas);           // Menyimpan kelas yang terpilih
-    setSelectedEditRombel(dataSiswa.id_rombel); 
-  };
-  // Handle perubahan input pada form edit
-  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEditData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
-
-  const handleEditSubmit = async (e) => {
-    e.preventDefault();
+    setEditData(row);
+    setIsModalOpen(true);
     
-    if (editData) {
+    // Mengatur nilai dropdown untuk kelas, jurusan, dan tahun ajaran
+    setSelectedEditKelas(row.id_kelas);
+    setSelectedEditTahun(row.id_tahun_pelajaran);
+    setSelectedEditRombel(row.id_rombel);
+};
+  // Handle perubahan input pada form edit
+  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+
+    // Update editData berdasarkan input yang berubah
+    setEditData((prev) => ({ ...prev, [name]: value }));
+};
+
+const handleEditSubmit = async (e) => {
+  e.preventDefault();
+
+  if (editData) {
       // Validasi sebelum mengupdate
       if (editData.nama_siswa.trim() === "" || editData.nis.trim() === "") {
-        setIsSiswaValid(false);
-        toast.error("Nama siswa dan NIS harus diisi.");
-        return;
+          setIsSiswaValid(false);
+          toast.error("Nama siswa dan NIS harus diisi.");
+          return;
       }
-  
+
       try {
-        // Mengirim permintaan update dengan id_siswa dan nis
-        const response = await updateSiswa(editData.id_siswa, editData.nis, editData);
-        console.log("Response dari server:", response);
-        
-        // Memperbarui state data siswa di frontend
-        setDataSiswa((prev) => {
-          console.log("Sebelum update:", prev);
-          const updatedSiswa = prev.map((siswa) =>
-            siswa.id_siswa === editData.id_siswa && siswa.nis === editData.nis
-              ? { ...siswa, ...editData }
-              : siswa
-          );
-          console.log("Setelah update:", updatedSiswa);
-          return updatedSiswa;
-        });
-        
-        // Menampilkan notifikasi sukses dan menutup modal
-        toast.success("Data berhasil diperbarui!");
-        setIsModalOpen(false); // Tutup modal setelah sukses
-        setOpenDropdownId(null); // Menutup dropdown setelah edit
-        
+          // Mengirim permintaan update dengan editData yang terbaru
+          const response = await updateSiswa(editData.id_siswa, editData.nis, {
+              ...editData, // Pastikan editData berisi id_rombel yang benar
+          });
+          console.log("Response dari server:", response);
+
+          // Memperbarui state data siswa di frontend
+          setDataSiswa((prev) => {
+              const updatedSiswa = prev.map((siswa) =>
+                  siswa.id_siswa === editData.id_siswa
+                      ? { ...siswa, ...editData }
+                      : siswa
+              );
+              return updatedSiswa;
+          });
+
+          // Menampilkan notifikasi sukses dan menutup modal
+          toast.success("Data berhasil diperbarui!");
+          setIsModalOpen(false);
+          setOpenDropdownId(null);
+
       } catch (error) {
-        console.error("Error saat memperbarui data:", error.response?.data || error.message);
-        toast.error(error.response?.data?.message || "Terjadi kesalahan saat mengedit data");
+          console.error("Error saat memperbarui data:", error.response?.data || error.message);
+          toast.error(error.response?.data?.message || "Terjadi kesalahan saat mengedit data");
       }
-    }
-  };
+  }
+};
+
+
 
   const handleDeleteClickk = (row) => {
     setSelectedRow(row); // Simpan data yang ingin dihapus
@@ -331,12 +329,9 @@ const handleEditRombelChange = (event) => {
 
   //state untuk menghandle input
    // Handler umum untuk input teks
-   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
+    setFormData((prevData) => ({ ...prevData, [name]: value }));
   };
   // Handler khusus untuk input foto
   const handleEditFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -357,59 +352,15 @@ const handleEditRombelChange = (event) => {
   //state untuk simpan
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-  
-    // Validasi jika ada input yang kosong
-    // if (
-    //   !formData.id_siswa ||
-    //   !formData.nis ||
-    //   !formData.nama_siswa ||
-    //   !formData.jenis_kelamin ||
-    //   // !formData.foto ||
-    //   !formData.id_tahun_pelajaran ||
-    //   !formData.id_kelas ||
-    //   !formData.id_rombel ||
-    //   !formData.nama_wali ||
-    //   !formData.nomor_wali 
-    // ) {
-    //   toast.error('Data tidak boleh kosong');
-    //   return;
-    // }
 
-    const dataToSubmit = new FormData();
-    for (const key in formData) {
-      dataToSubmit.append(key, formData[key]);
-    }
-    if (foto) {
-      dataToSubmit.append('foto', foto); // Menambahkan file foto
-    }
-
-  
     try {
-      const response = await addSiswa(dataToSubmit);
-      console.log('API response:', response);
-      const { id_siswa, id_admin, nis, nama_siswa, jenis_kelamin, id_tahun_pelajaran, id_kelas, id_rombel, email, pass, barcode, nama_wali, nomor_wali } = response.data;
-      
-      // Cek apakah data sudah ada berdasarkan respons dari server
-      if (response?.data?.exists) { // Asumsikan response.data.exists bernilai true jika data sudah ada
-        toast.error('Data sudah ada!');
-      } else {
-        toast.success('Siswa berhasil ditambahkan!');
-        setDataSiswa((prevDataSiswaList) => [...prevDataSiswaList, {
-          id_siswa,
-          id_admin,
-          nis,
-          nama_siswa,
-          jenis_kelamin,
-          id_tahun_pelajaran,
-          id_kelas,
-          id_rombel,
-          email,
-          pass,
-          barcode,
-          nama_wali,
-          nomor_wali,
-        }]);
-        // Reset form data setelah berhasil
+      // Gantikan dengan URL server Anda
+      const response = await axios.post('http://localhost:3005/siswa/add-siswa', formData);
+
+      if (response.data.success) {
+        toast.success(`Siswa ${formData.nama_siswa} berhasil ditambah!`);
+
+        // Kosongkan form setelah submit berhasil
         setFormData({
           id_siswa: '',
           id_admin: '',
@@ -419,34 +370,18 @@ const handleEditRombelChange = (event) => {
           id_tahun_pelajaran: '',
           id_kelas: '',
           id_rombel: '',
-          email: '',
-          pass: '',
-          barcode: '',
           nama_wali: '',
           nomor_wali: '',
         });
-        setFoto(null);
-        setFotoPreview(null);
+      } else {
+        toast.error('Gagal menambahkan data siswa');
       }
     } catch (error) {
-      console.error('Error adding siswa:', error);
-  
-      if (axios.isAxiosError(error)) {
-        console.error('Error response:', error.response);
-        if (error.response) {
-          // Tampilkan pesan error spesifik dari server jika ada
-          const errorMessage = error.response.data.message || 'Terjadi kesalahan pada server';
-          toast.error(`Error: ${error.response.status} - ${errorMessage}`);
-        } else {
-          toast.error('Tidak dapat terhubung ke server. Periksa koneksi Anda atau coba lagi nanti.');
-        }
-      } else {
-        toast.error('Terjadi kesalahan saat menambah data');
-      }
+      console.error('Error:', error);
+      toast.error('Terjadi kesalahan saat menambahkan data siswa');
     }
   };
-  
-
+ 
   // Fungsi untuk menangani edit
   const handleEdit = async (updatedRow: Siswa) => {
   try {
@@ -540,16 +475,17 @@ const handleDelete = async (deletedRow) => {
     const data = [
       {
         id_siswa: "",
+        id_admin:"",
         nis: "",
         nama_siswa: "",
         jenis_kelamin: "",
         tahun_ajaran: "",
         kelas: "",
         rombel: "",
-        email: "",
-        pass: "",
-        foto: "",
-        barcode: "",
+        // email: "",
+        // pass: "",
+        // foto: "",
+        // barcode: "",
         nama_wali: "",
         nomor_wali: "",
       },
@@ -558,16 +494,17 @@ const handleDelete = async (deletedRow) => {
     // Definisikan header file Excel
     const headers = [
       "id_siswa",
+      "id_admin",
       "nis",
       "nama_siswa",
       "jenis_kelamin",
       "tahun_ajaran",
       "kelas",
       "rombel",
-      "email",
-      "pass",
-      "foto",
-      "barcode",
+      // "email",
+      // "pass",
+      // "foto",
+      // "barcode",
       "nama_wali",
       "nomor_wali",
     ];
@@ -623,10 +560,10 @@ const handleDelete = async (deletedRow) => {
             id_tahun_pelajaran: row.id_tahun_pelajaran || 'default_value',
             id_kelas: row.id_kelas || 'default_value',
             id_rombel: row.id_rombel || 'default_value',
-            email: row.email || 'default_value',
-            pass: row.pass || 'default_value',
-            foto: row.foto || 'default_value',
-            barcode: row.barcode || 'default_value',
+            // email: row.email || 'default_value',
+            // pass: row.pass || 'default_value',
+            // foto: row.foto || 'default_value',
+            // barcode: row.barcode || 'default_value',
             nama_wali: row.nama_wali || 'default_value',
             nomor_wali: row.nomor_wali || 'default_value',
           }));
@@ -888,7 +825,7 @@ const handleDelete = async (deletedRow) => {
                 </button>
                 </div>
               </div>                
-            </form>
+              </form>
             <div className="absolute -mt-20 ml-6">
                   <button
                     onClick={handleDownloadFormatClick}
@@ -912,7 +849,7 @@ const handleDelete = async (deletedRow) => {
                     style={{ display: "none" }}
                     onChange={handleFileChange}
                   />
-                </div>
+            </div>
             </div>
             
             <ToastContainer className="mt-14" />
@@ -1036,8 +973,8 @@ const handleDelete = async (deletedRow) => {
                             className="w-full p-2 border rounded text-sm sm:text-base mb-2"
                           >
                             <option value="">Pilih Jenis Kelamin</option>
-                            <option value="Laki-laki">Laki-laki</option>
-                            <option value="Perempuan">Perempuan</option>
+                            <option value="L">Laki-laki</option>
+                            <option value="P">Perempuan</option>
                           </select>
 
                           <select

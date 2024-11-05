@@ -11,10 +11,10 @@ export type Siswa = {
   id_tahun_pelajaran: string;
   id_kelas: string;
   id_rombel: string;
-  email?: string;
-  pass?: string;
-  foto?: string;
-  barcode?: string;
+  // email?: string;
+  // pass?: string;
+  // foto?: string;
+  // barcode?: string;
   nama_wali: string;
   nomor_wali: string;
 };
