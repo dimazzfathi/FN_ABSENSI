@@ -13,7 +13,6 @@ import {
   updateKelas,
   Kelas,
 } from "../../../api/kelas";
-import { fetchAdmins, Admin } from "../../../api/admin";
 import useUserInfo from "@/app/components/useUserInfo";
 import Swal from "sweetalert2";
 
@@ -119,6 +118,7 @@ export default function _Kelas() {
   };
 
   const [kelasData, setKelasData] = useState({
+    id_kelas: "",
     id_admin: idAdmin || "",
     kelas: "",
   });
@@ -154,6 +154,7 @@ export default function _Kelas() {
 
         // Reset form
         setKelasData({
+          id_kelas: "",
           id_admin: idAdmin,
           kelas: "",
         });
@@ -377,6 +378,14 @@ export default function _Kelas() {
               onSubmit={handleKelasSubmit}
               className="bg-white rounded-lg shadow-md p-4 lg:p-6 border"
             >
+              <label
+                name="id_kelas"
+                value={kelasData.id_kelas}
+                onChange={handleKelasChange}
+                hidden="none"
+              >
+                id_kelas
+              </label>
               <h2 className="text-sm mb-2 sm:text-sm font-bold"></h2>
               <label
                 name="id_admin"

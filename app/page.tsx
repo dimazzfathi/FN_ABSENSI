@@ -2,6 +2,8 @@
 import { useState, useEffect, useRef } from 'react';
 import Navbar from './header'
 import DataTable from './components/dataTabel';
+import axios from "axios";
+import Cookies from "js-cookie"; // Import js-cookie
 import {
     addSiswa,
     fetchSiswa,
@@ -16,11 +18,14 @@ import {
     updateKelas,
     Kelas,
   } from "./api/kelas";
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
 const Page = () => {
     // State untuk kontrol popup Sakit
     const [isPopupVisibleSakit, setIsPopupVisibleSakit] = useState(false);
     // State untuk menyimpan data sakit yang dipilih
     const [selectedSakit, setSelectedSakit] = useState([]);
+    const [tableData, setTableData] = useState([]);
   
   // State untuk pengaturan item per halaman dan halaman saat ini
   const [sakitItemsPerPage, setSakitItemsPerPage] = useState(5);
@@ -304,7 +309,19 @@ const Page = () => {
 //     { no: 2, kelas: '1 B', jumlah: 28, h: 0, s: 0, i: 0, a: 0, t: 0, walas: 'Ms. B', barcode: ['(242)501006', '(242)501084'] },
 //     { no: 3, kelas: '11 D', jumlah: 25, h: 0, s: 0, i: 0, a: 0, t: 0, walas: 'Dimaz', barcode: ['(K242501029)', '(242)501039'] }
 // ]);
+const [kelas, setKelas] = useState<Kelas[]>([]);
+const fetchKelasSiswaTotal = async () => {
+    try {
+      const response = await axios.get(`${baseUrl}/joinNonMaster/KelasSiswaTotal`);
+      setKelas(response.data); // Menyimpan data ke state kelas
+    } catch (error) {
+      console.error("Fetch error:", error); // Menangani kesalahan
+    }
+  };
 
+  useEffect(() => {
+    fetchKelasSiswaTotal(); // Panggil fungsi fetch saat komponen di-mount
+  }, []);
 const tableColumns = [
     
     { header: 'Kelas', accessor: 'kelas' as keyof Kelas },
@@ -764,6 +781,7 @@ const handleBarcodeChange = (e) => {
                     <div className="overflow-x-auto">
                         <DataTable
                             columns={tableColumns}
+                            data={kelas}
                         />
                         {/* <table className="w-full text-left mt-4 border-collapse">
                             <thead>

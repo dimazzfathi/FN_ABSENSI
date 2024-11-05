@@ -2,6 +2,8 @@
 import { useState, useEffect, useRef } from "react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import axios from "axios";
+import Cookies from "js-cookie"; // Import js-cookie
 import {
   addMapel,
   fetchMapel,
@@ -11,7 +13,10 @@ import {
 } from "../../../api/mapel"; // Sesuaikan dengan path fungsi addMapel Anda
 import DataTable from "../../../components/dataTabel";
 import * as XLSX from 'xlsx';
+import useUserInfo from "@/app/components/useUserInfo";
+import Swal from "sweetalert2";
 
+const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export default function _Mapel() {
   const [editData, setEditData] = useState<Mapel | null>(null);
@@ -24,7 +29,8 @@ export default function _Mapel() {
   const [selectedRow, setSelectedRow] = useState(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [mapels, setMapels] = useState([]); // Untuk menyimpan daftar mapel
-
+  const { idAdmin } = useUserInfo();
+  const [admins, setAdmins] = useState<{ id_admin: string; nama_admin: string }[]>([]);
 
   const handleDownloadFormatClick = () => {
     // Data yang akan diisikan ke dalam file Excel untuk Mapel
@@ -91,7 +97,7 @@ export default function _Mapel() {
           setMapel(jsonData); // Simpan data ke state
 
           // Lakukan pengiriman data ke server setelah file diproses
-          const response = await fetch('http://localhost:5000/mapel/add-mapel', {
+          const response = await fetch('http://localhost:3005/mapel/add-mapel', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -170,8 +176,46 @@ export default function _Mapel() {
       },
     },
   ];
-  const handleDetailClick = (row: Kelas) => {
-    alert(`Detail Kelas: ${JSON.stringify(row)}`);
+  // Mengambil data admins dari API
+  useEffect(() => {
+    const fetchAdmin = async () => {
+    try{
+      const response = await axios.get(`${baseUrl}/admin/all-Admin`); // Ganti dengan endpoint Anda
+      console.log("admin", response);
+      setAdmins(response.data.data); // Simpan semua admin ke dalam state
+    } catch (error) {
+      console.error("Error fetching admins:", error);
+    }
+    };
+    fetchAdmin();
+  }, []);
+  useEffect(() => {
+    if (idAdmin) {
+      setMapelData((prevData) => ({
+        ...prevData,
+        id_admin: idAdmin,
+      }));
+    }
+  }, [idAdmin]);
+
+  const handleDetailClick = (row: Mapel) => {
+    const admin = admins.find(admin => admin.id_admin === row.id_admin); // Cari admin berdasarkan id_admin
+    console.log("id admin", admin)
+    const namaAdmin = admin ? admin.nama_admin : "Tidak ada"; // Jika ditemukan, ambil nama_admin
+    console.log("iki admin", namaAdmin)
+    Swal.fire({
+      html: `
+        <div style="text-align: center;">
+          <p>Mata pelajaran: ${JSON.stringify(row.nama_mapel) || "Tidak ada"}</p>
+          <p>Ditambah oleh: ${namaAdmin  || "Tidak ada"}</p>
+        </div>
+      `,
+      icon: "info",
+      iconColor: "#009688",
+      confirmButtonText: "Tutup",
+      width: "400px", // Mengatur lebar popup agar lebih kecil
+      confirmButtonColor: "#38b2ac", // Mengatur warna tombol OK (gunakan kode warna yang diinginkan)
+    });
     setOpenDropdownId(null); // Tutup dropdown setelah melihat detail
   };
   const handleToggleDropdown = (id_mapel: string) => {

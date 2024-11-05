@@ -13,16 +13,144 @@ import {
   updateGuru,
   Guru,
 } from "@/app/api/guru";
+import useUserInfo from "@/app/components/useUserInfo";
+import Swal from "sweetalert2";
+import * as XLSX from "xlsx";
+
+const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export default function DataGuru() {
   const handleDownloadFormatClick = () => {
-    // Logika untuk mengunduh file format
-    console.log("Unduh format");
+    // Data yang akan diisikan ke dalam file Excel untuk Mapel
+    const data = [
+      {
+        id_guru: "",
+        id_admin: "",
+        nip: "",
+        nama_guru: "",
+        jenis_kelamin: "",
+        // id_mapel: "",
+        // email: "",
+        // pass: "",
+        // foto: "",
+        // walas: "",
+        // barcode: "",
+        // id_kelas: "",
+        // rombel: "",
+        no_telp: "",
+      },
+    ];
+
+    // Definisikan header file Excel
+    const headers = [
+      "id_guru",
+      "id_admin",
+      "nip",
+      "nama_guru",
+      "jenis_kelamin",
+      // "id_mapel",
+      // "email",
+      // "pass",
+      // "foto",
+      // "walas",
+      // "barcode",
+      // "id_kelas",
+      // "rombel",
+      "no_telp",
+    ];
+
+    // Membuat worksheet
+    const worksheet = XLSX.utils.json_to_sheet(data, { header: headers });
+
+    // Membuat workbook
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Guru");
+
+    // Menghasilkan file Excel
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+
+    // Membuat Blob untuk mengunduh
+    const blob = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    // Membuat link download
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "format_guru.xlsx"; // Nama file yang diunduh
+    link.click();
   };
   const handleUploadFileClick = () => {
-    // Logika untuk mengunggah file
-    console.log("Upload file");
+    if (fileInputRef.current) {
+      fileInputRef.current.click(); // Trigger input file secara manual
+    }
   };
+
+  const handleFileUploadChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+
+      reader.onload = async (e) => {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: "array" });
+          const sheetName = workbook.SheetNames[0];
+          const sheet = workbook.Sheets[sheetName];
+          const jsonData = XLSX.utils.sheet_to_json(sheet).map((row) => ({
+            id_guru: row.id_guru || "default_value",
+            id_admin: row.id_admin || "default_value",
+            nip: row.nip || "default_value",
+            nama_guru: row.nama_guru || "default_value",
+            jenis_kelamin: row.jenis_kelamin || "default_value",
+            // id_mapel: row.id_mapel || "default_value",
+            // email: row.email || "default_value",
+            // pass: row.pass || "default_value",
+            // foto: row.foto || "default_value",
+            // walas: row.walas || "default_value",
+            // barcode: row.barcode || "default_value",
+            // id_kelas: row.id_kelas || "default_value",
+            // rombel: row.rombel || "default_value",
+            no_telp: row.no_telp || "default_value",
+          }));
+
+          console.log("Data dari Excel:", jsonData); // Log data dari Excel
+          setDataGuru(jsonData); // Simpan data ke state
+
+          // Lakukan pengiriman data ke server setelah file diproses
+          const response = await fetch(
+            "http://localhost:3005/guru/add-guru",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(jsonData),
+            }
+          );
+
+          const result = await response.json();
+
+          if (response.ok) {
+            console.log("Data berhasil dikirim", result);
+          } else {
+            console.error(
+              "Gagal mengirim data:",
+              result.error || response.statusText
+            );
+          }
+        } catch (error) {
+          console.error("Error membaca file Excel atau mengirim data:", error);
+        }
+      };
+
+      reader.readAsArrayBuffer(file);
+    }
+  };
+
   const [guru, setGuru] = useState<Guru[]>([]);
   const [editData, setEditData] = useState<Guru | null>(null);
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null); // Menyimpan ID baris yang dropdown-nya terbuka
@@ -32,9 +160,19 @@ export default function DataGuru() {
   const [searchTerm, setSearchTerm] = useState("");
   const fileInputRef = useRef(null);
   const [isGuruValid, setIsGuruValid] = useState(true);
-  const [dataGuru, setDataGuru] = useState<Siswa[]>([]);
+  const [dataGuru, setDataGuru] = useState<Guru[]>([]);
   const handleToggleDropdown = (id_guru: string) => {
     setOpenDropdownId(openDropdownId === id_guru ? null : id_guru); // Toggle dropdown
+  };
+  const [rombelList, setRombelList] = useState([]);
+  const [mapelList, setMapelList] = useState([]);
+  const [isWalasEnabled, setIsWalasEnabled] = useState(false); // State untuk kontrol on/off
+  const { idAdmin } = useUserInfo();
+  const [admins, setAdmins] = useState<
+    { id_admin: string; nama_admin: string }[]
+  >([]);
+  const handleToggle = () => {
+    setIsWalasEnabled(!isWalasEnabled); // Toggle nilai isWalasEnabled
   };
   useEffect(() => {
     //   const token = Cookies.get('token');
@@ -53,17 +191,98 @@ export default function DataGuru() {
     };
     loadGuru();
   }, []);
+  // Ambil data rombel dari backend saat komponen dimuat
+  useEffect(() => {
+    const fetchRombel = async () => {
+      try {
+        const response = await axios.get(`${baseUrl}/rombel/all-rombel`);
+        console.log("Data rombel yang diterima:", response.data); // Lihat data yang diterima
+        if (Array.isArray(response.data.data)) {
+          setRombelList(response.data.data); // Pastikan data adalah array
+        } else {
+          console.error("Data tidak dalam format array");
+        }
+      } catch (error) {
+        console.error("Error fetching rombel data:", error);
+      }
+    };
+    fetchRombel();
+  }, []);
+  // Ambil data Mapel dari backend saat komponen dimuat
+  useEffect(() => {
+    const fetchMapel = async () => {
+      try {
+        const response = await axios.get(`${baseUrl}/mapel/all-mapel`);
+        console.log("Data Mapel yang diterima:", response.data); // Lihat data yang diterima
+        if (Array.isArray(response.data.data)) {
+          setMapelList(response.data.data); // Pastikan data adalah array
+        } else {
+          console.error("Data tidak dalam format array");
+        }
+      } catch (error) {
+        console.error("Error fetching Mapel data:", error);
+      }
+    };
+    fetchMapel();
+  }, []);
+  // Mengambil data admins dari API
+  useEffect(() => {
+    const fetchAdmin = async () => {
+    try{
+      const response = await axios.get(`${baseUrl}/admin/all-Admin`); // Ganti dengan endpoint Anda
+      console.log("admin", response);
+      setAdmins(response.data.data); // Simpan semua admin ke dalam state
+    } catch (error) {
+      console.error("Error fetching admins:", error);
+    }
+    };
+    fetchAdmin();
+  }, []);
+  useEffect(() => {
+    if (idAdmin) {
+      setGuruData((prevData) => ({
+        ...prevData,
+        id_admin: idAdmin,
+      }));
+    }
+  }, [idAdmin]);
+
+  const handleDetailClick = (row: Guru) => {
+    const admin = admins.find((admin) => admin.id_admin === row.id_admin); // Cari admin berdasarkan id_admin
+    console.log("id admin", admin);
+    const namaAdmin = admin ? admin.nama_admin : "Tidak ada"; // Jika ditemukan, ambil nama_admin
+    console.log("iki admin", namaAdmin);
+    Swal.fire({
+      html: `
+        <div style="text-align: center;">
+          <p>${JSON.stringify(row.nama_guru) || "Tidak ada"}</p>
+          <p>Ditambah oleh: ${namaAdmin || "Tidak ada"}</p>
+        </div>
+      `,
+      icon: "info",
+      iconColor: "#009688",
+      confirmButtonText: "Tutup",
+      width: "400px", // Mengatur lebar popup agar lebih kecil
+      confirmButtonColor: "#38b2ac", // Mengatur warna tombol OK (gunakan kode warna yang diinginkan)
+    });
+    setOpenDropdownId(null); // Tutup dropdown setelah melihat detail
+  };
   const guruColumns = [
     //adalah istilah yang digunakan dalam konteks tabel, terutama saat menggunakan pustaka seperti React Table, untuk menunjukkan kunci atau nama properti dalam data yang akan diambil dan ditampilkan di kolom tabel tertentu
     // { header: "No", accessor: (_: any, index: number) => index + 1 },
     // { header: "Guru", accessor: "id_guru" as keyof Guru },
-    { header: "Admin", accessor: "id_admin" as keyof Guru },
-    { header: "nip", accessor: "nip" as keyof Guru },
+    { header: "Admin",
+      accessor: "id_admin" as keyof Guru,
+      Cell: ({ row }: { row: Guru }) => {
+        const admin = admins.find((admin) => admin.id_admin === row.id_admin);
+        return admin ? admin.nama_admin : "Tidak Diketahui";
+      }, },
+    { header: "Nip", accessor: "nip" as keyof Guru },
     { header: "Guru", accessor: "nama_guru" as keyof Guru },
     { header: "Jk", accessor: "jenis_kelamin" as keyof Guru },
     { header: "Mapel", accessor: "id_mapel" as keyof Guru },
     { header: "Email", accessor: "email" as keyof Guru },
-    { header: "Pass", accessor: "pass" as keyof Guru },
+    // { header: "Pass", accessor: "pass" as keyof Guru },
     { header: "Foto", accessor: "foto" as keyof Guru },
     { header: "Walas", accessor: "walas" as keyof Guru },
     { header: "Barcode", accessor: "barcode" as keyof Guru },
@@ -82,7 +301,7 @@ export default function DataGuru() {
               &#8942; {/* Simbol menu */}
             </button>
             {openDropdownId === row.id_guru && ( // Hanya tampilkan dropdown jika id_guru sesuai
-              <div className="absolute mt-2 w-48 bg-white border rounded shadow-md">
+              <div className="absolute mt-2 bg-white border rounded shadow-md lg:-ml-2 md:-ml-96">
                 <button
                   onClick={() => handleEditClick(row)}
                   className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-200"
@@ -110,18 +329,18 @@ export default function DataGuru() {
   ];
   const [guruData, setGuruData] = useState({
     id_guru: "",
-    id_admin: "",
+    id_admin: idAdmin || "",
     nip: "",
     nama_guru: "",
     jenis_kelamin: "",
-    id_mapel: "",
-    email: "",
-    pass: "",
-    foto: "",
-    walas: "",
-    barcode: "",
-    id_kelas: [],
-    rombel: "",
+    // id_mapel: [],
+    // email: "",
+    // pass: "",
+    // foto: "",
+    // walas: "",
+    // barcode: "",
+    // id_kelas: [],
+    // rombel: [],
     no_telp: "",
   });
 
@@ -139,6 +358,43 @@ export default function DataGuru() {
         ? [...prevData.id_kelas, value] // Tambahkan kelas yang dipilih
         : prevData.id_kelas.filter((kelas) => kelas !== value); // Hapus kelas yang tidak dipilih
       return { ...prevData, id_kelas };
+    });
+  };
+  const handleJurusanChange = (e) => {
+    const { value, checked } = e.target;
+    setGuruData((prevData) => {
+      if (checked) {
+        // Tambahkan rombel yang dipilih
+        return {
+          ...prevData,
+          rombel: [...prevData.rombel, value],
+        };
+      } else {
+        // Hapus rombel yang tidak dipilih
+        return {
+          ...prevData,
+          rombel: prevData.rombel.filter((rombel) => rombel !== value),
+        };
+      }
+    });
+  };
+  // Fungsi untuk menangani perubahan checkbox
+  const handleMapelChange = (e) => {
+    const { value, checked } = e.target;
+    setGuruData((prevData) => {
+      if (checked) {
+        // Tambahkan mapel yang dipilih
+        return {
+          ...prevData,
+          id_mapel: [...prevData.id_mapel, value],
+        };
+      } else {
+        // Hapus id_mapel yang tidak dipilih
+        return {
+          ...prevData,
+          id_mapel: prevData.id_mapel.filter((mapel) => mapel !== value),
+        };
+      }
     });
   };
   const handleEditCheckboxChange = (e) => {
@@ -160,6 +416,17 @@ export default function DataGuru() {
       };
     });
   };
+  const handleMapelCheckboxChange = (event) => {
+    const { value } = event.target;
+    setGuruData((prevData) => {
+      const isChecked = prevData.id_mapel.includes(value);
+      const updatedMapel = isChecked
+        ? prevData.id_mapel.filter((id) => id !== value)
+        : [...prevData.id_mapel, value];
+      console.log("Updated id_mapel:", updatedMapel); // Tambahkan ini untuk cek
+      return { ...prevData, id_mapel: updatedMapel };
+    });
+  };
   const handleFileChange = (e) => {
     const file = e.target.files[0]; // Ambil file pertama yang dipilih
 
@@ -173,13 +440,14 @@ export default function DataGuru() {
     e.preventDefault();
     // Validasi: Pastikan semua field tidak kosong
     if (!guruData.nama_guru) {
-      toast.error("Data kelas tidak boleh kosong");
+      toast.error("Data guru tidak boleh kosong");
       return;
     }
 
     try {
       const response = await addGuru(guruData);
       console.log("API response:", response);
+      console.log("Data yang dikirim ke backend:", guruData);
       // Cek status respon
       if (response?.data?.exists) {
         // Gantilah dengan logika yang sesuai
@@ -192,18 +460,18 @@ export default function DataGuru() {
         // Reset form
         setGuruData({
           id_guru: "",
-          id_admin: "",
+          id_admin: idAdmin,
           nip: "",
           nama_guru: "",
           jenis_kelamin: "",
-          id_mapel: "",
-          email: "",
-          pass: "",
-          foto: "",
-          walas: "",
-          barcode: "",
-          id_kelas: [],
-          rombel: "",
+          // id_mapel: [],
+          // email: "",
+          // pass: "",
+          // foto: "",
+          // walas: "",
+          // barcode: "",
+          // id_kelas: [],
+          // rombel: [],
           no_telp: "",
         });
       }
@@ -251,13 +519,13 @@ export default function DataGuru() {
       formData.append("nip", editData.nip);
       formData.append("nama_guru", editData.nama_guru);
       formData.append("jenis_kelamin", editData.jenis_kelamin);
-      formData.append("id_mapel", editData.id_mapel);
-      formData.append("email", editData.email);
-      formData.append("pass", editData.pass);
-      formData.append("walas", editData.walas);
-      formData.append("barcode", editData.barcode);
-      formData.append("id_kelas", editData.id_kelas.join(",")); // Pastikan id_kelas array diubah menjadi string
-      formData.append("rombel", editData.rombel);
+      // formData.append("id_mapel", editData.id_mapel);
+      // formData.append("email", editData.email);
+      // formData.append("pass", editData.pass);
+      // formData.append("walas", editData.walas);
+      // formData.append("barcode", editData.barcode);
+      // formData.append("id_kelas", Array.isArray(editData.id_kelas) ? editData.id_kelas.join(",") : ""); // Pastikan id_kelas array diubah menjadi string
+      // formData.append("rombel", editData.rombel);
       formData.append("no_telp", editData.no_telp);
 
       // Tambahkan file foto jika ada
@@ -407,176 +675,323 @@ export default function DataGuru() {
               onSubmit={handleSubmit}
               className="bg-white rounded-lg shadow-md p-4 lg:p-6 border"
             >
-              <label>
-                ID Guru:
-                <input
-                  type="text"
-                  className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                  name="id_guru"
-                  value={guruData.id_guru}
-                  onChange={handleChange}
-                />
-              </label>
-              <label>
-                ID Admin:
-                <input
-                  type="text"
-                  className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                  name="id_admin"
-                  value={guruData.id_admin}
-                  onChange={handleChange}
-                />
-              </label>
-              <label>
-                NIP:
-                <input
-                  type="text"
-                  className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                  name="nip"
-                  value={guruData.nip}
-                  onChange={handleChange}
-                />
-              </label>
-              <label>
-                Nama Guru:
-                <input
-                  type="text"
-                  className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                  name="nama_guru"
-                  value={guruData.nama_guru}
-                  onChange={handleChange}
-                />
-              </label>
-              <label>
-                Jenis Kelamin:
-                <input
-                  type="text"
-                  className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                  name="jenis_kelamin"
-                  value={guruData.jenis_kelamin}
-                  onChange={handleChange}
-                />
-              </label>
-              <label>
-                ID Mapel:
-                <input
-                  type="text"
-                  className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                  name="id_mapel"
-                  value={guruData.id_mapel}
-                  onChange={handleChange}
-                />
-              </label>
-              <label>
-                Email:
-                <input
-                  type="email"
-                  className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                  name="email"
-                  value={guruData.email}
-                  onChange={handleChange}
-                />
-              </label>
-              <label>
-                Password:
-                <input
-                  type="password"
-                  className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                  name="pass"
-                  value={guruData.pass}
-                  onChange={handleChange}
-                />
-              </label>
-              <label>
-                Foto:
-                <input
-                  type="file"
-                  name="foto"
-                  onChange={handleFileChange} // Ganti event handler khusus untuk file
-                  className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                  placeholder="Pilih file foto..."
-                />
-              </label>
-              <label>
-                Walas:
-                <input
-                  type="text"
-                  className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                  name="walas"
-                  value={guruData.walas}
-                  onChange={handleChange}
-                />
-              </label>
-              <label>
-                Barcode:
-                <input
-                  type="text"
-                  className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                  name="barcode"
-                  value={guruData.barcode}
-                  onChange={handleChange}
-                />
-              </label>
-              <label>
-                ID Kelas:
-                <div>
-                  <label>
-                    <input
-                      type="checkbox"
-                      value="10"
-                      checked={guruData.id_kelas.includes("10")}
-                      onChange={handleCheckboxChange}
-                    />
-                    Kelas 10
-                  </label>
-                  <label className="mx-5">
-                    <input
-                      type="checkbox"
-                      value="11"
-                      checked={guruData.id_kelas.includes("11")}
-                      onChange={handleCheckboxChange}
-                    />
-                    Kelas 11
-                  </label>
-                  <label>
-                    <input
-                      type="checkbox"
-                      value="12"
-                      checked={guruData.id_kelas.includes("12")}
-                      onChange={handleCheckboxChange}
-                    />
-                    Kelas 12
-                  </label>
-                  {/* Tambahkan lebih banyak kelas sesuai kebutuhan */}
-                </div>
-              </label>
-              <label>
-                Rombel:
-                <input
-                  type="text"
-                  className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                  name="rombel"
-                  value={guruData.rombel}
-                  onChange={handleChange}
-                />
-              </label>
-              <label>
-                No. Telepon:
-                <input
-                  type="text"
-                  className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                  name="no_telp"
-                  value={guruData.no_telp}
-                  onChange={handleChange}
-                />
-              </label>
+              <input
+                type="text"
+                className="w-full p-2 border rounded text-sm sm:text-base mb-2"
+                name="id_guru"
+                value={guruData.id_guru}
+                onChange={handleChange}
+                hidden="none"
+              />
+              <input
+                type="text"
+                className="w-full p-2 border rounded text-sm sm:text-base mb-2"
+                name="id_admin"
+                value={guruData.id_admin}
+                onChange={handleChange}
+                hidden="none"
+              />
+              <h2 className="text-sm mb-2 sm:text-sm font-bold">NIP</h2>
+              <input
+                type="text"
+                className="w-full p-2 border rounded text-sm sm:text-base mb-2"
+                name="nip"
+                value={guruData.nip}
+                onChange={handleChange}
+                placeholder="Nip..."
+              />
+              <h2 className="text-sm mb-2 sm:text-sm font-bold">Nama Guru</h2>
+              <input
+                type="text"
+                className="w-full p-2 border rounded text-sm sm:text-base mb-2"
+                name="nama_guru"
+                value={guruData.nama_guru}
+                onChange={handleChange}
+                placeholder="Nama Guru..."
+              />
+              <h2 className="text-sm mb-2 sm:text-sm font-bold">
+                Jenis Kelamin
+              </h2>
+              <select
+                className="w-full p-2 border rounded text-sm sm:text-base mb-2"
+                name="jenis_kelamin"
+                value={guruData.jenis_kelamin}
+                onChange={handleChange}
+              >
+                <option value="">Pilih Jenis Kelamin...</option>
+                <option value="L">Laki-laki</option>
+                <option value="P">Perempuan</option>
+              </select>
+              <h2 className="text-sm mb-2 sm:text-sm font-bold">Email</h2>
+              <input
+                type="email"
+                className="w-full p-2 border rounded text-sm sm:text-base mb-2"
+                name="email"
+                value={guruData.email}
+                onChange={handleChange}
+                placeholder="Email..."
+              />
+              <h2 className="text-sm mb-2 sm:text-sm font-bold">Password</h2>
+              <input
+                type="password"
+                className="w-full p-2 border rounded text-sm sm:text-base mb-2"
+                name="pass"
+                value={guruData.pass}
+                onChange={handleChange}
+                placeholder="Password..."
+              />
+              {/* <h2 className="text-sm mb-2 sm:text-sm font-bold">Mapel</h2>
+              <div className="mb-2 lg:flex lg:flex-wrap md:flex md:flex-wrap">
+                {" "}
+                {mapelList.length > 0 ? (
+                  mapelList.map((mapel) => (
+                    <label
+                      key={mapel.id_mapel} // Pastikan id_mapel ada di data mapel
+                      className="flex items-center space-x-2 md:w-1/4 mb-2"
+                    >
+                      <input
+                        type="checkbox"
+                        name="mapel"
+                        value={mapel.nama_mapel} // Ganti dengan nama kolom yang sesuai dari database
+                        checked={guruData.id_mapel.includes(mapel.nama_mapel)} // Cek apakah mapel sudah dipilih
+                        onChange={handleMapelChange} // Panggil fungsi untuk mengubah state
+                        className="form-checkbox text-blue-600"
+                      />
+                      <span className="text-sm sm:text-base">
+                        {mapel.nama_mapel}
+                      </span>
+                    </label>
+                  ))
+                ) : (
+                  <p>Tidak ada data mata pelajaran.</p> // Tampilkan pesan jika tidak ada data
+                )}
+              </div>
+              <h2 className="text-sm mb-2 sm:text-sm font-bold">Kelas</h2>
+              <div>
+                <label>
+                  <input
+                    type="checkbox"
+                    value="10"
+                    checked={guruData.id_kelas.includes("10")}
+                    onChange={handleCheckboxChange}
+                  />
+                  Kelas 10
+                </label>
+                <label className="mx-5">
+                  <input
+                    type="checkbox"
+                    value="11"
+                    checked={guruData.id_kelas.includes("11")}
+                    onChange={handleCheckboxChange}
+                  />
+                  Kelas 11
+                </label>
+                <label>
+                  <input
+                    type="checkbox"
+                    value="12"
+                    checked={guruData.id_kelas.includes("12")}
+                    onChange={handleCheckboxChange}
+                  />
+                  Kelas 12
+                </label>
+              </div>
+              <h2 className="text-sm mb-2 sm:text-sm font-bold">Jurusan</h2>
+              <div className="flex flex-wrap space-x-4 mb-2">
+                {rombelList.length > 0 ? (
+                  rombelList.map((rombel) => (
+                    <label
+                      key={rombel.id_rombel}
+                      className="flex items-center space-x-2 mb-1"
+                    >
+                      <input
+                        type="checkbox"
+                        name="rombel"
+                        value={rombel.nama_rombel}
+                        checked={guruData.rombel.includes(rombel.nama_rombel)}
+                        onChange={handleJurusanChange}
+                        className="form-checkbox text-blue-600"
+                      />
+                      <span className="text-sm sm:text-base">
+                        {rombel.nama_rombel}
+                      </span>
+                    </label>
+                  ))
+                ) : (
+                  <p>Tidak ada data rombel.</p> // Tampilkan pesan jika tidak ada data
+                )}
+              </div> */}
+              <h2 className="text-sm sm:text-sm font-bold">Mapel</h2>
+              <div className="lg:flex lg:flex-wrap md:flex md:flex-wrap">
+                <label className="flex items-center space-x-2 md:w-1/4">
+                  <input
+                    type="checkbox"
+                    name="mapel"
+                    value="Matematika"
+                    className="form-checkbox text-blue-600"
+                  />
+                  <span className="text-sm sm:text-base">Matematika</span>
+                </label>
+                <label className="flex items-center space-x-2 md:w-1/4">
+                  <input
+                    type="checkbox"
+                    name="mapel"
+                    value="Bahasa Indonesia"
+                    className="form-checkbox text-blue-600"
+                  />
+                  <span className="text-sm sm:text-base">Bahasa Indonesia</span>
+                </label>
+                <label className="flex items-center space-x-2 md:w-1/4">
+                  <input
+                    type="checkbox"
+                    name="mapel"
+                    value="Bahasa Inggris"
+                    className="form-checkbox text-blue-600"
+                  />
+                  <span className="text-sm sm:text-base">Bahasa Inggris</span>
+                </label>
+                <label className="flex items-center space-x-2 md:w-1/4">
+                  <input
+                    type="checkbox"
+                    name="mapel"
+                    value="Ilmu Pengetahuan Alam"
+                    className="form-checkbox text-blue-600"
+                  />
+                  <span className="text-sm sm:text-base">
+                    Ilmu Pengetahuan Alam
+                  </span>
+                </label>
+              </div>
+              <h2 className="text-sm mb-2 sm:text-sm font-bold">Kelas</h2>
+              <div>
+                <label>
+                  <input
+                    type="checkbox"
+                    value="10"
+                    className="form-checkbox text-blue-600"
+                  />
+                  <span className="ml-2">Kelas 10</span>
+                </label>
+                <label className="mx-5">
+                  <input
+                    type="checkbox"
+                    value="11"
+                    className="form-checkbox text-blue-600"
+                  />
+                  <span className="ml-2">Kelas 11</span>
+                </label>
+                <label>
+                  <input
+                    type="checkbox"
+                    value="12"
+                    className="form-checkbox text-blue-600"
+                  />
+                  <span className="ml-2">Kelas 12</span>
+                </label>
+              </div>
+              <h2 className="text-sm mb-2 sm:text-sm font-bold">Jurusan</h2>
+              <div className="flex flex-wrap space-x-4 mb-2">
+                <label className="flex items-center space-x-2 mb-1">
+                  <input
+                    type="checkbox"
+                    name="jurusan"
+                    value="IPA"
+                    className="form-checkbox text-blue-600"
+                  />
+                  <span className="text-sm sm:text-base">IPA</span>
+                </label>
+                <label className="flex items-center space-x-2 mb-1">
+                  <input
+                    type="checkbox"
+                    name="jurusan"
+                    value="IPS"
+                    className="form-checkbox text-blue-600"
+                  />
+                  <span className="text-sm sm:text-base">IPS</span>
+                </label>
+                <label className="flex items-center space-x-2 mb-1">
+                  <input
+                    type="checkbox"
+                    name="jurusan"
+                    value="Bahasa"
+                    className="form-checkbox text-blue-600"
+                  />
+                  <span className="text-sm sm:text-base">Bahasa</span>
+                </label>
+                <label className="flex items-center space-x-2 mb-1">
+                  <input
+                    type="checkbox"
+                    name="jurusan"
+                    value="Teknik"
+                    className="form-checkbox text-blue-600"
+                  />
+                  <span className="text-sm sm:text-base">Teknik</span>
+                </label>
+              </div>
 
+              <label className="inline-flex items-center">
+                <h2 className="text-sm mb-2 sm:text-sm font-bold pr-2 pt-1">
+                  Walas
+                </h2>
+                <input
+                  type="checkbox"
+                  checked={isWalasEnabled}
+                  onChange={handleToggle}
+                  className="hidden"
+                />
+                <span
+                  className={`w-10 h-5 flex items-center bg-gray-300 rounded-full p-1 cursor-pointer transition-colors duration-300 ${
+                    isWalasEnabled ? "bg-teal-400" : ""
+                  }`}
+                >
+                  <span
+                    className={`bg-white w-4 h-4 rounded-full shadow-md transform duration-300 ${
+                      isWalasEnabled ? "translate-x-5" : ""
+                    }`}
+                  />
+                </span>
+                <span className="ml-2 text-sm"></span>
+              </label>
+              <input
+                type="text"
+                className="w-full p-2 border rounded text-sm sm:text-base mb-2"
+                name="walas"
+                value={guruData.walas}
+                onChange={handleChange}
+                placeholder="Wali Kelas..."
+                disabled={!isWalasEnabled} // Disable input jika isWalasEnabled false
+              />
+              <h2 className="text-sm mb-2 sm:text-sm font-bold">No. Telepon</h2>
+              <input
+                type="text"
+                className="w-full p-2 border rounded text-sm sm:text-base mb-2"
+                name="no_telp"
+                value={guruData.no_telp}
+                onChange={handleChange}
+                placeholder="Nomor telepon..."
+              />
+              <h2 className="text-sm mb-2 sm:text-sm font-bold">Barcode</h2>
+              <input
+                type="text"
+                className="w-full p-2 border rounded text-sm sm:text-base mb-2"
+                name="barcode"
+                value={guruData.barcode}
+                onChange={handleChange}
+              />
+              <h2 className="text-sm mb-2 sm:text-sm font-bold">Foto</h2>
+              <input
+                type="file"
+                name="foto"
+                onChange={handleFileChange} // Ganti event handler khusus untuk file
+                className="w-full p-2 border rounded text-sm sm:text-base mb-2"
+                placeholder="Pilih file foto..."
+              />
               <div className="mt-4">
                 {/* Tombol Simpan */}
-                <div className="flex justify-end m-4 space-x-2 lg:mt-0 md:mt-0 mt-24 ">
+                <div className="flex justify-end m-4 space-x-2 lg:mt-0 md:mt-0 md:z-50">
                   <button
                     type="submit"
-                    className="px-3 py-2 sm:px-4 sm:py-2 bg-teal-400 hover:bg-teal-500 text-white items-end rounded text-sm sm:text-base lg:w-24 md:w-24 w-full"
+                    className="px-3 py-2 sm:px-4 sm:py-2 bg-teal-400 hover:bg-teal-500 text-white items-end rounded text-sm sm:text-base lg:w-24 md:w-24"
                   >
                     Simpan
                   </button>
@@ -584,7 +999,7 @@ export default function DataGuru() {
               </div>
             </form>
             {/* Tombol Unduh Format dan Upload File */}
-            <div className="lg:absolute md:absolute flex flex-col lg:flex-row lg:ml-6 md:flex-row md:ml-5 lg:-mt-20 md:-mt-20 -mt-40 lg:w-full md:w-full w-64 ml-7 ">
+            <div className="absolute -mt-20 ml-6">
               <button
                 onClick={handleDownloadFormatClick}
                 className="flex-2 px-4 py-2 bg-teal-700 hover:bg-teal-800 border-slate-500 text-white rounded text-sm sm:text-base mb-2 lg:mb-0 lg:mr-2 md:mr-2"
@@ -593,17 +1008,16 @@ export default function DataGuru() {
               </button>
               <button
                 onClick={handleUploadFileClick}
-                className="flex-2 px-4 py-2 bg-rose-600 hover:bg-rose-700 border-teal-400 text-white rounded text-sm sm:text-base mb-2 lg:mb-0"
+                className="flex-2 lg:inline-block md:inline-block block px-4 py-2 bg-rose-600 hover:bg-rose-700 border-teal-400 text-white rounded text-sm sm:text-base mb-2 lg:mb-0"
               >
                 Upload File
               </button>
-              {/* Input file yang disembunyikan */}
               <input
                 type="file"
                 ref={fileInputRef}
                 accept=".xlsx, .xls"
                 style={{ display: "none" }}
-                onChange={handleFileChange}
+                onChange={handleFileUploadChange}
               />
             </div>
           </div>
@@ -707,188 +1121,261 @@ export default function DataGuru() {
                   <ToastContainer className="mt-14" />
                   {isModalOpen && (
                     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-                      <div className="bg-white rounded p-4 shadow-lg space-y-4">
+                      <div className="bg-white rounded p-4 shadow-lg space-y-4  max-h-screen overflow-y-auto">
                         <h3 className="pb-2 text-lg font-semibold">
                           Edit Data Guru
                         </h3>
                         <form onSubmit={handleEditSubmit} className="space-y-3">
-                          <label>
-                            ID Guru:
-                            <input
-                              type="text"
-                              name="id_guru"
-                              value={editData ? editData.id_guru : ""}
-                              onChange={handleEditChange}
-                              className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                              placeholder="ID Guru..."
-                            />
-                          </label>
-                          <label>
-                            ID Admin:
-                            <input
-                              type="text"
-                              name="id_admin"
-                              value={editData ? editData.id_admin : ""}
-                              onChange={handleEditChange}
-                              className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                              placeholder="id_admin..."
-                            />
-                          </label>
-                          <label>
-                            Nip:
-                            <input
-                              type="text"
-                              name="nip"
-                              value={editData ? editData.nip : ""}
-                              onChange={handleEditChange}
-                              className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                              placeholder="nip..."
-                            />
-                          </label>
-                          <label>
-                            Nama Guru:
-                            <input
-                              type="text"
-                              name="nama_guru"
-                              value={editData ? editData.nama_guru : ""}
-                              onChange={handleEditChange}
-                              className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                              placeholder="Nama Guru..."
-                            />
-                          </label>
-                          <label>
-                            Jenis Kelamin:
-                            <input
-                              type="text"
-                              name="jenis_kelamin"
-                              value={editData ? editData.jenis_kelamin : ""}
-                              onChange={handleEditChange}
-                              className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                              placeholder="Jenis Kelamin..."
-                            />
-                          </label>
-                          <label>
-                            ID Mapel:
-                            <input
-                              type="text"
-                              name="id_mapel"
-                              value={editData ? editData.id_mapel : ""}
-                              onChange={handleEditChange}
-                              className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                              placeholder="id_mapel..."
-                            />
-                          </label>
-                          <label>
-                            Email:
-                            <input
-                              type="email"
-                              name="email"
-                              value={editData ? editData.email : ""}
-                              onChange={handleEditChange}
-                              className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                              placeholder="Email..."
-                            />
-                          </label>
-                          <label>
-                            Password:
-                            <input
-                              type="pass"
-                              name="pass"
-                              value={editData ? editData.pass : ""}
-                              onChange={handleEditChange}
-                              className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                              placeholder="pass..."
-                            />
-                          </label>
-                          <label>
-                            Foto:
-                            <input
-                              type="file"
-                              name="foto"
-                              onChange={handleFileChange} // Handler untuk menangani file
-                              className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                              placeholder="Pilih file foto..."
-                            />
-                          </label>
-                          <label>
-                            Walas:
-                            <input
-                              type="text"
-                              name="walas"
-                              value={editData ? editData.walas : ""}
-                              onChange={handleEditChange}
-                              className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                              placeholder="Walas..."
-                            />
-                          </label>
-                          <label>
-                            Barcode:
-                            <input
-                              type="text"
-                              name="barcode"
-                              value={editData ? editData.barcode : ""}
-                              onChange={handleEditChange}
-                              className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                              placeholder="Barcode..."
-                            />
-                          </label>
-                          <label>
-                            ID Kelas:
-                            <div className="flex space-x-4">
-                              <label>
-                                <input
-                                  type="checkbox"
-                                  value="10"
-                                  checked={editData.id_kelas?.includes("10")}
-                                  onChange={handleEditCheckboxChange}
-                                />
-                                Kelas 10
-                              </label>
-                              <label>
-                                <input
-                                  type="checkbox"
-                                  value="11"
-                                  checked={editData.id_kelas?.includes("11")}
-                                  onChange={handleEditCheckboxChange}
-                                  className="ml-2"
-                                />
-                                Kelas 11
-                              </label>
-                              <label>
-                                <input
-                                  type="checkbox"
-                                  value="12"
-                                  checked={editData.id_kelas?.includes("12")}
-                                  onChange={handleEditCheckboxChange}
-                                  className="ml-2"
-                                />
-                                Kelas 12
-                              </label>
-                              {/* Tambahkan lebih banyak kelas sesuai kebutuhan */}
-                            </div>
-                          </label>
-                          <label>
-                            Rombel:
-                            <input
-                              type="text"
-                              name="rombel"
-                              value={editData ? editData.rombel : ""}
-                              onChange={handleEditChange}
-                              className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                              placeholder="Rombel..."
-                            />
-                          </label>
-                          <label>
-                            No. Telepon:
-                            <input
-                              type="text"
-                              name="no_telp"
-                              value={editData ? editData.no_telp : ""}
-                              onChange={handleEditChange}
-                              className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                              placeholder="No. Telepon..."
-                            />
-                          </label>
+                          <input
+                            type="text"
+                            name="id_guru"
+                            value={editData ? editData.id_guru : ""}
+                            onChange={handleEditChange}
+                            className="w-full p-2 border rounded text-sm sm:text-base mb-2"
+                            placeholder="ID Guru..."
+                            hidden="none"
+                          />
+                          <input
+                            type="text"
+                            name="id_admin"
+                            value={editData ? editData.id_admin : ""}
+                            onChange={handleEditChange}
+                            className="w-full p-2 border rounded text-sm sm:text-base mb-2"
+                            placeholder="id_admin..."
+                            hidden="none"
+                          />
+                          <h2 className="text-sm mb-2 sm:text-sm font-bold">
+                            Nip
+                          </h2>
+                          <input
+                            type="text"
+                            name="nip"
+                            value={editData ? editData.nip : ""}
+                            onChange={handleEditChange}
+                            className="w-full p-2 border rounded text-sm sm:text-base mb-2"
+                            placeholder="nip..."
+                          />
+
+                          <h2 className="text-sm mb-2 sm:text-sm font-bold">
+                            Nama Guru
+                          </h2>
+                          <input
+                            type="text"
+                            name="nama_guru"
+                            value={editData ? editData.nama_guru : ""}
+                            onChange={handleEditChange}
+                            className="w-full p-2 border rounded text-sm sm:text-base mb-2"
+                            placeholder="Nama Guru..."
+                          />
+
+                          <h2 className="text-sm mb-2 sm:text-sm font-bold">
+                            Jenis Kelamin
+                          </h2>
+                          <select
+                            name="jenis_kelamin"
+                            value={editData ? editData.jenis_kelamin : ""}
+                            onChange={handleEditChange}
+                            className="w-full p-2 border rounded text-sm sm:text-base mb-2"
+                          >
+                            <option value="">Pilih Jenis Kelamin...</option>
+                            <option value="L">Laki-laki</option>
+                            <option value="P">Perempuan</option>
+                          </select>
+                          <h2 className="text-sm mb-2 sm:text-sm font-bold">
+                            Email
+                          </h2>
+                          <input
+                            type="email"
+                            name="email"
+                            value={editData ? editData.email : ""}
+                            onChange={handleEditChange}
+                            className="w-full p-2 border rounded text-sm sm:text-base mb-2"
+                            placeholder="Email..."
+                          />
+
+                          <h2 className="text-sm mb-2 sm:text-sm font-bold">
+                            Password
+                          </h2>
+                          <input
+                            type="pass"
+                            name="pass"
+                            value={editData ? editData.pass : ""}
+                            onChange={handleEditChange}
+                            className="w-full p-2 border rounded text-sm sm:text-base mb-2"
+                            placeholder="pass..."
+                          />
+
+                          <h2 className="text-sm mb-2 sm:text-sm font-bold">
+                            Mapel
+                          </h2>
+                          <div className="lg:flex lg:flex-wrap md:flex md:flex-wrap">
+                            <label className="flex items-center space-x-2 md:w-1/4">
+                              <input
+                                type="checkbox"
+                                name="mapel"
+                                value="Matematika"
+                                className="form-checkbox text-blue-600"
+                              />
+                              <span className="text-sm sm:text-base">
+                                Matematika
+                              </span>
+                            </label>
+                            <label className="flex items-center space-x-2 md:w-1/4">
+                              <input
+                                type="checkbox"
+                                name="mapel"
+                                value="Bahasa Indonesia"
+                                className="form-checkbox text-blue-600"
+                              />
+                              <span className="text-sm sm:text-base">
+                                Bahasa Indonesia
+                              </span>
+                            </label>
+                            <label className="flex items-center space-x-2 md:w-1/4">
+                              <input
+                                type="checkbox"
+                                name="mapel"
+                                value="Bahasa Inggris"
+                                className="form-checkbox text-blue-600"
+                              />
+                              <span className="text-sm sm:text-base">
+                                Bahasa Inggris
+                              </span>
+                            </label>
+                            <label className="flex items-center space-x-2 md:w-1/4">
+                              <input
+                                type="checkbox"
+                                name="mapel"
+                                value="Ilmu Pengetahuan Alam"
+                                className="form-checkbox text-blue-600"
+                              />
+                              <span className="text-sm sm:text-base">
+                                Ilmu Pengetahuan Alam
+                              </span>
+                            </label>
+                          </div>
+                          {/* <div className="mb-2 lg:flex lg:flex-wrap md:flex md:flex-wrap">
+                            {mapelList.length > 0 ? (
+                              mapelList.map((mapel) => (
+                                <label
+                                  key={mapel.id_mapel}
+                                  className="flex items-center space-x-2 md:w-1/4 mb-2"
+                                >
+                                  <input
+                                    type="checkbox"
+                                    name="mapel"
+                                    value={mapel.id_mapel}
+                                    checked={guruData.id_mapel.includes(
+                                      mapel.id_mapel
+                                    )}
+                                    onChange={handleMapelCheckboxChange}
+                                    className="form-checkbox text-blue-600"
+                                  />
+                                  <span className="text-sm sm:text-base">
+                                    {mapel.nama_mapel}
+                                  </span>
+                                </label>
+                              ))
+                            ) : (
+                              <p>Tidak ada data mata pelajaran.</p>
+                            )}
+                          </div> */}
+
+                          <h2 className="text-sm mb-2 sm:text-sm font-bold">
+                            Kelas
+                          </h2>
+                          <div className="flex space-x-4">
+                            <label>
+                              <input
+                                type="checkbox"
+                                value="10"
+                                checked={editData.id_kelas?.includes("10")}
+                                onChange={handleEditCheckboxChange}
+                              />
+                              Kelas 10
+                            </label>
+                            <label>
+                              <input
+                                type="checkbox"
+                                value="11"
+                                checked={editData.id_kelas?.includes("11")}
+                                onChange={handleEditCheckboxChange}
+                                className="ml-2"
+                              />
+                              Kelas 11
+                            </label>
+                            <label>
+                              <input
+                                type="checkbox"
+                                value="12"
+                                checked={editData.id_kelas?.includes("12")}
+                                onChange={handleEditCheckboxChange}
+                                className="ml-2"
+                              />
+                              Kelas 12
+                            </label>
+                            {/* Tambahkan lebih banyak kelas sesuai kebutuhan */}
+                          </div>
+
+                          <h2 className="text-sm mb-2 sm:text-sm font-bold">
+                            Jurusan
+                          </h2>
+                          <input
+                            type="text"
+                            name="rombel"
+                            value={editData ? editData.rombel : ""}
+                            onChange={handleEditChange}
+                            className="w-full p-2 border rounded text-sm sm:text-base mb-2"
+                            placeholder="Rombel..."
+                          />
+
+                          <h2 className="text-sm mb-2 sm:text-sm font-bold">
+                            Walas
+                          </h2>
+                          <input
+                            type="text"
+                            name="walas"
+                            value={editData ? editData.walas : ""}
+                            onChange={handleEditChange}
+                            className="w-full p-2 border rounded text-sm sm:text-base mb-2"
+                            placeholder="Walas..."
+                          />
+
+                          <h2 className="text-sm mb-2 sm:text-sm font-bold">
+                            No. Telepon
+                          </h2>
+                          <input
+                            type="text"
+                            name="no_telp"
+                            value={editData ? editData.no_telp : ""}
+                            onChange={handleEditChange}
+                            className="w-full p-2 border rounded text-sm sm:text-base mb-2"
+                            placeholder="No. Telepon..."
+                          />
+
+                          <h2 className="text-sm mb-2 sm:text-sm font-bold">
+                            Barcode
+                          </h2>
+                          <input
+                            type="text"
+                            name="barcode"
+                            value={editData ? editData.barcode : ""}
+                            onChange={handleEditChange}
+                            className="w-full p-2 border rounded text-sm sm:text-base mb-2"
+                            placeholder="Barcode..."
+                          />
+
+                          <h2 className="text-sm mb-2 sm:text-sm font-bold">
+                            Foto
+                          </h2>
+                          <input
+                            type="file"
+                            name="foto"
+                            onChange={handleFileChange} // Handler untuk menangani file
+                            className="w-full p-2 border rounded text-sm sm:text-base mb-2"
+                            placeholder="Pilih file foto..."
+                          />
+
                           <div className="flex justify-end space-x-2">
                             <button
                               type="submit"

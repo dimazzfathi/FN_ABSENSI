@@ -13,9 +13,13 @@ import {
   updateRombel,
   Rombel,
 } from "../../../api/rombel";
-export default function Rombel() {
+import useUserInfo from "@/app/components/useUserInfo";
+import Swal from "sweetalert2";
+
+const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+export default function _Rombel() {
   // State untuk menyimpan nilai input 
- 
   const [isRombelValid, setIsRombelValid] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [dataRombel, setDataRombel] = useState<Rombel[]>([]);
@@ -25,8 +29,11 @@ export default function Rombel() {
   const [isModalOpen, setIsModalOpen] = useState(false); // State untuk mengontrol modal
   const [selectedRow, setSelectedRow] = useState(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const { idAdmin } = useUserInfo();
+  const [admins, setAdmins] = useState<{ id_admin: string; nama_admin: string }[]>([]);
   const [formData, setFormData] = useState({
     nama_rombel: '',
+    id_admin: idAdmin || "",
   });
 
   useEffect(() => {
@@ -84,9 +91,45 @@ export default function Rombel() {
       },
     },
   ];
+  useEffect(() => {
+    const fetchAdmin = async () => {
+    try{
+      const response = await axios.get(`${baseUrl}/admin/all-Admin`); // Ganti dengan endpoint Anda
+      console.log("admin", response);
+      setAdmins(response.data.data); // Simpan semua admin ke dalam state
+    } catch (error) {
+      console.error("Error fetching admins:", error);
+    }
+    };
+    fetchAdmin();
+  }, []);
+  useEffect(() => {
+    if (idAdmin) {
+      setFormData((prevData) => ({
+        ...prevData,
+        id_admin: idAdmin,
+      }));
+    }
+  }, [idAdmin]);
 
   const handleDetailClick = (row: Rombel) => {
-    alert(`Detail rombel: ${JSON.stringify(row)}`);
+    const admin = admins.find(admin => admin.id_admin === row.id_admin); // Cari admin berdasarkan id_admin
+    console.log("id admin", admin)
+    const namaAdmin = admin ? admin.nama_admin : "Tidak ada"; // Jika ditemukan, ambil nama_admin
+    console.log("iki admin", namaAdmin)
+    Swal.fire({
+      html: `
+        <div style="text-align: center;">
+          <p>Jurusan ${JSON.stringify(row.nama_rombel) || "Tidak ada"}</p>
+          <p>Ditambah oleh: ${namaAdmin  || "Tidak ada"}</p>
+        </div>
+      `,
+      icon: "info",
+      iconColor: "#009688",
+      confirmButtonText: "Tutup",
+      width: "400px", // Mengatur lebar popup agar lebih kecil
+      confirmButtonColor: "#38b2ac", // Mengatur warna tombol OK (gunakan kode warna yang diinginkan)
+    });
     setOpenDropdownId(null); // Tutup dropdown setelah melihat detail
   };
 
@@ -160,7 +203,7 @@ export default function Rombel() {
     setSelectedRow(null); // Reset selectedRow
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
@@ -168,7 +211,7 @@ export default function Rombel() {
     });
   };
 
-  const handleRombelSubmit = async (e: React.FormEvent) => {
+  const handleRombelSubmit = async (e) => {
     e.preventDefault();
     if (!formData.nama_rombel) {
       toast.error('Nama rombel tidak boleh kosong');
@@ -182,7 +225,10 @@ export default function Rombel() {
       
       // Update state dengan data baru
       setDataRombel((prevRombel) => [...prevRombel, response.data]);
-      setFormData({ nama_rombel: '' });
+      setFormData({ 
+        nama_rombel: "",
+        id_admin: idAdmin, 
+      });
     } catch (error) {
       console.error('Error adding rombel:', error);
       toast.error('Terjadi kesalahan saat menambah data');
@@ -308,6 +354,14 @@ export default function Rombel() {
             <form onSubmit={handleRombelSubmit}
               className="bg-white rounded-lg shadow-md p-4 lg:p-6 border"
             >
+              <label
+                name="id_admin"
+                value={formData.id_admin}
+                onChange={handleChange}
+                hidden="none"
+              >
+                id_admin
+              </label>
             <h2 className="text-sm mb-2 sm:text-sm font-bold"> Rombel</h2>
             <input 
                 type="text"
@@ -315,7 +369,7 @@ export default function Rombel() {
                 value={formData.nama_rombel}
                 onChange={handleChange}
                 className="mt-1 p-2 border rounded-md w-full"
-                required
+                placeholder="Rombel..."
               />
               <div className="flex m-4 space-x-2">
                 <button
