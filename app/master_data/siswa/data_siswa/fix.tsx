@@ -511,6 +511,8 @@ const handleDelete = async (deletedRow) => {
   
     // Membuat worksheet
     const worksheet = XLSX.utils.json_to_sheet(data, { header: headers });
+
+    worksheet["F1"].c = [{ t: "opo wes", v: "2024" }];
   
     // Membuat workbook
     const workbook = XLSX.utils.book_new();

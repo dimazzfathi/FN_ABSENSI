@@ -123,11 +123,11 @@ export default function DataRombel() {
 
   // fields untuk DataTabel
   const rombelColumns = [
-    { header: 'Kelas', accessor: 'id_kelas' as keyof Kelas },
-    { header: 'Jurusan', accessor: 'id_rombel' as keyof Rombel },
-    { header: 'Tahun Ajaran', accessor: 'id_tahun_pelajaran' as keyof Siswa },
-    { header: 'Jumlah siswa', accessor: 'jumlah siswa' as keyof Siswa },
-    { header: 'Wali Kelas', accessor: 'wali_kelas' as keyof Siswa },
+    { header: 'Kelas', accessor: 'id_kelas' },
+    { header: 'Jurusan', accessor: 'id_rombel'  },
+    { header: 'Tahun Ajaran', accessor: 'id_tahun_pelajaran' },
+    { header: 'Jumlah siswa', accessor: 'jumlah siswa' },
+    { header: 'Wali Kelas', accessor: 'wali_kelas' },
     // {
     //   header: "Aksi",
     //   Cell: ({ row }: { row: Siswa }) => {
@@ -166,6 +166,8 @@ export default function DataRombel() {
     //   },
     // },
   ];
+
+  
   
   // useEffect(() => {
   //   const storedJurusan = localStorage.getItem('tableDataJurusan');
