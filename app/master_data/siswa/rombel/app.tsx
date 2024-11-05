@@ -126,6 +126,8 @@ export default function DataRombel() {
     { header: 'Kelas', accessor: 'id_kelas' as keyof Kelas },
     { header: 'Jurusan', accessor: 'id_rombel' as keyof Rombel },
     { header: 'Tahun Ajaran', accessor: 'id_tahun_pelajaran' as keyof Siswa },
+    { header: 'Jumlah siswa', accessor: 'jumlah siswa' as keyof Siswa },
+    { header: 'Wali Kelas', accessor: 'wali_kelas' as keyof Siswa },
     // {
     //   header: "Aksi",
     //   Cell: ({ row }: { row: Siswa }) => {
