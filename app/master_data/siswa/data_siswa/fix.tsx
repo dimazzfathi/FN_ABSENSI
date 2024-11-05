@@ -353,6 +353,8 @@ const handleEditSubmit = async (e) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+   //proses mencocokkan data dari excel dengan tabel databse untuk diambilid nya
+
     try {
       // Gantikan dengan URL server Anda
       const response = await axios.post('http://localhost:3005/siswa/add-siswa', formData);
@@ -367,7 +369,7 @@ const handleEditSubmit = async (e) => {
           nis: '',
           nama_siswa: '',
           jenis_kelamin: '',
-          id_tahun_pelajaran: '',
+          id_tahun_pelajaran:'',
           id_kelas: '',
           id_rombel: '',
           nama_wali: '',
@@ -511,9 +513,19 @@ const handleDelete = async (deletedRow) => {
   
     // Membuat worksheet
     const worksheet = XLSX.utils.json_to_sheet(data, { header: headers });
+    
+ // Pastikan worksheet["F1"].c adalah array untuk menampung beberapa entri
+// worksheet["F1"].c = tahunPelajaran.map((tahun) => ({
+//   t: `Isi dengan Format ${tahun.tahun}`
+// }));
 
-    worksheet["F1"].c = [{ t: "opo wes", v: "2024" }];
-  
+// Menggabungkan nilai `tahun` menjadi satu string dengan format yang diinginkan
+const tahunText = `Isi dengan Format:\n${tahunPelajaran.map(tahun => tahun.tahun).join('\n')}`;
+
+// Menambahkan ke komentar worksheet sebagai satu entri
+worksheet["F1"].c = [{ t: tahunText }];
+
+
     // Membuat workbook
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Siswa");
