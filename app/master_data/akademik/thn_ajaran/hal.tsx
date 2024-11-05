@@ -120,6 +120,7 @@ export default function Tahun_Ajaran() {
   //.......untuk add data
   // State untuk menyimpan data input
   const [formData, setFormData] = useState({
+    id_tahun_pelajaran: "",
     id_admin: idAdmin || "",
     tahun: "",
     aktif: "",
@@ -168,6 +169,7 @@ export default function Tahun_Ajaran() {
         ]);
         // Reset form setelah submit
         setFormData({
+          id_tahun_pelajaran: "",
           id_admin: idAdmin,
           tahun: "",
           aktif: "",
@@ -347,6 +349,14 @@ export default function Tahun_Ajaran() {
               onSubmit={handleSubmit}
               className="bg-white rounded-lg shadow-md p-4 lg:p-6 border"
             >
+              <label
+                name="id_tahun_pelajaran"
+                value={formData.id_tahun_pelajaran}
+                onChange={handleChange}
+                hidden="none"
+              >
+                id_tahun_pelajaran
+              </label>
               <label
                 name="id_admin"
                 value={formData.id_admin}

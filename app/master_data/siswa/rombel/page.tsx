@@ -1,5 +1,5 @@
 "use client";
-import Rombel from './app';
+import Rombel from './coba';
 import React, { useState } from 'react'
 import Layout from "../../../layout/page"
 import Navbar from "../../../components/navbar/page"
