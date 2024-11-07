@@ -15,12 +15,16 @@ import DataTable from '../../../components/dataTabel';
 import * as XLSX from 'xlsx';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import imageCompression from 'browser-image-compression';
+import useUserInfo from "@/app/components/useUserInfo";
+import Swal from "sweetalert2";
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 export default function DataSiswa() {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const togglePasswordVisibility = () => {
     setPasswordVisible((prev) => !prev); // Toggle state
   };
+  const [admins, setAdmins] = useState<{ id_admin: string; nama_admin: string }[]>([]);
+  const { namaAdmin, status, idAdmin } = useUserInfo();
   const [editData, setEditData] = useState<Siswa | null>(null);
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null); // Menyimpan ID baris yang dropdown-nya terbuka
   const [isSiswaValid, setIsSiswaValid] = useState(true);
@@ -75,7 +79,7 @@ export default function DataSiswa() {
   useEffect(() => {
     const fetchTahunPelajaran = async () => {
         try {
-            const response = await axios.get('http://localhost:3005/tahun-pelajaran/all-tahun-pelajaran'); // Sesuaikan dengan URL API Anda
+            const response = await axios.get(`${baseUrl}/tahun-pelajaran/all-tahun-pelajaran`); // Sesuaikan dengan URL API Anda
             setTahunPelajaran(response.data.data);
             console.log('data berhasil di fetch', response);
         } catch (error) {
@@ -88,7 +92,7 @@ export default function DataSiswa() {
     useEffect(() => {
       const fetchTahunPelajaran = async () => {
           try {
-              const response = await axios.get('http://localhost:3005/tahun-pelajaran/all-tahun-pelajaran'); // Sesuaikan dengan URL API Anda
+              const response = await axios.get(`${baseUrl}/tahun-pelajaran/all-tahun-pelajaran`); // Sesuaikan dengan URL API Anda
               setTahunEditPelajaran(response.data.data);
               console.log('data berhasil di fetch', response);
           } catch (error) {
@@ -101,6 +105,8 @@ export default function DataSiswa() {
 
 const handleTahunChange = (event) => {
   const value = event.target.value;
+   // Log ID yang dipilih untuk memastikan
+   console.log('ID Tahun Pelajaran yang dipilih:', value);
   setSelectedTahun(value);
   setFormData((prevData) => ({
       ...prevData,
@@ -110,6 +116,7 @@ const handleTahunChange = (event) => {
 
 const handleEditTahunChange = (e) => {
   const { value } = e.target;
+  console.log('ID Tahun Pelajaran yang dipilih:', value);
   setSelectedEditTahun(value); // Update state untuk dropdown tahun ajaran
   setEditData((prev) => ({ ...prev, id_tahun_pelajaran: value })); // Update id_tahun_pelajaran di editData
 };
@@ -118,7 +125,7 @@ const handleEditTahunChange = (e) => {
 useEffect(() => {
   const fetchKelas = async () => {
       try {
-          const response = await axios.get('http://localhost:3005/kelas/all-kelas'); // Sesuaikan dengan URL API Anda
+          const response = await axios.get(`${baseUrl}/kelas/all-kelas`); // Sesuaikan dengan URL API Anda
           setKelas(response.data.data);
           console.log('data berhasil di fetch', response);
       } catch (error) {
@@ -131,6 +138,7 @@ useEffect(() => {
 
 const handleKelasChange = (event) => {
   const value = event.target.value;
+  console.log('ID Kelas yang dipilih:', value);
   setSelectedKelas(value);
   setFormData((prevData) => ({
       ...prevData,
@@ -140,6 +148,7 @@ const handleKelasChange = (event) => {
 
 const handleEditKelasChange = (e) => {
   const { value } = e.target;
+  console.log('ID Rombel yang dipilih:', value);
   setSelectedEditKelas(value); // Update state untuk dropdown kelas
   setEditData((prev) => ({ ...prev, id_kelas: value })); // Update id_kelas di editData
 };
@@ -148,7 +157,7 @@ const handleEditKelasChange = (e) => {
 useEffect(() => {
   const fetchRombel = async () => {
       try {
-          const response = await axios.get('http://localhost:3005/rombel/all-rombel'); // Sesuaikan dengan URL API Anda
+          const response = await axios.get(`${baseUrl}/rombel/all-rombel`); // Sesuaikan dengan URL API Anda
           setRombel(response.data.data);
           console.log('data berhasil di fetch', response);
       } catch (error) {
@@ -161,6 +170,7 @@ useEffect(() => {
 
 const handleRombelChange = (event) => {
   const value = event.target.value;
+  console.log('ID Rombel yang dipilih:', value);
   setSelectedRombel(value);
   setFormData((prevData) => ({
       ...prevData,
@@ -170,6 +180,7 @@ const handleRombelChange = (event) => {
 
 const handleEditRombelChange = (e) => {
   const { value } = e.target;
+  console.log('ID Rombel yang dipilih:', value);
   setSelectedEditRombel(value); // Update state untuk dropdown rombel
   setEditData((prev) => ({ ...prev, id_rombel: value })); // Update id_rombel di editData
 };
@@ -228,8 +239,45 @@ const handleEditRombelChange = (e) => {
     },
   ];
 
+  useEffect(() => {
+    const fetchAdmin = async () => {
+    try{
+      const response = await axios.get(`${baseUrl}/admin/all-Admin`); // Ganti dengan endpoint Anda
+      console.log("admin", response);
+      setAdmins(response.data.data); // Simpan semua admin ke dalam state
+    } catch (error) {
+      console.error("Error fetching admins:", error);
+    }
+    };
+    fetchAdmin();
+  }, []);
+  useEffect(() => {
+    if (idAdmin) {
+      setFormData((prevData) => ({
+        ...prevData,
+        id_admin: idAdmin,
+      }));
+    }
+  }, [idAdmin]);
+
   const handleDetailClick = (row: Siswa) => {
-    alert(`Detail Siswa: ${JSON.stringify(row)}`);
+    const admin = admins.find(admin => admin.id_admin === row.id_admin); // Cari admin berdasarkan id_admin
+    console.log("id admin", admin)
+    const namaAdmin = admin ? admin.nama_admin : "Tidak ada"; // Jika ditemukan, ambil nama_admin
+    console.log("iki admin", namaAdmin)
+    Swal.fire({
+      html: `
+        <div style="text-align: center;">
+          <p>Nama Siswa: ${JSON.stringify(row.nama_siswa) || "Tidak ada"}</p>
+          <p>Ditambah oleh: ${namaAdmin  || "Tidak ada"}</p>
+        </div>
+      `,
+      icon: "info",
+      iconColor: "#009688",
+      confirmButtonText: "Tutup",
+      width: "400px", // Mengatur lebar popup agar lebih kecil
+      confirmButtonColor: "#38b2ac", // Mengatur warna tombol OK (gunakan kode warna yang diinginkan)
+    });
     setOpenDropdownId(null); // Tutup dropdown setelah melihat detail
   };
 
@@ -357,7 +405,7 @@ const handleEditSubmit = async (e) => {
 
     try {
       // Gantikan dengan URL server Anda
-      const response = await axios.post('http://localhost:3005/siswa/add-siswa', formData);
+      const response = await axios.post(`${baseUrl}/siswa/add-siswa`, formData);
 
       if (response.data.success) {
         toast.success(`Siswa ${formData.nama_siswa} berhasil ditambah!`);
@@ -526,6 +574,23 @@ const tahunText = `Isi dengan Format:\n${tahunPelajaran.map(tahun => tahun.tahun
 worksheet["F1"].c = [{ t: tahunText }];
 
 
+<<<<<<< HEAD
+=======
+   // Menggabungkan nilai tahun menjadi satu string dengan format yang diinginkan
+const tahunText = `Isi dengan Format:\n${tahunPelajaran.map(tahun => tahun.tahun).join('\n')}`;
+// Menambahkan ke komentar worksheet sebagai satu entri
+worksheet["F1"].c = [{ t: tahunText }];
+
+const kelasText =` Isi dengan Format:\n${kelas.map(kelas => kelas.kelas).join('\n')}`;
+// Menambahkan ke komentar worksheet sebagai satu entri
+worksheet["G1"].c = [{ t: kelasText }];
+
+const rombelText =` Isi dengan Format:\n${rombel.map(rombel => rombel.nama_rombel).join('\n')}`;
+// Menambahkan ke komentar worksheet sebagai satu entri
+worksheet["H1"].c = [{ t:rombelText}];
+
+  
+>>>>>>> 3de3666f13434c03ef16b6f84e7189dd1a1b8bf1
     // Membuat workbook
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Siswa");
@@ -553,49 +618,117 @@ worksheet["F1"].c = [{ t: tahunText }];
       fileInputRef.current.click(); // Trigger input file secara manual
     }
   };
-  
-  const handleFileChange = (event) => {
+
+   // Fungsi untuk mendapatkan data admin dari API
+   const getAdmins = async () => {
+    try {
+      const response = await fetch(`${baseUrl}/admin/all-Admin`); // Ganti dengan endpoint API yang benar
+      const data = await response.json();
+      setAdmins(data.data); // Menyimpan data admin ke state
+    } catch (error) {
+      console.error('Error fetching admin data:', error);
+    }
+  };
+
+  // Panggil getAdmins saat pertama kali komponen dirender
+  useEffect(() => {
+    getAdmins();
+  }, []);
+
+  const handleFileChange = async (event) => {
     const file = event.target.files[0];
     if (file) {
       const reader = new FileReader();
-      
+  
       reader.onload = async (e) => {
         try {
           const data = new Uint8Array(e.target.result);
           const workbook = XLSX.read(data, { type: 'array' });
           const sheetName = workbook.SheetNames[0];
           const sheet = workbook.Sheets[sheetName];
-          const jsonData = XLSX.utils.sheet_to_json(sheet).map((row) => ({
-            id_siswa: row.id_siswa || 'default_value',
-            id_admin: row.id_admin || 'default_value',
-            nis: row.nis || 'default_value',
-            nama_siswa: row.nama_siswa || 'default_value',
-            jenis_kelamin: row.jenis_kelamin || 'default_value',
-            id_tahun_pelajaran: row.id_tahun_pelajaran || 'default_value',
-            id_kelas: row.id_kelas || 'default_value',
-            id_rombel: row.id_rombel || 'default_value',
-            // email: row.email || 'default_value',
-            // pass: row.pass || 'default_value',
-            // foto: row.foto || 'default_value',
-            // barcode: row.barcode || 'default_value',
-            nama_wali: row.nama_wali || 'default_value',
-            nomor_wali: row.nomor_wali || 'default_value',
-          }));
+          const jsonData = XLSX.utils.sheet_to_json(sheet);
+  
+          // Mengambil data tahun ajaran dari API
+          const tahunResponse = await fetch(`${baseUrl}/tahun-pelajaran/all-tahun-pelajaran`); // Ganti dengan endpoint API yang benar
+          const tahunData = await tahunResponse.json();
+          console.log('Respons API tahunData:', tahunData);
+          const tahunMap = new Map(tahunData.data.map(item => [item.tahun, item.id_tahun_pelajaran]));
+          console.log('Mapping Tahun:', [...tahunMap]);
+  
+          // Mengambil data kelas dari API
+          const kelasResponse = await fetch(`${baseUrl}/kelas/all-kelas`); // Ganti dengan endpoint API yang benar
+          const kelasData = await kelasResponse.json();
+          console.log('Respons API kelasData:', kelasData);
+          const kelasMap = new Map(kelasData.data.map(item => [item.kelas, item.id_kelas]));
+          console.log('Mapping Kelas:', [...kelasMap]);
+  
+          // Mengambil data rombel dari API
+          const rombelResponse = await fetch(`${baseUrl}/rombel/all-rombel`); // Ganti dengan endpoint API yang benar
+          const rombelData = await rombelResponse.json();
+          console.log('Respons API rombelData:', rombelData);
+          const rombelMap = new Map(rombelData.data.map(item => [item.nama_rombel, item.id_rombel]));
+          console.log('Mapping Rombel:', [...rombelMap]);
+  
+            // Mapping data dari Excel dengan mengganti id_tahun_pelajaran yang sesuai
+            const updatedData = jsonData.map((row) => {
+              console.log(`Mencari ID Tahun untuk: ${row.id_tahun_pelajaran}`);
+              const cleanedTahun = String(row.id_tahun_pelajaran).trim();
+              console.log(`ID Tahun yang dibersihkan: ${cleanedTahun}`);
+              const tahunAjaran = tahunMap.get(cleanedTahun);
+              console.log(`Tahun Ajaran ditemukan: ${tahunAjaran}`);
+  
+              console.log(`Mencari ID Kelas untuk: ${row.id_kelas}`);
+              const cleanedKelas = String(row.id_kelas).trim();
+              console.log(`ID Kelas yang dibersihkan: ${cleanedKelas}`);
+              const kelas = kelasMap.get(cleanedKelas);
+              console.log(`Kelas ditemukan: ${kelas}`);
+  
+              console.log(`Mencari ID Rombel untuk: ${row.id_rombel}`);
+              const cleanedRombel = String(row.id_rombel).trim();
+              console.log(`ID Rombel yang dibersihkan: ${cleanedRombel}`);
+              const rombel = rombelMap.get(cleanedRombel);
+              console.log(`Rombel ditemukan: ${rombel}`);
+  
+             // Debugging untuk admin
+             const cleanedAdminId = String(row.id_admin).trim();
+             console.log(`ID Admin yang dibersihkan: ${cleanedAdminId}`);
 
-          console.log('Data dari Excel:', jsonData); // Log data dari Excel
-          setDataSiswa(jsonData); // Simpan data ke state
+             // Cek apakah admins sudah terisi dan id_admin cocok
+             const admin = admins.find(admin => admin.id_admin === cleanedAdminId);
+             console.log('Admin ditemukan:', admin); // Log admin yang ditemukan
+             
+             const idAdmin = admin ? admin.id_admin : "Tidak ditemukan"; // Menampilkan id_admin yang sesuai ditemukan, beri nilai default
+             console.log(`ID Admin yang digunakan: ${idAdmin}`);
+  
+              return {
+                id_siswa: row.id_siswa || 'default_value',
+                id_admin: idAdmin, // Menampilkan id_admin yang ditemukan
+                nis: row.nis || 'default_value',
+                nama_siswa: row.nama_siswa || 'default_value',
+                jenis_kelamin: row.jenis_kelamin || 'default_value',
+                id_tahun_pelajaran: tahunAjaran || 'default_value',
+                id_kelas: kelas || 'default_value',
+                id_rombel: rombel || 'default_value',
+                nama_wali: row.nama_wali || 'default_value',
+                nomor_wali: row.nomor_wali || 'default_value',
+              };
+            });
+  
+             // Tampilkan data yang sudah dimodifikasi
+          console.log('Data dari Excel yang sudah dimodifikasi:', updatedData);
 
-          // Lakukan pengiriman data ke server setelah file diproses
-          const response = await fetch('http://localhost:3005/siswa/add-siswa', {
+          setDataSiswa(updatedData); // Simpan data ke state
+
+          // Kirim data yang sudah dimodifikasi ke server
+          const response = await fetch(`${baseUrl}/siswa/add-siswa`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify(jsonData),
+            body: JSON.stringify(updatedData), // Kirim data yang sudah dimodifikasi
           });
 
           const result = await response.json();
-          
           if (response.ok) {
             console.log('Data berhasil dikirim', result);
           } else {
@@ -606,9 +739,11 @@ worksheet["F1"].c = [{ t: tahunText }];
         }
       };
 
-      reader.readAsArrayBuffer(file);
+      reader.readAsArrayBuffer(file); // Mulai membaca file Excel
     }
   };
+  
+
   
   
 
@@ -719,14 +854,14 @@ worksheet["F1"].c = [{ t: tahunText }];
                   >
                       <option>Pilih Tahun Pelajaran</option>
                       {tahunPelajaran.map((tahun) => (
-                          <option key={tahun.id_tahun_pelajaran} value={tahun.tahun}>
+                          <option key={tahun.id_tahun_pelajaran} value={tahun.id_tahun_pelajaran}>
                               {tahun.tahun}
                           </option>
                       ))}
                   </select>
               </div>
               <div>
-              <label htmlFor="id_kelas" className="block text-sm font-medium">Tahun Pelajaran:</label>
+              <label htmlFor="id_kelas" className="block text-sm font-medium">Kelas:</label>
                   <select
                       name="id_kelas"
                       value={selectedKelas}
@@ -735,23 +870,23 @@ worksheet["F1"].c = [{ t: tahunText }];
                   >
                       <option>Pilih Kelas</option>
                       {kelas.map((kelas) => (
-                          <option key={kelas.id_kelas} value={kelas.kelas}>
+                          <option key={kelas.id_kelas} value={kelas.id_kelas}>
                               {kelas.kelas}
                           </option>
                       ))}
                   </select>
               </div>
               <div>
-              <label htmlFor="id_rombel" className="block text-sm font-medium">Tahun Pelajaran:</label>
+              <label htmlFor="id_rombel" className="block text-sm font-medium">Jurusan:</label>
                   <select
                       name="id_rombel"
                       value={selectedRombel}
                       onChange={handleRombelChange}
                       className="mt-1 p-2 border rounded-md w-full"
                   >
-                      <option>Pilih Rombel</option>
+                      <option>Pilih Jurusan</option>
                       {rombel.map((rombel) => (
-                          <option key={rombel.id_rombel} value={rombel.nama_rombel}>
+                          <option key={rombel.id_rombel} value={rombel.id_rombel}>
                               {rombel.nama_rombel}
                           </option>
                       ))}
@@ -999,7 +1134,7 @@ worksheet["F1"].c = [{ t: tahunText }];
                           >
                               <option>Pilih Tahun Pelajaran</option>
                               {tahunEditPelajaran.map((tahun) => (
-                                  <option key={tahun.id_tahun_pelajaran} value={tahun.tahun}>
+                                  <option key={tahun.id_tahun_pelajaran} value={tahun.id_tahun_pelajaran}>
                                       {tahun.tahun}
                                   </option>
                               ))}
@@ -1013,7 +1148,7 @@ worksheet["F1"].c = [{ t: tahunText }];
                           >
                               <option>Pilih Kelas</option>
                               {kelas.map((kelas) => (
-                                  <option key={kelas.id_kelas} value={kelas.kelas}>
+                                  <option key={kelas.id_kelas} value={kelas.id_kelas}>
                                       {kelas.kelas}
                                   </option>
                               ))}
@@ -1027,7 +1162,7 @@ worksheet["F1"].c = [{ t: tahunText }];
                           >
                               <option>Pilih Rombel</option>
                               {rombel.map((rombel) => (
-                                  <option key={rombel.id_rombel} value={rombel.nama_rombel}>
+                                  <option key={rombel.id_rombel} value={rombel.id_rombel}>
                                       {rombel.nama_rombel}
                                   </option>
                               ))}
