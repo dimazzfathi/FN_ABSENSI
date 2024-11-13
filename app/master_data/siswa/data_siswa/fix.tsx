@@ -17,6 +17,7 @@ import '@fortawesome/fontawesome-free/css/all.min.css';
 import imageCompression from 'browser-image-compression';
 import useUserInfo from "@/app/components/useUserInfo";
 import Swal from "sweetalert2";
+import { FaWhatsapp } from 'react-icons/fa';
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 export default function DataSiswa() {
   const [passwordVisible, setPasswordVisible] = useState(false);
@@ -186,6 +187,8 @@ const handleEditRombelChange = (e) => {
 };
 
 
+
+
   // fields untuk DataTabel
   const siswaColumns = [
     
@@ -193,18 +196,34 @@ const handleEditRombelChange = (e) => {
     { header: 'Nis', accessor: 'nis' as keyof Siswa },
     { header: 'Nama', accessor: 'nama_siswa' as keyof Siswa },
     { header: 'JK', accessor: 'jenis_kelamin' as keyof Siswa },
-    { header: 'Tahun Ajaran', accessor: 'id_tahun_pelajaran' as keyof Siswa },
-    { header: 'Kelas', accessor: 'id_kelas' as keyof Siswa },
-    { header: 'Jurusan', accessor: 'id_rombel' as keyof Siswa },
+    { header: 'Tahun Ajaran', accessor: 'tahun' as keyof Siswa },
+    { header: 'Kelas', accessor: 'kelas' as keyof Siswa },
+    { header: 'Jurusan', accessor: 'nama_rombel' as keyof Siswa },
     { header: 'Email', accessor: 'email' as keyof Siswa },
     { header: 'Barcode', accessor: 'barcode' as keyof Siswa },
     { header: 'Nama Wali', accessor: 'nama_wali' as keyof Siswa },
-    { header: 'No Wali', accessor: 'nomor_wali' as keyof Siswa },
+    {
+      header: 'No Wali',
+      accessor: 'nomor_wali', // Ini untuk akses ke kolom nomor_wali dalam data
+      Cell: ({ row }: any) => {
+        const nomorWali = row.nomor_wali; // Ambil nomor_wali langsung dari row.original
+        if (!nomorWali) return null; // Pastikan nomor_wali ada
+        return (
+          <a
+            href={`https://wa.me/${nomorWali}`} // Gantikan nomor_wali dengan nomor yang diambil dari baris data
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <FaWhatsapp size={20} color="#25D366" /> {/* Ikon WhatsApp */}
+          </a>
+        );
+      },
+    },
     {
       header: "Aksi",
       Cell: ({ row }: { row: Siswa }) => {
         return (
-          <div>
+          <div className="relative">
             <button
               className="px-4 py-2 rounded"
               onClick={() => handleToggleDropdown(row.id_siswa)}
@@ -379,6 +398,9 @@ const handleEditSubmit = async (e) => {
    // Handler umum untuk input teks
    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+    if (name === "nis" && !/^\d*$/.test(value)) {
+      return; // Jika bukan angka, jangan update state
+    }
     setFormData((prevData) => ({ ...prevData, [name]: value }));
   };
   // Handler khusus untuk input foto
@@ -477,13 +499,8 @@ const handleDelete = async (deletedRow) => {
   
 
   //tombol untuk filter, pindah halaman, search dan reset
-  const [itemsPerPage, setItemsPerPage] = useState(5); // Default value is 5
+  const [itemsPerPage, setItemsPerPage] = useState(5); // Atur ke angka default
   const [currentPage, setCurrentPage] = useState(1);
-
-  const handleItemsPerPageChange = (e) => {
-    setItemsPerPage(Number(e.target.value));
-    setCurrentPage(1); //  Reset ke halaman pertama saat jumlah item per halaman berubah
-  };
 
   // Memfilter data berdasarkan searchTerm
   const filteredData = dataSiswa.filter((item) => {
@@ -495,20 +512,39 @@ const handleDelete = async (deletedRow) => {
       (item.id_rombel ? item.id_rombel.toString().toLowerCase().includes(searchTerm.toLowerCase()) : false)
     );
   });
-  
+
+  // Fungsi untuk mengurutkan data berdasarkan nama secara alfabetis
+  const sortedData = [...filteredData].sort((a, b) => {
+    if (a.nama_siswa < b.nama_siswa) return -1; // Urutkan dari A ke Z
+    if (a.nama_siswa > b.nama_siswa) return 1;
+    return 0;
+  });
 
   // Menghitung pagination
-  const totalData = filteredData.length; // Total item setelah difilter
-  const startIndex = (currentPage - 1) * itemsPerPage; // Indeks awal untuk pagination
-  const paginatedData = filteredData.slice(
-    startIndex,
-    startIndex + itemsPerPage
-  ); // Data yang akan ditampilkan
+  const totalData = sortedData.length; // Total item setelah difilter
   const totalPages = Math.ceil(totalData / itemsPerPage); // Total halaman
 
+  // Menentukan data yang akan ditampilkan di halaman saat ini
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedData = sortedData.slice(startIndex, endIndex); // Data yang ditampilkan
+
+  // Fungsi untuk menangani perubahan halaman
   const handlePageChange = (newPage) => {
-    setCurrentPage(newPage);
+    // Pastikan halaman baru valid sebelum mengubah state
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+    }
   };
+
+  // Fungsi untuk menangani perubahan items per page
+  const handleItemsPerPageChange = (value) => {
+    const newItemsPerPage = Number(value);
+    const newPage = Math.min(currentPage, Math.ceil(totalData / newItemsPerPage));
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(newPage); // Perbarui currentPage agar tetap relevan
+  };
+
 
   // Fungsi untuk mengatur ulang pencarian
   const handleResetClick = () => {
@@ -607,6 +643,7 @@ worksheet["H1"].c = [{ t:rombelText}];
     try {
       const response = await fetch(`${baseUrl}/admin/all-Admin`); // Ganti dengan endpoint API yang benar
       const data = await response.json();
+      console.log('Data Admin:', data.data);
       setAdmins(data.data); // Menyimpan data admin ke state
     } catch (error) {
       console.error('Error fetching admin data:', error);
@@ -671,21 +708,10 @@ worksheet["H1"].c = [{ t:rombelText}];
               console.log(`ID Rombel yang dibersihkan: ${cleanedRombel}`);
               const rombel = rombelMap.get(cleanedRombel);
               console.log(`Rombel ditemukan: ${rombel}`);
-  
-             // Debugging untuk admin
-             const cleanedAdminId = String(row.id_admin).trim();
-             console.log(`ID Admin yang dibersihkan: ${cleanedAdminId}`);
 
-             // Cek apakah admins sudah terisi dan id_admin cocok
-             const admin = admins.find(admin => admin.id_admin === cleanedAdminId);
-             console.log('Admin ditemukan:', admin); // Log admin yang ditemukan
-             
-             const idAdmin = admin ? admin.id_admin : "Tidak ditemukan"; // Menampilkan id_admin yang sesuai ditemukan, beri nilai default
-             console.log(`ID Admin yang digunakan: ${idAdmin}`);
-  
               return {
                 id_siswa: row.id_siswa || 'default_value',
-                id_admin: idAdmin, // Menampilkan id_admin yang ditemukan
+                id_admin: formData.id_admin || 'default_value', // Menggunakan idAdmin dari formData
                 nis: row.nis || 'default_value',
                 nama_siswa: row.nama_siswa || 'default_value',
                 jenis_kelamin: row.jenis_kelamin || 'default_value',
@@ -778,8 +804,10 @@ worksheet["H1"].c = [{ t:rombelText}];
         <div className="flex flex-col lg:flex-row">
           {/* Column 1: Input */}
           <div className="w-full lg:w-1/3 p-4 lg:p-6">
-            <div>
-              <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-4 lg:p-6 border">
+          <div className="bg-white rounded-lg shadow-md p-4 lg:p-6 border relative">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Form Input Fields */}
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
                 <label className="block text-sm font-medium">ID Siswa</label>
                 <input
@@ -943,47 +971,49 @@ worksheet["H1"].c = [{ t:rombelText}];
                   className="mt-1 p-2 border rounded-md w-full"
                   
                 />
+              </div>
+
+                {/* Sembunyikan bagian lainnya jika tidak diperlukan */}
               </div>
-              <div className="mt-6 ">
-                {/* Tombol Unduh Format dan Upload File */}
-                
-                {/* Tombol Simpan */}
-                <div className="flex justify-end m-5 space-x-2">
+
+              {/* Tombol Simpan */}
+              <div className=" flex justify-end space-x-2">
                 <button
                   type="submit"
-                  className="px-3 py-2 sm:px-4 sm:py-2 bg-teal-400 hover:bg-teal-500 text-white items-end-end rounded text-sm sm:text-base"
+                  className="px-2 py-1 sm:px-4 sm:py-2 bg-teal-400 hover:bg-teal-500 text-white rounded text-sm md:text-sm sm:text-sm  sm:-mr-2 lg:py-2"
                 >
                   Simpan
                 </button>
-                </div>
-              </div>                
-              </form>
-            <div className="absolute -mt-20 ml-6">
-                  <button
-                    onClick={handleDownloadFormatClick}
-                    className="px-4 py-2 bg-teal-700 hover:bg-teal-800 border-slate-500 text-white rounded text-sm sm:text-base"
-                  >
-                    Unduh Format
-                  </button>
+              </div>
+            </form> 
+            <div className="flex flex-col md:flex-row flex-wrap items-start md:-ml-2 md:-mt-10 lg:-mt-9 -mt-12  space-y-2 md:space-y-0 md:space-x-1.5">
+              <button
+                onClick={handleDownloadFormatClick}
+                className="px-2 py-1 sm:px-3 sm:py-2 bg-teal-700 hover:bg-teal-800 text-white rounded text-xs sm:text-sm"
+              >
+                Unduh Format
+              </button>
 
-                  <button
-                    onClick={handleUploadFileClick}
-                    className="px-4 py-2 lg:ml-2 md:ml-2 bg-rose-600 hover:bg-rose-700 border-teal-400 text-white rounded text-sm sm:text-base pr-10 mt-1 text-center"
-                  >
-                    Upload File
-                  </button>
+              <button
+                onClick={handleUploadFileClick}
+                className="px-2 py-1 sm:px-3 sm:py-2 bg-rose-600 hover:bg-rose-700 text-white rounded text-xs sm:text-sm pr-6"
+              >
+                Upload File
+              </button>
 
-                  {/* Input file yang disembunyikan */}
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    accept=".xlsx, .xls"
-                    style={{ display: "none" }}
-                    onChange={handleFileChange}
-                  />
+              {/* Input file yang disembunyikan */}
+              <input
+                type="file"
+                ref={fileInputRef}
+                accept=".xlsx, .xls"
+                style={{ display: "none" }}
+                onChange={handleFileChange}
+              />
             </div>
-            </div>
-            
+
+
+
+          </div>
             <ToastContainer className="mt-14" />
           </div>
 
@@ -1004,9 +1034,8 @@ worksheet["H1"].c = [{ t:rombelText}];
                     <div className=" items-center lg:mb-0 space-x-2 mb-3 lg:order-1">
                       <select
                         value={itemsPerPage}
-                        onChange={(e) =>
-                          setItemsPerPage(Number(e.target.value))
-                        }
+                        onChange={(e) => handleItemsPerPageChange(e.target.value)}
+                        min="1" // Menambahkan batas minimum
                         className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base"
                       >
                         <option value={1}>1</option>
@@ -1262,30 +1291,29 @@ worksheet["H1"].c = [{ t:rombelText}];
                     Halaman {currentPage} dari {totalPages > 0 ? totalPages : 1}
                   </div>
                   <div className="flex m-4 space-x-2">
-                    <button
-                      disabled={currentPage === 1}
-                      onClick={() => handlePageChange(currentPage - 1)}
-                      className={`px-2 py-1 border rounded ${
-                        currentPage === 1
-                          ? "bg-gray-300"
-                          : "bg-teal-400 hover:bg-teal-600 text-white"
-                      }  `}
-                    >
-                      Previous
-                    </button>
-                    <button
-                      disabled={
-                        currentPage === totalPages || paginatedData.length === 0
-                      } // Disable tombol 'Next' jika sudah di halaman terakhir atau tidak ada data yang ditampilkan
-                      onClick={() => handlePageChange(currentPage + 1)}
-                      className={`px-2 py-1 border rounded ${
-                        currentPage === totalPages
-                          ? "bg-gray-300"
-                          : "bg-teal-400 hover:bg-teal-600 text-white"
-                      }  `}
-                    >
-                      Next
-                    </button>
+                  <button 
+                    disabled={currentPage === 1}
+                    className={`px-2 py-1 border rounded ${
+                      currentPage === 1
+                        ? "bg-gray-300"
+                        : "bg-teal-400 hover:bg-teal-600 text-white"
+                    }  `}
+                    onClick={() => handlePageChange(currentPage - 1)} >
+                    Previous
+                  </button>
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={
+                      currentPage === totalPages || paginatedData.length === 0
+                    } 
+                    className={`px-2 py-1 border rounded ${
+                      currentPage === totalPages
+                        ? "bg-gray-300"
+                        : "bg-teal-400 hover:bg-teal-600 text-white"
+                    }  `}
+                  >
+                    Next
+                  </button>
                   </div>
                 </div>
               </div>

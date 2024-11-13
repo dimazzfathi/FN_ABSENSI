@@ -19,94 +19,197 @@ import {
   Kelas,
 } from "./api/kelas";
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+import dynamic from "next/dynamic";
+import { Noto_Serif_Georgian } from "next/font/google";
 
 const Page = () => {
+  const [isDropdownVisible, setDropdownVisible] = useState(false);
+
+  const handleDropdownToggle = () => {
+    setDropdownVisible(!isDropdownVisible);
+  };
+
+  const [siswaData, setSiswaData] = useState([]);
+  const fetchNamaKelas = async () => {
+    try {
+      const response = await axios.get(
+        `${baseUrl}/joinNonMaster/nama-siswa-kelas`
+      );
+      setSiswaData(response.data.data); // Menyimpan data ke state kelas
+      console.log("total", response.data);
+    } catch (error) {
+      console.error("Fetch error:", error); // Menangani kesalahan
+    }
+  };
+  useEffect(() => {
+    fetchNamaKelas(); // Panggil fungsi fetch saat komponen di-mount
+  }, []);
+
+  const [kelas, setKelas] = useState([]);
+  const fetchKelasSiswaTotal = async () => {
+    try {
+      const response = await axios.get(
+        `${baseUrl}/joinNonMaster/total-kelas-siswa`
+      );
+      setKelas(response.data.data); // Menyimpan data ke state kelas
+      console.log("total", response.data);
+    } catch (error) {
+      console.error("Fetch error:", error); // Menangani kesalahan
+    }
+  };
+  useEffect(() => {
+    fetchKelasSiswaTotal(); // Panggil fungsi fetch saat komponen di-mount
+  }, []);
+  
+  //   const headers = Object.keys(siswaData[0]);
+  
+
+  const tableColumns = [
+    { header: "Kelas", accessor: "kelas" },
+    { header: "Jumlah Siswa", accessor: "total_siswa" },
+    { header: "H", accessor: "h" },
+    { header: "S", accessor: "s" },
+    { header: "I", accessor: "i" },
+    { header: "A", accessor: "a" },
+    { header: "T", accessor: "t" },
+    { header: "Walas", accessor: "walas" },
+    
+  ];
+  const [clickedRowIndex, setClickedRowIndex] = useState(null);
+  const tableRef = useRef(null);
+  const buttonRef = useRef(null); // Ref untuk tombol "Kirim"
+  const handleRowClick = (row, index) => {
+    // Set indeks baris yang diklik untuk mengubah latar belakang
+    setClickedRowIndex(index);
+    console.log("Baris diklik:", row);
+  };
+  // Menghapus highlight saat pengguna mengklik di luar tabel
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // Memeriksa apakah klik terjadi di luar elemen tabel dan tombol "Kirim"
+      if (
+        tableRef.current &&
+        !tableRef.current.contains(event.target) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(event.target)
+      ) {
+        setClickedRowIndex(null); // Reset indeks baris yang diklik
+        console.log("Klik terdeteksi di luar tabel dan tombol Kirim");
+      }
+    };
+    
+
+    // Menambahkan event listener untuk klik di luar
+    document.addEventListener("mousedown", handleClickOutside);
+
+    // Membersihkan event listener saat komponen unmount
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
   // State untuk kontrol popup Sakit
   const [isPopupVisibleSakit, setIsPopupVisibleSakit] = useState(false);
   // State untuk menyimpan data sakit yang dipilih
   const [selectedSakit, setSelectedSakit] = useState([]);
   const [tableData, setTableData] = useState([]);
 
-  // State untuk pengaturan item per halaman dan halaman saat ini
-  const [sakitItemsPerPage, setSakitItemsPerPage] = useState(5);
-  const [sakitCurrentPage, setSakitCurrentPage] = useState(1);
+  
 
-  // Data contoh untuk item Sakit
-  const sakitItems = [
-    { name: "Aldi", kelas: "1A" },
-    { name: "Budi", kelas: "1B" },
-    { name: "Citra", kelas: "1C" },
-    { name: "Diana", kelas: "1A" },
-    { name: "Eko", kelas: "1B" },
-    { name: "Fani", kelas: "1C" },
-    { name: "Gita", kelas: "2A" },
-    { name: "Hendra", kelas: "2B" },
-    { name: "Ika", kelas: "2C" },
-    { name: "Joko", kelas: "2A" },
-    { name: "Kiki", kelas: "2B" },
-    { name: "Lina", kelas: "2C" },
-    { name: "Maya", kelas: "3A" },
-    { name: "Nia", kelas: "3B" },
-    { name: "Omar", kelas: "3C" },
-  ];
-  // Contoh data
-  const sakitTotalPages = Math.ceil(sakitItems.length / sakitItemsPerPage);
-
-  // Fungsi untuk mengubah item per halaman
-  const handleSakitItemsPerPageChange = (e) => {
-    setSakitItemsPerPage(parseInt(e.target.value));
-  };
-
-  // Mengambil item Sakit yang ditampilkan berdasarkan halaman saat ini
-  const currentItemsSakit = sakitItems.slice(
-    (sakitCurrentPage - 1) * sakitItemsPerPage,
-    sakitCurrentPage * sakitItemsPerPage
-  );
-
-  //Handle untuk ngirim sakit
-  const handleSakitSubmit = () => {
-    if (selectedSakit) {
-      setTableData((prevData) => {
-        // Cek apakah kelas dari siswa yang dipilih sudah ada di tableData
-        const updatedData = prevData.map((data) => {
-          if (data.kelas === selectedSakit.kelas) {
-            // Jika kelas cocok, tambahkan 1 ke kolom "s"
-            return {
-              ...data,
-              s: data.s ? data.s + 1 : 1, // Jika "s" belum ada, mulai dari 1
-            };
-          }
-          return data; // Jika kelas tidak cocok, biarkan tetap sama
-        });
-
-        return updatedData;
+  // // Data contoh untuk item Sakit
+  // const sakitItems = [
+  //   { name: "Aldi", kelas: "1A" },
+  //   { name: "Budi", kelas: "1B" },
+  //   { name: "Citra", kelas: "1C" },
+  //   { name: "Diana", kelas: "1A" },
+  //   { name: "Eko", kelas: "1B" },
+  //   { name: "Fani", kelas: "1C" },
+  //   { name: "Gita", kelas: "2A" },
+  //   { name: "Hendra", kelas: "2B" },
+  //   { name: "Ika", kelas: "2C" },
+  //   { name: "Joko", kelas: "2A" },
+  //   { name: "Kiki", kelas: "2B" },
+  //   { name: "Lina", kelas: "2C" },
+  //   { name: "Maya", kelas: "3A" },
+  //   { name: "Nia", kelas: "3B" },
+  //   { name: "Omar", kelas: "3C" },
+  //   { name: "Maya", kelas: "4A" },
+  //   { name: "Nia", kelas: "4B" },
+  //   { name: "Omar", kelas: "4C" },
+  // ];
+  const [siswaSakitData, setSiswaSakitData]= useState([]);
+  useEffect(() => {
+    fetch(`${baseUrl}/siswa/all-siswa`)
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("Data dari API:", data); // Cek seluruh data yang diterima
+        if (Array.isArray(data.data)) {
+          console.log("Data yang diterima adalah array sakit:", data.data); // Cek data yang ada dalam array
+          setSiswaSakitData(data.data); // Set data jika array
+        } else {
+          console.error("Data yang diterima bukan array:", data); // Tampilkan error jika data tidak berupa array
+        }
+      })
+      .catch((error) => {
+        console.error("Error saat mengambil data:", error); // Tangani error jika fetch gagal
       });
-
-      // Reset pilihan setelah kirim
-      setSelectedSakit(null);
-      togglePopupSakit(); // Tutup popup setelah kirim
-    }
-  };
-  // Fungsi untuk menambahkan siswa yang dipilih ke selectedSakit
-  const handleSakitSelect = (item) => {
-    setSelectedSakit(item); // Menyimpan item yang dipilih
-    setSearchTermSakit(item.name);
-  };
+  }, []);
+  
+  
+  // Memeriksa nilai state siswaSakitData setelah diperbarui
+  useEffect(() => {
+    console.log("Siswa Sakit Data updated:", siswaSakitData); // Pastikan state terupdate
+  }, [siswaSakitData]);
 
   //function untuk search
   const [searchTermSakit, setSearchTermSakit] = useState("");
   const handleSearchSakitChange = (event) => {
     setSearchTermSakit(event.target.value);
   };
-  const filteredSakitItems = sakitItems.filter((item) => {
-    const nameMatch = item.name
-      .toLowerCase()
-      .includes(searchTermSakit.toLowerCase());
-    const kelasMatch = item.kelas
-      .toLowerCase()
-      .includes(searchTermSakit.toLowerCase());
-    return nameMatch || kelasMatch;
-  });
+  
+  // State untuk pengaturan item per halaman dan halaman saat ini
+  const [sakitItemsPerPage, setSakitItemsPerPage] = useState(5);
+  const [sakitCurrentPage, setSakitCurrentPage] = useState(1);
+  
+  // Mengurutkan data siswa berdasarkan nama dari A-Z
+  const filteredSiswaSakit = siswaData
+  .filter((row) =>
+    row.nama_siswa.toLowerCase().includes(searchTermSakit.toLowerCase())
+  )
+  .sort((a, b) => a.nama_siswa.localeCompare(b.nama_siswa)); // Mengurutkan A-Z
+
+  // Menghitung total halaman setelah data diterima
+  const sakitTotalPages = Math.ceil(filteredSiswaSakit.length / sakitItemsPerPage);
+
+
+  // Fungsi untuk mengubah item per halaman
+  const handleSakitItemsPerPageChange = (e) => {
+    setSakitItemsPerPage(parseInt(e.target.value));
+  };
+
+  // // Mengambil item Sakit yang ditampilkan berdasarkan halaman saat ini
+  // const currentItemsSakit = sakitItems.slice(
+  //   (sakitCurrentPage - 1) * sakitItemsPerPage,
+  //   sakitCurrentPage * sakitItemsPerPage
+  // );
+
+  //Handle untuk ngirim sakit
+  const handleSakitSubmit = () => {
+    setKelas((prevData) =>
+      prevData.map((data) =>
+        data.kelas === row.kelas ? { ...data, s: data.s + 1 } : data
+      )
+    );
+  };
+  
+  // Fungsi untuk menambahkan siswa yang dipilih ke selectedSakit
+  const handleSakitSelect = (item) => {
+    setSelectedSakit(item); // Menyimpan item yang dipilih
+    setSearchTermSakit(item.name);
+  };
+
+  
+  
+  
 
   // Fungsi untuk toggle popup Sakit
   const togglePopupSakit = () => {
@@ -126,9 +229,7 @@ const Page = () => {
   // State untuk menyimpan data keterangan lain yang dipilih
   const [selectedKeteranganLain, setSelectedKeteranganLain] = useState([]);
 
-  // State untuk pengaturan item per halaman dan halaman saat ini
-  const [keteranganItemsPerPage, setKeteranganItemsPerPage] = useState(5);
-  const [keteranganCurrentPage, setKeteranganCurrentPage] = useState(1);
+ 
 
   // Data contoh untuk item keterangan lain bisa diganti secara dinamis
   const keteranganItems = [
@@ -147,31 +248,73 @@ const Page = () => {
     { name: "Maya", kelas: "3A" },
     { name: "Nia", kelas: "3B" },
     { name: "Omar", kelas: "3C" },
+    { name: "Maya", kelas: "4A" },
+    { name: "Nia", kelas: "4B" },
+    { name: "Omar", kelas: "4C" },
   ];
 
-  //Handle untuk ngirim keterangan lain
-  const handleKeteranganLainSubmit = () => {
-    if (selectedKeteranganLain) {
-      setTableData((prevData) => {
-        // Cek apakah kelas dari siswa yang dipilih sudah ada di tableData
-        const updatedData = prevData.map((data) => {
-          if (data.kelas === selectedKeteranganLain.kelas) {
-            // Jika kelas cocok, tambahkan 1 ke kolom "s"
-            return {
-              ...data,
-              i: data.i ? data.i + 1 : 1, // Jika "s" belum ada, mulai dari 1
-            };
-          }
-          return data; // Jika kelas tidak cocok, biarkan tetap sama
-        });
+  const [siswaKeteranganLainData, setSiswaKeteranganLainData] = useState<Siswa[]>([]);
 
-        return updatedData;
+  useEffect(() => {
+    fetch(`${baseUrl}/siswa/all-siswa`)
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("Data dari API:", data); // Cek seluruh data yang diterima
+        if (Array.isArray(data.data)) {
+          console.log("Data yang diterima adalah array keterangan:", data.data); // Cek data yang ada dalam array
+          setSiswaKeteranganLainData(data.data); // Set data jika array
+        } else {
+          console.error("Data yang diterima bukan array:", data); // Tampilkan error jika data tidak berupa array
+        }
+      })
+      .catch((error) => {
+        console.error("Error saat mengambil data:", error); // Tangani error jika fetch gagal
       });
+  }, []);
+  
+  
+  // Memeriksa nilai state siswaKeteranganLainData setelah diperbarui
+  useEffect(() => {
+    console.log("Siswa KeteranganLain Data updated:", siswaKeteranganLainData); // Pastikan state terupdate
+  }, [siswaKeteranganLainData]);
 
-      // Reset pilihan setelah kirim
-      setSelectedKeteranganLain(null);
-      togglePopupKeteranganLain(); // Tutup popup setelah kirim
-    }
+   //function untuk search
+   const [searchTermKeterangan, setSearchTermKeterangan] = useState("");
+   const handleKeteranganSearchChange = (event) => {
+     setSearchTermKeterangan(event.target.value);
+   };
+
+   // State untuk pengaturan item per halaman dan halaman saat ini
+   const [keteranganItemsPerPage, setKeteranganItemsPerPage] = useState(5);
+   const [keteranganCurrentPage, setKeteranganCurrentPage] = useState(1);
+
+   const filteredSiswaKeterangan = siswaData.filter((row) =>
+    row.nama_siswa.toLowerCase().includes(searchTermKeterangan.toLowerCase())
+  )
+  .sort((a, b) => a.nama_siswa.localeCompare(b.nama_siswa)); // Mengurutkan A-Z
+
+   
+  // Contoh data
+  const keteranganTotalPages = Math.ceil(filteredSiswaKeterangan.length / keteranganItemsPerPage
+  );
+
+
+
+  //Handle untuk ngirim keterangan lain
+  const handleKeteranganSubmit = () => {
+    // Perbarui data `kelas` dengan menambah `s` untuk semua item
+    const updatedKelas = kelas.map((item) => {
+      // Pastikan item memiliki properti `s` yang akan ditingkatkan
+      if (item.i !== undefined) {
+        return {
+          ...item,
+          i: item.i + 1, // Tambahkan 1 ke nilai `s`
+        };
+      }
+      return item;
+    });
+  
+    setKelas(updatedKelas);
   };
   // Fungsi untuk menambahkan siswa yang dipilih ke selectedKeteranganLain
   const handleKeteranganLainSelect = (item) => {
@@ -179,10 +322,7 @@ const Page = () => {
     setSearchTermKeterangan(item.name);
   };
 
-  // Contoh data
-  const keteranganTotalPages = Math.ceil(
-    keteranganItems.length / keteranganItemsPerPage
-  );
+ 
   //state input keterangan lain
   const [inputketeranganLain, setInputKeteranganLain] = useState("");
   // Fungsi untuk toggle popup Keterangan Lain
@@ -197,25 +337,11 @@ const Page = () => {
   };
 
   // Fungsi untuk mengubah item per halaman
-  const handleKeteranganItemsPerPageChange = (event) => {
-    setKeteranganItemsPerPage(parseInt(event.target.value, 10));
-    setKeteranganCurrentPage(1); // Reset ke halaman 1 saat item per page berubah
+  const handleKeteranganItemsPerPageChange = (e) => {
+    setKeteranganItemsPerPage(parseInt(e.target.value));
   };
 
-  //function untuk search
-  const [searchTermKeterangan, setSearchTermKeterangan] = useState("");
-  const handleKeteranganSearchChange = (event) => {
-    setSearchTermKeterangan(event.target.value);
-  };
-  const filteredKeteranganItems = keteranganItems.filter((item) => {
-    const nameMatch = item.name
-      .toLowerCase()
-      .includes(searchTermKeterangan.toLowerCase());
-    const kelasMatch = item.kelas
-      .toLowerCase()
-      .includes(searchTermKeterangan.toLowerCase());
-    return nameMatch || kelasMatch;
-  });
+ 
 
   //function untuk pulang
   const [isOpen, setIsOpen] = useState(false);
@@ -223,9 +349,7 @@ const Page = () => {
   const [isPopupVisiblePulang, setIsPopupVisiblePulang] = useState(false);
   // State untuk menyimpan data pulang yang dipilih
   const [selectedPulang, setSelectedPulang] = useState([]);
-  // State untuk pengaturan item per halaman dan halaman saat ini
-  const [pulangItemsPerPage, setPulangItemsPerPage] = useState(5);
-  const [pulangCurrentPage, setPulangCurrentPage] = useState(1);
+ 
   // Data contoh untuk item pulang bisa diganti secara dinamis
   const pulangItems = [
     { name: "Aldi", kelas: "1A" },
@@ -245,29 +369,66 @@ const Page = () => {
     { name: "Omar", kelas: "3C" },
   ];
 
+  const [siswaPulangData, setSiswaPulangData] = useState<Siswa[]>([]);
+
+  useEffect(() => {
+    fetch(`${baseUrl}/siswa/all-siswa`)
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("Data dari API:", data); // Cek seluruh data yang diterima
+        if (Array.isArray(data.data)) {
+          console.log("Data yang diterima adalah array keterangan:", data.data); // Cek data yang ada dalam array
+          setSiswaPulangData(data.data); // Set data jika array
+        } else {
+          console.error("Data yang diterima bukan array:", data); // Tampilkan error jika data tidak berupa array
+        }
+      })
+      .catch((error) => {
+        console.error("Error saat mengambil data:", error); // Tangani error jika fetch gagal
+      });
+  }, []);
+  
+  
+  // Memeriksa nilai state siswaKeteranganLainData setelah diperbarui
+  useEffect(() => {
+    console.log("Siswa Pulang updated:", siswaPulangData); // Pastikan state terupdate
+  }, [siswaPulangData]);
+
+  //function untuk search
+  const [searchTermPulang, setSearchTermPulang] = useState("");
+  const handlePulangSearchChange = (event) => {
+    setSearchTermPulang(event.target.value);
+  };
+
+  // State untuk pengaturan item per halaman dan halaman saat ini
+  const [pulangItemsPerPage, setPulangItemsPerPage] = useState(5);
+  const [pulangCurrentPage, setPulangCurrentPage] = useState(1);
+
+  const filteredSiswaPulang = siswaData.filter((row) =>
+    row.nama_siswa.toLowerCase().includes(searchTermSakit.toLowerCase())
+  )
+  .sort((a, b) => a.nama_siswa.localeCompare(b.nama_siswa)); // Mengurutkan A-Z
+
+  // Contoh data
+  const pulangTotalPages = Math.ceil(filteredSiswaPulang.length / pulangItemsPerPage
+  );
+
+
   //Handle untuk ngirim pulang
   const handlePulangSubmit = () => {
-    if (selectedPulang) {
-      setTableData((prevData) => {
-        // Cek apakah kelas dari siswa yang dipilih sudah ada di tableData
-        const updatedData = prevData.map((data) => {
-          if (data.kelas === selectedPulang.kelas) {
-            // Jika kelas cocok, tambahkan 1 ke kolom "s"
-            return {
-              ...data,
-              i: data.i ? data.i + 1 : 1, // Jika "s" belum ada, mulai dari 1
-            };
-          }
-          return data; // Jika kelas tidak cocok, biarkan tetap sama
-        });
-
-        return updatedData;
-      });
-
-      // Reset pilihan setelah kirim
-      setSelectedPulang(null);
-      togglePopupPulang(); // Tutup popup setelah kirim
-    }
+    // Perbarui data `kelas` dengan menambah `s` untuk semua item
+    const updatedKelas = kelas.map((item) => {
+      // Pastikan item memiliki properti `s` yang akan ditingkatkan
+      if (item.i !== undefined) {
+        return {
+          ...item,
+          i: item.i + 1, // Tambahkan 1 ke nilai `s`
+        };
+      }
+      return item;
+    });
+  
+    setKelas(updatedKelas);
   };
 
   // Fungsi untuk menambahkan siswa yang dipilih ke selectedPulang
@@ -276,8 +437,8 @@ const Page = () => {
     setSearchTermPulang(item.name);
   };
 
-  // Contoh data
-  const pulangTotalPages = Math.ceil(pulangItems.length / pulangItemsPerPage);
+  
+  
 
   //state input keterangan lain
   const [inputPulang, setInputPulang] = useState("");
@@ -298,25 +459,11 @@ const Page = () => {
   };
 
   // Fungsi untuk mengubah item per halaman
-  const handlePulangItemsPerPageChange = (event) => {
-    setPulangItemsPerPage(parseInt(event.target.value, 10));
-    setPulangCurrentPage(1); // Reset ke halaman 1 saat item per page berubah
+  const handlePulangItemsPerPageChange = (e) => {
+    setSakitItemsPerPage(parseInt(e.target.value));
   };
 
-  //function untuk search
-  const [searchTermPulang, setSearchTermPulang] = useState("");
-  const handlePulangSearchChange = (event) => {
-    setSearchTermPulang(event.target.value);
-  };
-  const filteredPulangItems = pulangItems.filter((item) => {
-    const nameMatch = item.name
-      .toLowerCase()
-      .includes(searchTermPulang.toLowerCase());
-    const kelasMatch = item.kelas
-      .toLowerCase()
-      .includes(searchTermPulang.toLowerCase());
-    return nameMatch || kelasMatch;
-  });
+  
 
   // data untuk tabel absensi
   //   const [tableData, setTableData] = useState([
@@ -324,648 +471,487 @@ const Page = () => {
   //     { no: 2, kelas: '1 B', jumlah: 28, h: 0, s: 0, i: 0, a: 0, t: 0, walas: 'Ms. B', barcode: ['(242)501006', '(242)501084'] },
   //     { no: 3, kelas: '11 D', jumlah: 25, h: 0, s: 0, i: 0, a: 0, t: 0, walas: 'Dimaz', barcode: ['(K242501029)', '(242)501039'] }
   // ]);
-  const [kelas, setKelas] = useState([]);
-  const fetchKelasSiswaTotal = async () => {
-    try {
-      const response = await axios.get(
-        `${baseUrl}/joinNonMaster/KelasSiswaTotal`
-      );
-      setKelas(response.data.data); // Menyimpan data ke state kelas
-      console.log("total", response.data);
-    } catch (error) {
-      console.error("Fetch error:", error); // Menangani kesalahan
-    }
-  };
-  useEffect(() => {
-    fetchKelasSiswaTotal(); // Panggil fungsi fetch saat komponen di-mount
-  }, []);
-  const [siswaData, setSiswaData] = useState([]);
-  //   const headers = Object.keys(siswaData[0]);
-  const fetchNamaKelas = async () => {
-    try {
-      const response = await axios.get(
-        `${baseUrl}/joinNonMaster/namaSiswaKelas`
-      );
-      setSiswaData(response.data.data); // Menyimpan data ke state kelas
-      console.log("total", response.data);
-    } catch (error) {
-      console.error("Fetch error:", error); // Menangani kesalahan
-    }
-  };
-  useEffect(() => {
-    fetchNamaKelas(); // Panggil fungsi fetch saat komponen di-mount
-  }, []);
-
-  const tableColumns = [
-    { header: "Kelas", accessor: "kelas" },
-    { header: "Jumlah Siswa", accessor: "total" },
-    { header: "H", accessor: "h" as keyof Siswa },
-    { header: "S", accessor: "s" as keyof Siswa },
-    { header: "I", accessor: "i" as keyof Siswa },
-    { header: "A", accessor: "a" as keyof Siswa },
-    { header: "T", accessor: "t" as keyof Siswa },
-    { header: "Walas", accessor: "walas" as keyof Siswa },
-    { header: "Barcode", accessor: "barcode" as keyof Siswa },
-  ];
+  
   //variabel  dan function untuk barcode
-  const [barcode, setBarcode] = useState("");
-  const [timer, setTimer] = useState(null);
-  const [popupMessage, setPopupMessage] = useState("");
-  const normalizeBarcode = (barcode) => {
-    // Menghilangkan tanda kurung `)` yang berlebihan
-    const cleanedBarcode = barcode.replace(/\)/g, "");
-    // Menghilangkan tanda kurung `(` yang tidak perlu jika ada
-    const finalBarcode = cleanedBarcode.replace(/\(/g, "");
-    return `(${finalBarcode})`; // Menyusun ulang barcode dengan format yang benar
-  };
-  // Gunakan di `handleBarcodeChange`
-  const handleBarcodeChange = (e) => {
-    const normalizedBarcode = normalizeBarcode(e.target.value);
-    setBarcode(normalizedBarcode);
-
-    console.log("Barcode setelah dinormalisasi:", normalizedBarcode);
-
-    if (timer) {
-      clearTimeout(timer);
-    }
-
-    setTimer(setTimeout(saveBarcodeToH, 500));
-  };
-  //state untuk inputan terhidden dan mengarah ke crusor
+  const [barcode, setBarcode] = useState('');
   const barcodeInputRef = useRef(null);
-  useEffect(() => {
-    // Mengarahkan fokus ke input saat komponen dimuat
-    if (barcodeInputRef.current) {
-      barcodeInputRef.current.focus();
+  const handleBarcodeChange = (e) => {
+    const newBarcode = e.target.value;
+    setBarcode(newBarcode);
+
+    // Ketika barcode dipindai dan panjang barcode sudah cukup
+    if (newBarcode.length >= 6) { // Sesuaikan panjang barcode sesuai kebutuhan
+      const updatedKelas = kelas.map((item) => {
+        // Periksa apakah barcode cocok
+        if (item.barcode === newBarcode) {
+          return { ...item, h: item.h + 1 }; // Tambahkan 1 ke nilai "H"
+        }
+        return item;
+      });
+
+      // Setel data yang diperbarui
+      setKelas(updatedKelas);
+
+      // Mengosongkan input barcode setelah 1 detik
+      setTimeout(() => {
+        setBarcode('');
+      }, 1000);
     }
-  }, []);
-  const saveBarcodeToH = () => {
-    const today = new Date().toLocaleDateString(); // Mengambil tanggal hari ini
-
-    console.log("Barcode yang dipindai:", barcode);
-
-    // Cari item di tableData yang memiliki barcode yang sesuai
-    const existingItem = tableColumns.find((item) => {
-      console.log(`Memeriksa barcodes di kelas ${item.kelas}:`, item.barcode);
-      return item.barcode.includes(barcode);
-    });
-
-    console.log("Item ditemukan:", existingItem);
-
-    if (existingItem) {
-      // Cek jika item sudah absen pada hari ini
-      if (existingItem.lastAbsen === today) {
-        showPopup(
-          `Sudah absen: ${existingItem.walas}, kelas ${existingItem.kelas}`
-        );
-      } else {
-        const updatedData = tableColumns.map((item) => {
-          if (item.barcode.includes(barcode)) {
-            const hadirCount = (item.h || 0) + 1;
-            return {
-              ...item,
-              h: hadirCount,
-              lastAbsen: today, // Update tanggal absen terakhir
-            };
-          }
-          return item;
-        });
-
-        setTableData(updatedData);
-        showPopup(
-          `Absen berhasil: ${existingItem.walas}, kelas ${existingItem.kelas}`
-        );
-      }
-    } else {
-      if (!barcode.trim()) {
-        showPopup("ID tidak boleh kosong");
-      } else {
-        showPopup("ID tidak terdaftar");
-      }
-    }
-
-    setBarcode(""); // Reset input barcode setelah disimpan
   };
-  const showPopup = (message) => {
-    setPopupMessage(message);
-    setTimeout(() => {
-      setPopupMessage("");
-    }, 1500);
-  };
+  
   //state untuk dropdown aksi
   const [openDropdown, setOpenDropdown] = useState(null);
   const handleDropdownClick = (id) => {
     setOpenDropdown((prev) => (prev === id ? null : id));
   };
-  //state edit
+  //state jam digital
+  const DigitalClock = dynamic(() => import('./components/DIgitalClock'), {
+    ssr: false, // Matikan SSR
+  });
   return (
     <>
       <div>
         <Navbar />
       </div>
-      <div className="flex flex-col lg:flex-row">
-        {/* Column 1: Input */}
-        <div className="w-full lg:w-1/3 p-4 lg:p-6">
-          <div className="bg-white rounded-lg shadow-md p-4 lg:p-6 border">
-            <div className="flex flex-col items-center justify-center">
-              <h1 className="font-bold text-xl text-center">
-                Tombol untuk siswa
-              </h1>
-              <div>
-                <div className="flex space-x-4">
-                  <button
-                    className="bg-blue-500 w-44 text-white px-4 py-2 mr-2 rounded"
-                    onClick={togglePopupSakit}
-                  >
-                    Sakit
-                  </button>
-                  {isPopupVisibleSakit && (
-                    <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
-                      <div className="bg-white p-3 rounded shadow-md">
-                        <div className="bg-slate-600 p-2 rounded-lg">
-                          <div className="flex items-center space-x-4">
-                            <select
-                              className="border border-gray-300 rounded px-2 py-1"
-                              value={sakitItemsPerPage}
-                              onChange={handleSakitItemsPerPageChange}
-                            >
-                              <option value="5">5</option>
-                              <option value="10">10</option>
-                              <option value="12">12</option>
-                            </select>
-                            <input
-                              type="text"
-                              placeholder="Search..."
-                              className="border border-gray-300 rounded px-2 py-1"
-                              value={searchTermSakit}
-                              onChange={handleSearchSakitChange} // Tambahkan handler untuk pencarian
-                            />
-                          </div>
+      <div className="text-center mt-14 text-7xl font-bold" style={{ fontFamily: 'Poppins, sans-serif' }}>
+        SMK BUDI MULIA
+      </div>
 
-                          <div className="mt-4">
-                            <table className="min-w-full  border-gray-300">
-                              <thead>
-                                <tr className="bg-slate-500 text-left">
-                                  <th className=" rounded-l-lg text-white px-4 py-2">
-                                    Nama
-                                  </th>
-                                  <th className=" rounded-r-lg text-white px-4 py-2">
-                                    Kelas
-                                  </th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {siswaData
-                                  .slice(
-                                    (sakitCurrentPage - 1) * sakitItemsPerPage,
-                                    sakitCurrentPage * sakitItemsPerPage
-                                  )
-                                  .map((row, index) => (
-                                    <tr key={index}>
-                                      <td className="px-4 py-2 border-b">
-                                        {row.nama_siswa}
-                                      </td>
-                                      <td className="px-4 py-2 border-b">
-                                        {row.kelas}
-                                      </td>
-                                      {/* Tambahkan sel data lain jika ada kolom tambahan */}
-                                    </tr>
-                                  ))}
-                              </tbody>
-                            </table>
-                          </div>
-
-                          <div className="flex justify-between mt-4">
-                            <button
-                              className={`px-2 py-1 rounded ${
-                                sakitTotalPages === 0 || sakitCurrentPage === 1
-                                  ? "bg-gray-300 cursor-not-allowed"
-                                  : "bg-teal-400 hover:bg-teal-500 text-white"
-                              }`}
-                              disabled={
-                                sakitTotalPages === 0 || sakitCurrentPage === 1
-                              }
-                              onClick={() =>
-                                setSakitCurrentPage(sakitCurrentPage - 1)
-                              }
-                            >
-                              Previous
-                            </button>
-                            <span className="text-white">
-                              Page{" "}
-                              {sakitItems.length > 0 ? sakitCurrentPage : 0} of{" "}
-                              {sakitTotalPages}
-                            </span>
-                            <button
-                              className={`px-2 py-1 rounded ${
-                                sakitTotalPages === 0 ||
-                                sakitCurrentPage === sakitTotalPages
-                                  ? "bg-gray-300 cursor-not-allowed"
-                                  : "bg-teal-400 hover:bg-teal-500 text-white"
-                              }`}
-                              disabled={
-                                sakitTotalPages === 0 ||
-                                sakitCurrentPage === sakitTotalPages
-                              }
-                              onClick={() =>
-                                setSakitCurrentPage(sakitCurrentPage + 1)
-                              }
-                            >
-                              Next
-                            </button>
-                          </div>
-
-                          <div className="flex justify-between">
-                            <button
-                              className="mt-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-                              onClick={togglePopupSakit}
-                            >
-                              Close
-                            </button>
-                            <button
-                              className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                              onClick={handleSakitSubmit}
-                            >
-                              Kirim
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  <button
-                    className="bg-orange-500 w-44 text-white px-4 py-2 mr-2 rounded"
-                    onClick={togglePopupKeteranganLain} // Panggil fungsi untuk toggle pop-up
-                  >
-                    Keterangan Lain
-                  </button>
-                  {isPopupVisibleKeteranganLain && (
-                    <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
-                      <div className="bg-white p-3 rounded shadow-md">
-                        <div className="bg-slate-600 p-2 rounded-lg">
-                          <div className="flex items-center space-x-4">
-                            <select
-                              className="border border-gray-300 rounded px-2 py-1"
-                              value={keteranganItemsPerPage} // Ganti dengan state yang sesuai
-                              onChange={handleKeteranganItemsPerPageChange} // Ganti dengan handler yang sesuai
-                            >
-                              <option value="5">5</option>
-                              <option value="10">10</option>
-                              <option value="12">12</option>
-                            </select>
-                            <input
-                              type="text"
-                              placeholder="Search..."
-                              className="border border-gray-300 rounded px-2 py-1"
-                              onChange={handleKeteranganSearchChange} // Handler pencarian untuk keterangan
-                            />
-                          </div>
-
-                          {/* Input untuk mengisi keterangan lain */}
-                          <div className="mt-4">
-                            <input
-                              type="text"
-                              placeholder="Alasannya..."
-                              className="border border-gray-300 rounded px-2 py-1 w-full"
-                              value={inputketeranganLain} // State untuk menyimpan nilai input keterangan lain
-                              onChange={(e) =>
-                                setInputKeteranganLain(e.target.value)
-                              } // Handler untuk mengubah state keterangan lain
-                            />
-                          </div>
-
-                          <div className="mt-4">
-                            <table className="min-w-full">
-                              <thead>
-                                <tr
-                                  className="bg-slate-500"
-                                  onClick={() =>
-                                    handleKeteranganLainSelect(item)
-                                  }
+    {/* Column 1: Input */}
+        <div className="relative">
+          <div className="text-white px-4 py-2 rounded flex items-center">
+            <span
+              onClick={handleDropdownToggle}
+              className="cursor-pointer flex items-end text-gray-200 text-3xl"
+            >
+              {isDropdownVisible ? "▾" : "▸"}
+            </span>
+          </div>
+          {isDropdownVisible && (
+            <div className="w-full p-4 lg:p-6">
+              <div className="bg-white rounded-lg shadow-md p-4 lg:p-6 border">
+                <div className="flex flex-col items-center justify-center">
+                  <h1 className="font-bold text-xl text-center lg:text-3xl">
+                    Tombol untuk siswa
+                  </h1>
+                  <div>
+                    <div className="flex space-x-4 lg:mt-4">
+                      <button
+                        className="bg-blue-500 w-32 lg:w-40 lg:text-xl md:w-40 md:text-xl text-white px-4 py-2 mr-2 rounded "
+                        onClick={togglePopupSakit}
+                      >
+                        Sakit
+                      </button>
+                      {isPopupVisibleSakit && (
+                        <div className="fixed inset-0 scroll-pl-1 flex items-center justify-center bg-gray-800 bg-opacity-50 z-10">
+                          <div className="bg-white p-3 rounded shadow-md">
+                            <div className="bg-slate-600 p-2 rounded-lg">
+                              <div className="flex items-center space-x-4">
+                                <select
+                                  className="border border-gray-300 rounded px-2 py-1"
+                                  value={sakitItemsPerPage}
+                                  onChange={handleSakitItemsPerPageChange}
                                 >
-                                  <th className="text-white text-left rounded-l-lg px-4 py-2">
-                                    Nama
-                                  </th>
-                                  <th className="text-white text-left rounded-r-lg px-4 py-2">
-                                    Kelas
-                                  </th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {siswaData
-                                  .slice(
-                                    (sakitCurrentPage - 1) * sakitItemsPerPage,
-                                    sakitCurrentPage * sakitItemsPerPage
-                                  )
-                                  .map((row, index) => (
-                                    <tr key={index}>
-                                      <td className="px-4 py-2 border-b">
-                                        {row.nama_siswa}
-                                      </td>
-                                      <td className="px-4 py-2 border-b">
-                                        {row.kelas}
-                                      </td>
-                                      {/* Tambahkan sel data lain jika ada kolom tambahan */}
+                                  <option value="5">5</option>
+                                  <option value="10">10</option>
+                                  <option value="12">12</option>
+                                </select>
+                                <input
+                                  type="text"
+                                  placeholder="Search..."
+                                  className="border border-gray-300 rounded px-2 py-1"
+                                  value={searchTermSakit}
+                                  onChange={handleSearchSakitChange} // Tambahkan handler untuk pencarian
+                                />
+                              </div>
+
+                              <div className="mt-4">
+                                <table ref={tableRef} className="min-w-full  border-gray-300">
+                                  <thead>
+                                    <tr className="bg-slate-500 text-left">
+                                      <th className=" rounded-l-lg text-white px-4 py-2">
+                                        Nama
+                                      </th>
+                                      <th className=" rounded-r-lg text-white px-4 py-2">
+                                        Kelas
+                                      </th>
                                     </tr>
-                                  ))}
-                              </tbody>
-                            </table>
-                          </div>
+                                  </thead>
+                                  <tbody>
+                                  {filteredSiswaSakit
+                                    .slice(
+                                      (sakitCurrentPage - 1) * sakitItemsPerPage,
+                                      sakitCurrentPage * sakitItemsPerPage
+                                    )
+                                    .map((row, index) => (
+                                      <tr
+                                        key={index}
+                                        className={`cursor-pointer ${
+                                          clickedRowIndex === index ? "bg-gray-100" : ""
+                                        }`}
+                                        onClick={() => handleRowClick(row, index)}
+                                      >
+                                        <td className="px-4 py-2 border-b">{row.nama_siswa}</td>
+                                        <td className="px-4 py-2 border-b">{row.kelas}</td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
 
-                          <div className="flex justify-between mt-4">
-                            <button
-                              className={`px-2 py-1 rounded ${
-                                keteranganTotalPages === 0 ||
-                                keteranganCurrentPage === 1
-                                  ? "bg-gray-300 cursor-not-allowed"
-                                  : "bg-teal-400 hover:bg-teal-500 text-white"
-                              }`}
-                              disabled={
-                                keteranganTotalPages === 0 ||
-                                keteranganCurrentPage === 1
-                              }
-                              onClick={() =>
-                                setKeteranganCurrentPage(
-                                  keteranganCurrentPage - 1
-                                )
-                              }
-                            >
-                              Previous
-                            </button>
-                            <span className="text-white">
-                              Page{" "}
-                              {filteredKeteranganItems.length > 0
-                                ? keteranganCurrentPage
-                                : 0}{" "}
-                              of {keteranganTotalPages}
-                            </span>
-                            <button
-                              className={`px-2 py-1 rounded ${
-                                keteranganTotalPages === 0 ||
-                                keteranganCurrentPage === keteranganTotalPages
-                                  ? "bg-gray-300 cursor-not-allowed"
-                                  : "bg-teal-400 hover:bg-teal-500 text-white"
-                              }`}
-                              disabled={
-                                keteranganTotalPages === 0 ||
-                                keteranganCurrentPage === keteranganTotalPages
-                              }
-                              onClick={() =>
-                                setKeteranganCurrentPage(
-                                  keteranganCurrentPage + 1
-                                )
-                              }
-                            >
-                              Next
-                            </button>
-                          </div>
+                              <div className="flex justify-between mt-4">
+                              <button
+                                className={`px-2 py-1 rounded ${
+                                  sakitTotalPages === 0 || sakitCurrentPage === 1
+                                    ? "bg-gray-300 cursor-not-allowed"
+                                    : "bg-teal-400 hover:bg-teal-500 text-white"
+                                }`}
+                                disabled={sakitTotalPages === 0 || sakitCurrentPage === 1}
+                                onClick={() => setSakitCurrentPage(sakitCurrentPage - 1)}
+                              >
+                                Kembali
+                              </button>
+                              <span className="text-gray-950 px-2">
+                                Page {filteredSiswaSakit.length > 0 ? sakitCurrentPage : 0} of {sakitTotalPages}
+                              </span>
+                              <button
+                                className={`px-2 py-1 rounded ${
+                                  sakitTotalPages === 0 || sakitCurrentPage === sakitTotalPages
+                                    ? "bg-gray-300 cursor-not-allowed"
+                                    : "bg-teal-400 hover:bg-teal-500 text-white"
+                                }`}
+                                disabled={sakitTotalPages === 0 || sakitCurrentPage === sakitTotalPages}
+                                onClick={() => setSakitCurrentPage(sakitCurrentPage + 1)}
+                              >
+                                Selanjutnya
+                              </button>
+                              </div>
 
-                          <div className="flex justify-between">
-                            <button
-                              className="mt-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-                              onClick={togglePopupKeteranganLain} // Fungsi untuk menutup pop-up
-                            >
-                              Close
-                            </button>
-                            <button
-                              className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                              onClick={handleKeteranganLainSubmit} // Fungsi untuk kirim jika diperlukan
-                            >
-                              Kirim
-                            </button>
+                              <div className="flex justify-between">
+                                <button
+                                  className="mt-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                                  onClick={togglePopupSakit}
+                                >
+                                  Close
+                                </button>
+                                <button
+                                  ref={buttonRef}
+                                  className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                                  onClick={handleSakitSubmit}
+                                >
+                                  Kirim
+                                </button>
+                              </div>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className="relative inline-block text-left">
-              <div
-                onClick={toggleDropdown}
-                className="text-white px-4 py-2 rounded flex items-center"
-              >
-                <span className="flex items-end text-gray-200">
-                  {isOpen ? "<" : ">"}
-                  {isOpen && (
-                    <div className="absolute left-8 border rounded shadow-lg -mb-2">
+                      )}
                       <button
-                        className="block px-4 py-2 text-gray-800 hover:bg-gray-200 text-left"
-                        onClick={togglePopupPulang} // Ketika tombol "Pulang" diklik, buka pop-up
+                        className="bg-orange-500 lg:w-44 lg:text-xl md:w-44 md:text-xl text-white px-4 py-2 mr-2 rounded"
+                        onClick={togglePopupKeteranganLain} // Panggil fungsi untuk toggle pop-up
                       >
-                        Pulang
+                        Keterangan Lain
                       </button>
-                    </div>
-                  )}
-                </span>
-              </div>
-            </div>
-            {isPopupVisiblePulang && (
-              <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
-                <div className="bg-white p-3 rounded shadow-md">
-                  <div className="bg-slate-600 p-2 rounded-lg">
-                    <div className="flex items-center space-x-4">
-                      <select
-                        className="border border-gray-300 rounded px-2 py-1"
-                        value={pulangItemsPerPage} // Ganti dengan state yang sesuai
-                        onChange={handlePulangItemsPerPageChange} // Ganti dengan handler yang sesuai
-                      >
-                        <option value="5">5</option>
-                        <option value="10">10</option>
-                        <option value="12">12</option>
-                      </select>
-                      <input
-                        type="text"
-                        placeholder="Search..."
-                        className="border border-gray-300 rounded px-2 py-1"
-                        onChange={handlePulangSearchChange} // Handler pencarian untuk pulang
-                      />
-                    </div>
+                      {isPopupVisibleKeteranganLain && (
+                        <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-10">
+                          <div className="bg-white p-3 rounded shadow-md">
+                            <div className="bg-slate-600 p-2 rounded-lg">
+                              <div className="flex items-center space-x-4">
+                                <select
+                                  className="border border-gray-300 rounded px-2 py-1"
+                                  value={keteranganItemsPerPage} // Ganti dengan state yang sesuai
+                                  onChange={handleKeteranganItemsPerPageChange} // Ganti dengan handler yang sesuai
+                                >
+                                  <option value="5">5</option>
+                                  <option value="10">10</option>
+                                  <option value="12">12</option>
+                                </select>
+                                <input
+                                  type="text"
+                                  placeholder="Search..."
+                                  className="border border-gray-300 rounded px-2 py-1"
+                                  onChange={handleKeteranganSearchChange} // Handler pencarian untuk keterangan
+                                />
+                              </div>
 
-                    {/* Input untuk mengisi alasan pulang */}
-                    <div className="mt-4">
-                      <input
-                        type="text"
-                        placeholder="Alasan pulang..."
-                        className="border border-gray-300 rounded px-2 py-1 w-full"
-                        value={inputPulang} // State untuk menyimpan nilai input alasan pulang
-                        onChange={(e) => setInputPulang(e.target.value)} // Handler untuk mengubah state alasan pulang
-                      />
-                    </div>
+                              {/* Input untuk mengisi keterangan lain */}
+                              <div className="mt-4">
+                                <input
+                                  type="text"
+                                  placeholder="Alasannya..."
+                                  className="border border-gray-300 rounded px-2 py-1 w-full"
+                                  value={inputketeranganLain} // State untuk menyimpan nilai input keterangan lain
+                                  onChange={(e) =>
+                                    setInputKeteranganLain(e.target.value)
+                                  } // Handler untuk mengubah state keterangan lain
+                                />
+                              </div>
 
-                    <div className="mt-4">
-                      <table className="min-w-full">
-                        <thead>
-                          <tr
-                            className="bg-slate-500"
-                            onClick={() => handlePulangSelect(item)}
-                          >
-                            <th className="text-white text-left rounded-l-lg px-4 py-2">
-                              Nama
-                            </th>
-                            <th className="text-white text-left rounded-r-lg px-4 py-2">
-                              Kelas
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {siswaData
-                            .slice(
-                              (pulangCurrentPage - 1) * pulangItemsPerPage,
-                              pulangCurrentPage * pulangItemsPerPage
-                            )
-                            .map((row, index) => (
-                              <tr key={index}>
-                                <td className="px-4 py-2 border-b">
-                                  {row.nama_siswa}
-                                </td>
-                                <td className="px-4 py-2 border-b">
-                                  {row.kelas}
-                                </td>
-                                {/* Tambahkan sel data lain jika ada kolom tambahan */}
-                              </tr>
-                            ))}
-                        </tbody>
-                      </table>
-                    </div>
+                              <div className="mt-4">
+                                <table ref={tableRef} className="min-w-full">
+                                  <thead>
+                                    <tr
+                                      className="bg-slate-500"
+                                      onClick={() =>
+                                        handleKeteranganLainSelect(item)
+                                      }
+                                    >
+                                      <th className="text-white text-left rounded-l-lg px-4 py-2">
+                                        Nama
+                                      </th>
+                                      <th className="text-white text-left rounded-r-lg px-4 py-2">
+                                        Kelas
+                                      </th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                  {filteredSiswaKeterangan
+                                    .slice(
+                                      (keteranganCurrentPage - 1) * keteranganItemsPerPage,
+                                      keteranganCurrentPage * keteranganItemsPerPage
+                                    )
+                                    .map((row, index) => (
+                                      <tr key={index}
+                                      className={`cursor-pointer ${
+                                        clickedRowIndex === index ? "bg-gray-100" : ""
+                                      }`} // Latar belakang berubah saat baris diklik
+                                      onClick={() => handleRowClick(row, index)}>
+                                        <td className="px-4 py-2 border-b">{row.nama_siswa}</td>
+                                        <td className="px-4 py-2 border-b">{row.kelas}</td>
+                                        {/* Tambahkan sel data lain jika ada kolom tambahan */}
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
 
-                    <div className="flex justify-between mt-4">
-                      <button
-                        className={`px-2 py-1 rounded ${
-                          pulangTotalPages === 0 || pulangCurrentPage === 1
-                            ? "bg-gray-300 cursor-not-allowed"
-                            : "bg-teal-400 hover:bg-teal-500 text-white"
-                        }`}
-                        disabled={
-                          pulangTotalPages === 0 || pulangCurrentPage === 1
-                        }
-                        onClick={() =>
-                          setPulangCurrentPage(pulangCurrentPage - 1)
-                        }
-                      >
-                        Kembali
-                      </button>
-                      <span className="text-white mx-1">
-                        Halaman{" "}
-                        {filteredPulangItems.length > 0 ? pulangCurrentPage : 0}{" "}
-                        dari {pulangTotalPages}
-                      </span>
-                      <button
-                        className={`px-2 py-1 rounded ${
-                          pulangTotalPages === 0 ||
-                          pulangCurrentPage === pulangTotalPages
-                            ? "bg-gray-300 cursor-not-allowed"
-                            : "bg-teal-400 hover:bg-teal-500 text-white"
-                        }`}
-                        disabled={
-                          pulangTotalPages === 0 ||
-                          pulangCurrentPage === pulangTotalPages
-                        }
-                        onClick={() =>
-                          setPulangCurrentPage(pulangCurrentPage + 1)
-                        }
-                      >
-                        Selanjutnya
-                      </button>
-                    </div>
+                              <div className="flex justify-between mt-4">
+                              <button
+                                className={`px-2 py-1 rounded ${
+                                  keteranganTotalPages === 0 || keteranganCurrentPage === 1
+                                    ? "bg-gray-300 cursor-not-allowed"
+                                    : "bg-teal-400 hover:bg-teal-500 text-white"
+                                }`}
+                                disabled={keteranganTotalPages === 0 || keteranganCurrentPage === 1}
+                                onClick={() => setKeteranganCurrentPage(keteranganCurrentPage - 1)}
+                              >
+                                Kembali
+                              </button>
+                              <span className="text-gray-900 px-2">
+                                Page {filteredSiswaKeterangan.length > 0 ? keteranganCurrentPage : 0} of {keteranganTotalPages}
+                              </span>
+                              <button
+                                className={`px-2 py-1 rounded ${
+                                  keteranganTotalPages === 0 || keteranganCurrentPage === keteranganTotalPages
+                                    ? "bg-gray-300 cursor-not-allowed"
+                                    : "bg-teal-400 hover:bg-teal-500 text-white"
+                                }`}
+                                disabled={keteranganTotalPages === 0 || keteranganCurrentPage === keteranganTotalPages}
+                                onClick={() => setKeteranganCurrentPage(keteranganCurrentPage + 1)}
+                              >
+                                Selanjutnya
+                              </button>
+                              </div>
 
-                    <div className="flex justify-between">
-                      <button
-                        className="mt-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-                        onClick={togglePopupPulang} // Fungsi untuk menutup pop-up
-                      >
-                        Tutup
-                      </button>
-                      <button
-                        className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                        onClick={handlePulangSubmit} // Fungsi untuk kirim jika diperlukan
-                      >
-                        Kirim
-                      </button>
+                              <div className="flex justify-between">
+                                <button
+                                  className="mt-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                                  onClick={togglePopupKeteranganLain} // Fungsi untuk menutup pop-up
+                                >
+                                  Close
+                                </button>
+                                <button
+                                  ref={buttonRef}
+                                  className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                                  onClick={handleKeteranganSubmit} // Fungsi untuk kirim jika diperlukan
+                                >
+                                  Kirim
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
-        </div>
-        {/* Column 2: Table */}
-        <div className="w-full  lg:w-2/3 p-4 lg:p-6">
-          <div className="bg-white p-3 rounded shadow-md">
-            <div className="bg-slate-600 p-2 rounded-lg">
-              <div className="p-2">
-                <h2 className="text-sm pt-3 sm:text-2xl text-white font-bold">
-                  Data Absen
-                </h2>
-              </div>
-              <div className="overflow-x-auto">
-                <DataTable columns={tableColumns} data={kelas} />
-                {/* <table className="w-full text-left mt-4 border-collapse">
+                <div className="relative inline-block text-left">
+                  <div
+                    onClick={toggleDropdown}
+                    className="text-white px-4 py-2 rounded flex items-center"
+                  >
+                    <span className="flex items-end lg:mt-2 lg:text-xl text-gray-200">
+                      {isOpen ? "«" : "»"}
+                      {isOpen && (
+                        <div className="absolute left-8 border rounded shadow-lg -mb-2">
+                          <button
+                            className="block px-4 py-2 text-gray-800 hover:bg-gray-200 text-left"
+                            onClick={togglePopupPulang} // Ketika tombol "Pulang" diklik, buka pop-up
+                          >
+                            Pulang
+                          </button>
+                        </div>
+                      )}
+                    </span>
+                  </div>
+                </div>
+                {isPopupVisiblePulang && (
+                  <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
+                    <div className="bg-white p-3 rounded shadow-md">
+                      <div className="bg-slate-600 p-2 rounded-lg">
+                        <div className="flex items-center space-x-4">
+                          <select
+                            className="border border-gray-300 rounded px-2 py-1"
+                            value={pulangItemsPerPage} // Ganti dengan state yang sesuai
+                            onChange={handlePulangItemsPerPageChange} // Ganti dengan handler yang sesuai
+                          >
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                            <option value="12">12</option>
+                          </select>
+                          <input
+                            type="text"
+                            placeholder="Search..."
+                            className="border border-gray-300 rounded px-2 py-1"
+                            onChange={handlePulangSearchChange} // Handler pencarian untuk pulang
+                          />
+                        </div>
+
+                        {/* Input untuk mengisi alasan pulang */}
+                        <div className="mt-4">
+                          <input
+                            type="text"
+                            placeholder="Alasan pulang..."
+                            className="border border-gray-300 rounded px-2 py-1 w-full"
+                            value={inputPulang} // State untuk menyimpan nilai input alasan pulang
+                            onChange={(e) => setInputPulang(e.target.value)} // Handler untuk mengubah state alasan pulang
+                          />
+                        </div>
+
+                        <div className="mt-4">
+                          <table ref={tableRef} className="min-w-full">
                             <thead>
-                                <tr className="ml-2">
-                                <th className="p-2 sm:p-3 rounded-l-lg bg-slate-500 text-white">No</th>
-                                <th className="p-2 sm:p-3 bg-slate-500 text-white">Kelas</th>
-                                <th className="p-2 sm:p-3 bg-slate-500 text-white">Jumlah</th>
-                                <th className="p-2 sm:p-3 bg-slate-500 text-white">H</th>
-                                <th className="p-2 sm:p-3 bg-slate-500 text-white">S</th>
-                                <th className="p-2 sm:p-3 bg-slate-500 text-white">I</th>
-                                <th className="p-2 sm:p-3 bg-slate-500 text-white">A</th>
-                                <th className="p-2 sm:p-3 bg-slate-500 text-white">T</th>
-                                <th className="p-2 sm:p-3 bg-slate-500 text-white">Walas</th>
-                                <th className="p-2 sm:p-3 rounded-r-lg bg-slate-500 text-white">Aksi</th>
-                                </tr>
+                              <tr
+                                className="bg-slate-500"
+                                onClick={() => handlePulangSelect(item)}
+                              >
+                                <th className="text-white text-left rounded-l-lg px-4 py-2">
+                                  Nama
+                                </th>
+                                <th className="text-white text-left rounded-r-lg px-4 py-2">
+                                  Kelas
+                                </th>
+                              </tr>
                             </thead>
                             <tbody>
-                            {tableData.map((item, index) => (
-                                <tr key={index} className="border-b">
-                                <td className="p-2 sm:p-3 text-white">{item.no}</td>
-                                <td className="p-2 sm:p-3 text-white">{item.kelas}</td>
-                                <td className="p-2 sm:p-3 text-white">{item.jumlah}</td>
-                                <td className="p-2 sm:p-3 text-white">{item.h}</td>
-                                <td className="p-2 sm:p-3 text-white">{item.s}</td>
-                                <td className="p-2 sm:p-3 text-white">{item.i}</td>
-                                <td className="p-2 sm:p-3 text-white">{item.a}</td>
-                                <td className="p-2 sm:p-3 text-white">{item.t}</td>
-                                <td className="p-2 sm:p-3 text-white">{item.walas}</td>
-                                <td className="p-2 sm:p-3 text-white">
-                                <DropdownMenu
-                                    isOpen={openDropdown === item.no}
-                                    onClick={() => handleDropdownClick(item.no)}
-                                    onDelete={() => handleDeleteClick(item.no)}
-                                    onEdit={() => handleEditClick(item)}
-                                />
-                                </td>
+                            {filteredSiswaPulang
+                              .slice(
+                                (pulangCurrentPage - 1) * pulangItemsPerPage,
+                                pulangCurrentPage * pulangItemsPerPage
+                              )
+                              .map((row, index) => (
+                                <tr key={index}
+                                className={`cursor-pointer ${
+                                  clickedRowIndex === index ? "bg-gray-100" : ""
+                                }`} // Latar belakang berubah saat baris diklik
+                                onClick={() => handleRowClick(row, index)}>
+                                  <td className="px-4 py-2 border-b">{row.nama_siswa}</td>
+                                  <td className="px-4 py-2 border-b">{row.kelas}</td>
+                                  {/* Tambahkan sel data lain jika ada kolom tambahan */}
                                 </tr>
-                            ))}
-                            </tbody>     
-                        </table>                   */}
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        <div className="flex justify-between mt-4">
+                        <button
+                          className={`px-2 py-1 rounded ${
+                            pulangTotalPages === 0 || pulangCurrentPage === 1
+                              ? "bg-gray-300 cursor-not-allowed"
+                              : "bg-teal-400 hover:bg-teal-500 text-white"
+                          }`}
+                          disabled={pulangTotalPages === 0 || pulangCurrentPage === 1}
+                          onClick={() => setPulangCurrentPage(pulangCurrentPage - 1)}
+                        >
+                          Kembali
+                        </button>
+                        <span className="text-gray-900 px-2">
+                          Page {filteredSiswaSakit.length > 0 ? pulangCurrentPage : 0} of {pulangTotalPages}
+                        </span>
+                        <button
+                          className={`px-2 py-1 rounded ${
+                            pulangTotalPages === 0 || pulangCurrentPage === pulangTotalPages
+                              ? "bg-gray-300 cursor-not-allowed"
+                              : "bg-teal-400 hover:bg-teal-500 text-white"
+                          }`}
+                          disabled={pulangTotalPages === 0 || pulangCurrentPage === pulangTotalPages}
+                          onClick={() => setPulangCurrentPage(pulangCurrentPage + 1)}
+                        >
+                          Selanjutnya
+                        </button>
+                        </div>
+
+                        <div className="flex justify-between">
+                          <button
+                            className="mt-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                            onClick={togglePopupPulang} // Fungsi untuk menutup pop-up
+                          >
+                            Tutup
+                          </button>
+                          <button
+                            ref={buttonRef}
+                            className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                            onClick={handlePulangSubmit} // Fungsi untuk kirim jika diperlukan
+                          >
+                            Kirim
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}  
+        </div>
+
+        <div className="flex flex-col lg:flex-row items-center justify-between p-4">
+          {/* Column 1: Digital Clock */}
+          <div className="flex items-center justify-center p-4 w-full lg:w-auto">
+            <div className="bg-white rounded-lg shadow-lg p-6 text-center">
+              <DigitalClock/> {/* Menambahkan ukuran font */}
+            </div>
+          </div>
+
+          {/* Column 2: Table */}
+          <div className="w-full lg:w-3/4 p-4 lg:mt-11">
+            <div className="bg-white p-3 rounded shadow-md">
+              <div className="bg-slate-600 p-2 rounded-lg">
+                <div className="p-2">
+                  <h2 className="text-sm pt-3 sm:text-2xl text-white font-bold">
+                    Absensi Global
+                  </h2>
+                </div>
+                <div className="overflow-x-auto">
+                  <DataTable columns={tableColumns} data={kelas} />
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+
 
       {/* scan barcode */}
       <div className="p-4">
-        {popupMessage && (
-          <div
-            className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-auto max-w-xs bg-green-500 text-white p-4 rounded shadow-md transition-all duration-300 ${
-              popupMessage.includes("Absen berhasil")
-                ? "bg-green-500"
-                : "bg-red-500"
-            }`}
-          >
-            {popupMessage}
-          </div>
-        )}
+        
         <input
           ref={barcodeInputRef}
           type="text"
           value={barcode}
           onChange={handleBarcodeChange}
           placeholder="Scan Barcode"
-          className=" pointer-events-none" // Menyembunyikan input
+          // className=" pointer-events-none" // Menyembunyikan input
         />
       </div>
     </>

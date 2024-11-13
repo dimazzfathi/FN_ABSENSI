@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import DropdownMenu from "./dropdown";
 import EditForm from "./EditForm"; // Import komponen EditForm
-const BASE_URL = "http://localhost:3005/";
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 type DataTableProps<T> = {
   columns: { header: string; accessor: keyof T }[];
