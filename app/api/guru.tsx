@@ -24,7 +24,7 @@ export const fetchGuru = async (): Promise<Guru[]> => {
     try {
       const res = await axios.get(`${baseUrl}/guru/all-guru`);
       
-      console.log(res)
+      console.log("data guru",res)
       return res.data as Guru[];
     } catch (error) {
       console.error('Error fetching guru:', error);
@@ -39,14 +39,14 @@ export const addGuru = async (guruData: Guru): Promise<Guru> => {
       console.log(response);
       return response.data as Guru;
     } catch (error) {
-      console.error('Error saat menambah guru:', error);
+      console.error('Error saat menambah guru:', error.response?.data || error.message);
       throw error;
     }
   };
 
-export const updateGuru = async (id: string, nip: string, guruData: Guru): Promise<Guru> => {
+export const updateGuru = async (guruData: Guru): Promise<Guru> => {
 try {
-    const res = await axios.put(`${baseUrl}/guru/edit-guru/${id}/${nip}`, guruData);
+    const res = await axios.put(`${baseUrl}/guru/edit-guru`, guruData);
       
     console.log(res);
     return res.data as Guru; // Mengembalikan data Guru yang telah diperbarui

@@ -20,6 +20,63 @@ import * as XLSX from "xlsx";
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export default function DataGuru() {
+  const [kelas, setKelas] = useState([]);
+  const [rombel, setRombel] = useState([]);
+  const [mapel, setMapel] = useState([]);
+  const [kelas1, setKelas1] = useState([]);
+  useEffect(() => {
+    const fetchKelas = async () => {
+      try {
+        const response = await axios.get(`${baseUrl}/kelas/all-kelas`); // Sesuaikan dengan URL API Anda
+        setKelas(response.data.data);
+        console.log("data berhasil di fetch", response);
+      } catch (error) {
+        console.error("Error fetching tahun pelajaran:", error);
+      }
+    };
+
+    fetchKelas();
+  }, []);
+  useEffect(() => {
+    const fetchRombel = async () => {
+      try {
+        const response = await axios.get(`${baseUrl}/rombel/all-rombel`); // Sesuaikan dengan URL API Anda
+        setRombel(response.data.data);
+        console.log("data berhasil di fetch", response);
+      } catch (error) {
+        console.error("Error fetching jurusan:", error);
+      }
+    };
+
+    fetchRombel();
+  }, []);
+  useEffect(() => {
+    const fetchMapel = async () => {
+      try {
+        const response = await axios.get(`${baseUrl}/mapel/all-mapel`); // Sesuaikan dengan URL API Anda
+        setMapel(response.data.data);
+        console.log("data berhasil di fetch", response);
+      } catch (error) {
+        console.error("Error fetching jurusan:", error);
+      }
+    };
+
+    fetchMapel();
+  }, []);
+  const fetchKelasSiswaTotal = async () => {
+    try {
+      const response = await axios.get(
+        `${baseUrl}/joinNonMaster/total-kelas-siswa`
+      );
+      setKelas1(response.data.data);
+      console.log("ini siswa", response.data);
+    } catch (error) {
+      console.error("Fetch error:", error); // Menangani kesalahan
+    }
+  };
+  useEffect(() => {
+    fetchKelasSiswaTotal(); // Panggil fungsi fetch saat komponen di-mount
+  }, []);
   const handleDownloadFormatClick = () => {
     // Data yang akan diisikan ke dalam file Excel untuk Mapel
     const data = [
@@ -48,19 +105,34 @@ export default function DataGuru() {
       "nip",
       "nama_guru",
       "jenis_kelamin",
-      // "id_mapel",
+      // "mapel",
       // "email",
       // "pass",
       // "foto",
       // "walas",
       // "barcode",
-      // "id_kelas",
-      // "rombel",
+      // "kelas",
+      // "jurusan",
       "no_telp",
     ];
 
     // Membuat worksheet
     const worksheet = XLSX.utils.json_to_sheet(data, { header: headers });
+    const kelasText = ` Isi dengan Format:\n${kelas
+      .map((kelas) => kelas.kelas)
+      .join("\n")}`;
+    // Menambahkan ke komentar worksheet sebagai satu entri
+    worksheet["L1"].c = [{ t: kelasText }];
+    const rombelText = ` Isi dengan Format:\n${rombel
+      .map((rombel) => rombel.nama_rombel)
+      .join("\n")}`;
+    // Menambahkan ke komentar worksheet sebagai satu entri
+    worksheet["M1"].c = [{ t: rombelText }];
+    const mapelText = ` Isi dengan Format:\n${mapel
+      .map((mapel) => mapel.nama_mapel)
+      .join("\n")}`;
+    // Menambahkan ke komentar worksheet sebagai satu entri
+    worksheet["F1"].c = [{ t: mapelText }];
 
     // Membuat workbook
     const workbook = XLSX.utils.book_new();
@@ -121,16 +193,13 @@ export default function DataGuru() {
           setDataGuru(jsonData); // Simpan data ke state
 
           // Lakukan pengiriman data ke server setelah file diproses
-          const response = await fetch(
-            "http://localhost:3005/guru/add-guru",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify(jsonData),
-            }
-          );
+          const response = await fetch(`${baseUrl}/guru/add-guru`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(jsonData),
+          });
 
           const result = await response.json();
 
@@ -154,7 +223,7 @@ export default function DataGuru() {
   const [guru, setGuru] = useState<Guru[]>([]);
   const [editData, setEditData] = useState<Guru | null>(null);
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null); // Menyimpan ID baris yang dropdown-nya terbuka
-  const [isModalOpen, setIsModalOpen] = useState(false); // State untuk mengontrol modal
+  const [isModalEdit, setIsModalEdit] = useState(false); // State untuk mengontrol modal
   const [selectedRow, setSelectedRow] = useState(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -166,13 +235,26 @@ export default function DataGuru() {
   };
   const [rombelList, setRombelList] = useState([]);
   const [mapelList, setMapelList] = useState([]);
+  const [kelasList, setKelasList] = useState([]);
   const [isWalasEnabled, setIsWalasEnabled] = useState(false); // State untuk kontrol on/off
   const { idAdmin } = useUserInfo();
   const [admins, setAdmins] = useState<
     { id_admin: string; nama_admin: string }[]
   >([]);
   const handleToggle = () => {
-    setIsWalasEnabled(!isWalasEnabled); // Toggle nilai isWalasEnabled
+    setIsWalasEnabled((prevState) => {
+      const newState = !prevState;
+
+      // Jika toggle dimatikan (isWalasEnabled false), kosongkan nilai walas
+      if (!newState) {
+        setGuruData((prevData) => ({
+          ...prevData,
+          walas: "", // Kosongkan input walas
+        }));
+      }
+
+      return newState;
+    });
   };
   useEffect(() => {
     //   const token = Cookies.get('token');
@@ -184,10 +266,17 @@ export default function DataGuru() {
 
     // axios.defaults.headers.common['Authorization'] = token;
     const loadGuru = async () => {
-      const response = await fetchGuru();
-      console.log("API Guru:", response); // Debugging tambahan
-      const data = response.data;
-      setGuru(data);
+      try {
+        const response = await axios.get(`${baseUrl}/guru/all-guru`);
+        console.log("Data guru yang diterima:", response.data); // Lihat data yang diterima
+        if (Array.isArray(response.data.data)) {
+          setGuru(response.data.data); // Pastikan data adalah array
+        } else {
+          console.error("Data tidak dalam format array");
+        }
+      } catch (error) {
+        console.error("Error fetching rombel data:", error);
+      }
     };
     loadGuru();
   }, []);
@@ -207,6 +296,23 @@ export default function DataGuru() {
       }
     };
     fetchRombel();
+  }, []);
+  // Ambil data Kelas dari backend saat komponen dimuat
+  useEffect(() => {
+    const fetchKelas = async () => {
+      try {
+        const response = await axios.get(`${baseUrl}/kelas/all-kelas`);
+        console.log("Data Kelas yang diterima:", response.data); // Lihat data yang diterima
+        if (Array.isArray(response.data.data)) {
+          setKelasList(response.data.data); // Pastikan data adalah array
+        } else {
+          console.error("Data tidak dalam format array");
+        }
+      } catch (error) {
+        console.error("Error fetching Kelas data:", error);
+      }
+    };
+    fetchKelas();
   }, []);
   // Ambil data Mapel dari backend saat komponen dimuat
   useEffect(() => {
@@ -228,13 +334,13 @@ export default function DataGuru() {
   // Mengambil data admins dari API
   useEffect(() => {
     const fetchAdmin = async () => {
-    try{
-      const response = await axios.get(`${baseUrl}/admin/all-Admin`); // Ganti dengan endpoint Anda
-      console.log("admin", response);
-      setAdmins(response.data.data); // Simpan semua admin ke dalam state
-    } catch (error) {
-      console.error("Error fetching admins:", error);
-    }
+      try {
+        const response = await axios.get(`${baseUrl}/admin/all-Admin`); // Ganti dengan endpoint Anda
+        console.log("admin", response);
+        setAdmins(response.data.data); // Simpan semua admin ke dalam state
+      } catch (error) {
+        console.error("Error fetching admins:", error);
+      }
     };
     fetchAdmin();
   }, []);
@@ -271,23 +377,26 @@ export default function DataGuru() {
     //adalah istilah yang digunakan dalam konteks tabel, terutama saat menggunakan pustaka seperti React Table, untuk menunjukkan kunci atau nama properti dalam data yang akan diambil dan ditampilkan di kolom tabel tertentu
     // { header: "No", accessor: (_: any, index: number) => index + 1 },
     // { header: "Guru", accessor: "id_guru" as keyof Guru },
-    { header: "Admin",
+
+    { header: "Foto", accessor: "foto" as keyof Guru },
+    {
+      header: "Admin",
       accessor: "id_admin" as keyof Guru,
       Cell: ({ row }: { row: Guru }) => {
         const admin = admins.find((admin) => admin.id_admin === row.id_admin);
         return admin ? admin.nama_admin : "Tidak Diketahui";
-      }, },
-    { header: "Nip", accessor: "nip" as keyof Guru },
+      },
+    },
     { header: "Guru", accessor: "nama_guru" as keyof Guru },
+    { header: "Nip", accessor: "nip" as keyof Guru },
     { header: "Jk", accessor: "jenis_kelamin" as keyof Guru },
-    { header: "Mapel", accessor: "id_mapel" as keyof Guru },
+    { header: "Mapel", accessor: "nama_mapel" as keyof Guru },
     { header: "Email", accessor: "email" as keyof Guru },
     // { header: "Pass", accessor: "pass" as keyof Guru },
-    { header: "Foto", accessor: "foto" as keyof Guru },
     { header: "Walas", accessor: "walas" as keyof Guru },
     { header: "Barcode", accessor: "barcode" as keyof Guru },
-    { header: "Kelas", accessor: "id_kelas" as keyof Guru },
-    { header: "Rombel", accessor: "rombel" as keyof Guru },
+    { header: "Kelas", accessor: "kelas" as keyof Guru },
+    { header: "Jurusan", accessor: "nama_rombel" as keyof Guru },
     { header: "No", accessor: "no_telp" as keyof Guru },
     {
       header: "Aksi",
@@ -333,15 +442,16 @@ export default function DataGuru() {
     nip: "",
     nama_guru: "",
     jenis_kelamin: "",
-    // id_mapel: [],
-    // email: "",
-    // pass: "",
-    // foto: "",
-    // walas: "",
-    // barcode: "",
-    // id_kelas: [],
-    // rombel: [],
     no_telp: "",
+    id_dg: "",
+    id_mapel: [],
+    id_kelas: [],
+    id_rombel: [],
+    email: "",
+    pas: "",
+    foto: "",
+    walas: "",
+    barcode: "",
   });
 
   const handleChange = (e) => {
@@ -354,10 +464,19 @@ export default function DataGuru() {
   const handleCheckboxChange = (e) => {
     const { value, checked } = e.target;
     setGuruData((prevData) => {
-      const id_kelas = checked
-        ? [...prevData.id_kelas, value] // Tambahkan kelas yang dipilih
-        : prevData.id_kelas.filter((kelas) => kelas !== value); // Hapus kelas yang tidak dipilih
-      return { ...prevData, id_kelas };
+      if (checked) {
+        // Tambahkan mapel yang dipilih
+        return {
+          ...prevData,
+          id_kelas: [...prevData.id_kelas, value],
+        };
+      } else {
+        // Hapus id_kelas yang tidak dipilih
+        return {
+          ...prevData,
+          id_kelas: prevData.id_kelas.filter((kelas) => kelas !== value),
+        };
+      }
     });
   };
   const handleJurusanChange = (e) => {
@@ -367,13 +486,13 @@ export default function DataGuru() {
         // Tambahkan rombel yang dipilih
         return {
           ...prevData,
-          rombel: [...prevData.rombel, value],
+          id_rombel: [...prevData.id_rombel, value],
         };
       } else {
         // Hapus rombel yang tidak dipilih
         return {
           ...prevData,
-          rombel: prevData.rombel.filter((rombel) => rombel !== value),
+          id_rombel: prevData.id_rombel.filter((rombel) => rombel !== value),
         };
       }
     });
@@ -397,34 +516,52 @@ export default function DataGuru() {
       }
     });
   };
+  const handleEditRombel = (e) => {
+    const { value, checked } = e.target;
+    setEditData((prevData) => {
+      // Pastikan prevData.id_kelas adalah array
+      const currentRombel = Array.isArray(prevData.id_rombel)
+        ? prevData.id_rombel
+        : [];
+      const updatedRombel = checked
+        ? [...currentRombel, value] // Tambahkan kelas jika checked
+        : currentRombel.filter((rombel) => rombel !== value); // Hapus kelas jika unchecked
+      return {
+        ...prevData,
+        id_rombel: updatedRombel,
+      };
+    });
+  };
   const handleEditCheckboxChange = (e) => {
     const { value, checked } = e.target;
-
     setEditData((prevData) => {
       // Pastikan prevData.id_kelas adalah array
       const currentKelas = Array.isArray(prevData.id_kelas)
         ? prevData.id_kelas
         : [];
-
       const updatedKelas = checked
         ? [...currentKelas, value] // Tambahkan kelas jika checked
         : currentKelas.filter((kelas) => kelas !== value); // Hapus kelas jika unchecked
-
       return {
         ...prevData,
         id_kelas: updatedKelas,
       };
     });
   };
-  const handleMapelCheckboxChange = (event) => {
-    const { value } = event.target;
-    setGuruData((prevData) => {
-      const isChecked = prevData.id_mapel.includes(value);
-      const updatedMapel = isChecked
-        ? prevData.id_mapel.filter((id) => id !== value)
-        : [...prevData.id_mapel, value];
-      console.log("Updated id_mapel:", updatedMapel); // Tambahkan ini untuk cek
-      return { ...prevData, id_mapel: updatedMapel };
+  const handleMapelCheckboxChange = (e) => {
+    const { value, checked } = e.target;
+    setEditData((prevData) => {
+      // Pastikan prevData.id_kelas adalah array
+      const currentMapel = Array.isArray(prevData.id_mapel)
+        ? prevData.id_mapel
+        : [];
+      const updatedMapel = checked
+        ? [...currentMapel, value] // Tambahkan kelas jika checked
+        : currentMapel.filter((mapel) => mapel !== value); // Hapus kelas jika unchecked
+      return {
+        ...prevData,
+        id_mapel: updatedMapel,
+      };
     });
   };
   const handleFileChange = (e) => {
@@ -445,13 +582,12 @@ export default function DataGuru() {
     }
 
     try {
-      const response = await addGuru(guruData);
+      const response = await addGuru([guruData]);
       console.log("API response:", response);
-      console.log("Data yang dikirim ke backend:", guruData);
+      console.log("Data yang dikirim ke backend:", [guruData]);
       // Cek status respon
-      if (response?.data?.exists) {
-        // Gantilah dengan logika yang sesuai
-        toast.error("Data sudah ada!"); // Menampilkan pesan jika data sudah ada
+      if (response?.data?.results?.some((result) => result.exists)) {
+        toast.error("Data sudah ada!");
       } else {
         toast.success("Tahun Guru berhasil ditambahkan!"); // Menampilkan pesan sukses
         // Tambahkan Guru baru ke dalam GuruList
@@ -460,24 +596,29 @@ export default function DataGuru() {
         // Reset form
         setGuruData({
           id_guru: "",
-          id_admin: idAdmin,
+          id_admin: idAdmin || "",
           nip: "",
           nama_guru: "",
           jenis_kelamin: "",
-          // id_mapel: [],
-          // email: "",
-          // pass: "",
-          // foto: "",
-          // walas: "",
-          // barcode: "",
-          // id_kelas: [],
-          // rombel: [],
           no_telp: "",
+          id_dg: "",
+          id_mapel: [],
+          id_kelas: [],
+          id_rombel: [],
+          email: "",
+          pas: "",
+          foto: "",
+          walas: "",
+          barcode: "",
         });
       }
     } catch (error) {
       // Tangani kesalahan di sini
-      console.error("Error adding Guru:", error);
+      console.error(
+        "Error adding Guru:",
+        error.response?.data || error.message
+      );
+      console.log("Data yang dikirim ke backend:", [guruData]);
 
       // Cek apakah error berasal dari response API
       if (error.response) {
@@ -494,7 +635,7 @@ export default function DataGuru() {
   // Fungsi untuk handle klik edit
   const handleEditClick = (row: guru) => {
     setEditData(row); // Set data yang dipilih ke form edit
-    setIsModalOpen(true); // Buka modal saat tombol edit diklik
+    setIsModalEdit(true); // Buka modal saat tombol edit diklik
   };
   // Handle perubahan input pada form edit
   const handleEditChange = (e) => {
@@ -507,25 +648,67 @@ export default function DataGuru() {
     }));
   };
   // Handle update data setelah form edit disubmit
+  // const handleEditSubmit = async (e) => {
+  //   e.preventDefault();
+
+  //   if (editData) {
+  //     const formData = new FormData();
+
+  //     // Tambahkan data lain ke formData
+  //     formData.append("id_guru", editData.id_guru);
+  //     formData.append("id_admin", editData.id_admin);
+  //     formData.append("nip", editData.nip);
+  //     formData.append("nama_guru", editData.nama_guru);
+  //     formData.append("jenis_kelamin", editData.jenis_kelamin);
+  //     formData.append("id_mapel", editData.id_mapel);
+  //     formData.append("email", editData.email);
+  //     formData.append("pass", editData.pass);
+  //     formData.append("walas", editData.walas);
+  //     formData.append("barcode", editData.barcode);
+  //     formData.append("id_kelas", Array.isArray(editData.id_kelas) ? editData.id_kelas.join(",") : ""); // Pastikan id_kelas array diubah menjadi string
+  //     formData.append("rombel", editData.rombel);
+  //     formData.append("no_telp", editData.no_telp);
+
+  //     // Tambahkan file foto jika ada
+  //     if (editData.foto) {
+  //       formData.append("foto", editData.foto);
+  //     }
+
+  //     try {
+  //       // Panggil fungsi updateGuru dengan id_guru dan nip
+  //       await updateGuru(editData.id_guru, editData.nip, editData);
+
+  //       // Update data guru di state utama jika berhasil
+  //       setGuru((prev) =>
+  //         prev.map((guru) =>
+  //           guru.id_guru === editData.id_guru ? { ...guru, ...editData } : guru
+  //         )
+  //       );
+  //       toast.success("Data berhasil diperbarui!");
+  //       setIsModalEdit(false);
+  //       setOpenDropdownId(null);
+  //     } catch (error) {
+  //       toast.error("Terjadi kesalahan saat mengedit data");
+  //     }
+  //   }
+  // };
   const handleEditSubmit = async (e) => {
     e.preventDefault();
 
     if (editData) {
       const formData = new FormData();
-
-      // Tambahkan data lain ke formData
       formData.append("id_guru", editData.id_guru);
       formData.append("id_admin", editData.id_admin);
       formData.append("nip", editData.nip);
       formData.append("nama_guru", editData.nama_guru);
       formData.append("jenis_kelamin", editData.jenis_kelamin);
-      // formData.append("id_mapel", editData.id_mapel);
-      // formData.append("email", editData.email);
-      // formData.append("pass", editData.pass);
-      // formData.append("walas", editData.walas);
-      // formData.append("barcode", editData.barcode);
-      // formData.append("id_kelas", Array.isArray(editData.id_kelas) ? editData.id_kelas.join(",") : ""); // Pastikan id_kelas array diubah menjadi string
-      // formData.append("rombel", editData.rombel);
+      formData.append("id_mapel", editData.id_mapel);
+      formData.append("email", editData.email);
+      formData.append("pass", editData.pass);
+      formData.append("walas", editData.walas);
+      formData.append("barcode", editData.barcode);
+      formData.append("id_kelas", editData.id_kelas);
+      formData.append("rombel", editData.rombel);
       formData.append("no_telp", editData.no_telp);
 
       // Tambahkan file foto jika ada
@@ -534,20 +717,30 @@ export default function DataGuru() {
       }
 
       try {
-        // Panggil fungsi updateGuru dengan id_guru dan nip
-        await updateGuru(editData.id_guru, editData.nip, editData);
+        // Lakukan PUT request ke endpoint '/edit-guru'
+        const response = await axios.put(`${baseUrl}/guru/edit-guru`, [
+          editData,
+        ]);
 
-        // Update data guru di state utama jika berhasil
-        setGuru((prev) =>
-          prev.map((guru) =>
-            guru.id_guru === editData.id_guru ? { ...guru, ...editData } : guru
-          )
-        );
-        toast.success("Data berhasil diperbarui!");
-        setIsModalOpen(false);
-        setOpenDropdownId(null);
+        // Cek respons dari server
+        if (response.data.success) {
+          // Update data guru di state utama jika berhasil
+          setGuru((prev) =>
+            prev.map((guru) =>
+              guru.id_guru === editData.id_guru
+                ? { ...guru, ...editData }
+                : guru
+            )
+          );
+          toast.success("Data berhasil diperbarui!");
+          setIsModalEdit(false);
+          setOpenDropdownId(null);
+        } else {
+          toast.error("Terjadi kesalahan: " + response.data.message);
+        }
       } catch (error) {
         toast.error("Terjadi kesalahan saat mengedit data");
+        console.error(error);
       }
     }
   };
@@ -565,7 +758,7 @@ export default function DataGuru() {
       setGuru((prevGuru) =>
         prevGuru.filter((guru) => guru.id_guru !== selectedRow.id_guru)
       );
-      toast.success(`guru ${selectedRow.guru} berhasil dihapus`);
+      toast.success(`guru ${selectedRow.nama_guru} berhasil dihapus`);
       setIsConfirmOpen(false); // Tutup modal
       setSelectedRow(null); // Reset selectedRow
     } catch (error) {
@@ -585,20 +778,20 @@ export default function DataGuru() {
     setItemsPerPage(Number(e.target.value));
     setCurrentPage(1); //  Reset ke halaman pertama saat jumlah item per halaman berubah
   };
-
+  const validSearchTerm = searchTerm ? searchTerm.toLowerCase() : '';
   // Memfilter data berdasarkan searchTerm
   const filteredData = guru.filter((item) => {
     // Asumsikan 'kelas' memiliki properti 'kelas' untuk dicari
     return (
-      item.nip.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.nama_guru.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.jenis_kelamin.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.id_mapel.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.walas.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.id_kelas.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.rombel.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.no_telp.toLowerCase().includes(searchTerm.toLowerCase())
+      (item?.nip?.toLowerCase().includes(validSearchTerm)) ||
+  (item?.nama_guru?.toLowerCase().includes(validSearchTerm)) ||
+  (item?.jenis_kelamin?.toLowerCase().includes(validSearchTerm)) ||
+  (item?.no_telp?.toLowerCase().includes(validSearchTerm)) ||
+  (item?.id_mapel?.toLowerCase().includes(validSearchTerm)) ||
+  (item?.id_kelas?.toLowerCase().includes(validSearchTerm)) ||
+  (item?.rombel?.toLowerCase().includes(validSearchTerm)) ||
+  (item?.email?.toLowerCase().includes(validSearchTerm)) ||
+  (item?.walas?.toLowerCase().includes(validSearchTerm))
     );
   });
 
@@ -735,25 +928,25 @@ export default function DataGuru() {
               <input
                 type="password"
                 className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                name="pass"
-                value={guruData.pass}
+                name="pas"
+                value={guruData.pas}
                 onChange={handleChange}
                 placeholder="Password..."
               />
-              {/* <h2 className="text-sm mb-2 sm:text-sm font-bold">Mapel</h2>
+              <h2 className="text-sm mb-2 sm:text-sm font-bold">Mapel</h2>
               <div className="mb-2 lg:flex lg:flex-wrap md:flex md:flex-wrap">
                 {" "}
                 {mapelList.length > 0 ? (
                   mapelList.map((mapel) => (
                     <label
                       key={mapel.id_mapel} // Pastikan id_mapel ada di data mapel
-                      className="flex items-center space-x-2 md:w-1/4 mb-2"
+                      className="flex items-center space-x-2 md:w-1/2 mb-2"
                     >
                       <input
                         type="checkbox"
                         name="mapel"
-                        value={mapel.nama_mapel} // Ganti dengan nama kolom yang sesuai dari database
-                        checked={guruData.id_mapel.includes(mapel.nama_mapel)} // Cek apakah mapel sudah dipilih
+                        value={mapel.id_mapel} // Ganti dengan nama kolom yang sesuai dari database
+                        checked={guruData.id_mapel.includes(mapel.id_mapel)} // Cek apakah mapel sudah dipilih
                         onChange={handleMapelChange} // Panggil fungsi untuk mengubah state
                         className="form-checkbox text-blue-600"
                       />
@@ -767,34 +960,23 @@ export default function DataGuru() {
                 )}
               </div>
               <h2 className="text-sm mb-2 sm:text-sm font-bold">Kelas</h2>
-              <div>
-                <label>
-                  <input
-                    type="checkbox"
-                    value="10"
-                    checked={guruData.id_kelas.includes("10")}
-                    onChange={handleCheckboxChange}
-                  />
-                  Kelas 10
-                </label>
-                <label className="mx-5">
-                  <input
-                    type="checkbox"
-                    value="11"
-                    checked={guruData.id_kelas.includes("11")}
-                    onChange={handleCheckboxChange}
-                  />
-                  Kelas 11
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    value="12"
-                    checked={guruData.id_kelas.includes("12")}
-                    onChange={handleCheckboxChange}
-                  />
-                  Kelas 12
-                </label>
+              <div className="mb-2 lg:flex lg:flex-wrap md:flex md:flex-wrap">
+                {kelasList.map((kelas) => (
+                  <label
+                    key={kelas.id_kelas} // Pastikan id_kelas ada di data kelas
+                    className="flex items-center space-x-2 md:w-16 mb-2"
+                  >
+                    <input
+                      type="checkbox"
+                      name="kelas"
+                      value={kelas.id_kelas} // Ganti dengan nama kolom yang sesuai dari database
+                      checked={guruData.id_kelas.includes(kelas.id_kelas)} // Cek apakah kelas sudah dipilih
+                      onChange={handleCheckboxChange} // Panggil fungsi untuk mengubah state
+                      className="form-checkbox text-blue-600"
+                    />
+                    <span className="text-sm sm:text-base">{kelas.kelas}</span>
+                  </label>
+                ))}
               </div>
               <h2 className="text-sm mb-2 sm:text-sm font-bold">Jurusan</h2>
               <div className="flex flex-wrap space-x-4 mb-2">
@@ -807,8 +989,8 @@ export default function DataGuru() {
                       <input
                         type="checkbox"
                         name="rombel"
-                        value={rombel.nama_rombel}
-                        checked={guruData.rombel.includes(rombel.nama_rombel)}
+                        value={rombel.id_rombel}
+                        checked={guruData.id_rombel.includes(rombel.id_rombel)}
                         onChange={handleJurusanChange}
                         className="form-checkbox text-blue-600"
                       />
@@ -820,115 +1002,7 @@ export default function DataGuru() {
                 ) : (
                   <p>Tidak ada data rombel.</p> // Tampilkan pesan jika tidak ada data
                 )}
-              </div> */}
-              <h2 className="text-sm sm:text-sm font-bold">Mapel</h2>
-              <div className="lg:flex lg:flex-wrap md:flex md:flex-wrap">
-                <label className="flex items-center space-x-2 md:w-1/4">
-                  <input
-                    type="checkbox"
-                    name="mapel"
-                    value="Matematika"
-                    className="form-checkbox text-blue-600"
-                  />
-                  <span className="text-sm sm:text-base">Matematika</span>
-                </label>
-                <label className="flex items-center space-x-2 md:w-1/4">
-                  <input
-                    type="checkbox"
-                    name="mapel"
-                    value="Bahasa Indonesia"
-                    className="form-checkbox text-blue-600"
-                  />
-                  <span className="text-sm sm:text-base">Bahasa Indonesia</span>
-                </label>
-                <label className="flex items-center space-x-2 md:w-1/4">
-                  <input
-                    type="checkbox"
-                    name="mapel"
-                    value="Bahasa Inggris"
-                    className="form-checkbox text-blue-600"
-                  />
-                  <span className="text-sm sm:text-base">Bahasa Inggris</span>
-                </label>
-                <label className="flex items-center space-x-2 md:w-1/4">
-                  <input
-                    type="checkbox"
-                    name="mapel"
-                    value="Ilmu Pengetahuan Alam"
-                    className="form-checkbox text-blue-600"
-                  />
-                  <span className="text-sm sm:text-base">
-                    Ilmu Pengetahuan Alam
-                  </span>
-                </label>
               </div>
-              <h2 className="text-sm mb-2 sm:text-sm font-bold">Kelas</h2>
-              <div>
-                <label>
-                  <input
-                    type="checkbox"
-                    value="10"
-                    className="form-checkbox text-blue-600"
-                  />
-                  <span className="ml-2">Kelas 10</span>
-                </label>
-                <label className="mx-5">
-                  <input
-                    type="checkbox"
-                    value="11"
-                    className="form-checkbox text-blue-600"
-                  />
-                  <span className="ml-2">Kelas 11</span>
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    value="12"
-                    className="form-checkbox text-blue-600"
-                  />
-                  <span className="ml-2">Kelas 12</span>
-                </label>
-              </div>
-              <h2 className="text-sm mb-2 sm:text-sm font-bold">Jurusan</h2>
-              <div className="flex flex-wrap space-x-4 mb-2">
-                <label className="flex items-center space-x-2 mb-1">
-                  <input
-                    type="checkbox"
-                    name="jurusan"
-                    value="IPA"
-                    className="form-checkbox text-blue-600"
-                  />
-                  <span className="text-sm sm:text-base">IPA</span>
-                </label>
-                <label className="flex items-center space-x-2 mb-1">
-                  <input
-                    type="checkbox"
-                    name="jurusan"
-                    value="IPS"
-                    className="form-checkbox text-blue-600"
-                  />
-                  <span className="text-sm sm:text-base">IPS</span>
-                </label>
-                <label className="flex items-center space-x-2 mb-1">
-                  <input
-                    type="checkbox"
-                    name="jurusan"
-                    value="Bahasa"
-                    className="form-checkbox text-blue-600"
-                  />
-                  <span className="text-sm sm:text-base">Bahasa</span>
-                </label>
-                <label className="flex items-center space-x-2 mb-1">
-                  <input
-                    type="checkbox"
-                    name="jurusan"
-                    value="Teknik"
-                    className="form-checkbox text-blue-600"
-                  />
-                  <span className="text-sm sm:text-base">Teknik</span>
-                </label>
-              </div>
-
               <label className="inline-flex items-center">
                 <h2 className="text-sm mb-2 sm:text-sm font-bold pr-2 pt-1">
                   Walas
@@ -952,15 +1026,23 @@ export default function DataGuru() {
                 </span>
                 <span className="ml-2 text-sm"></span>
               </label>
-              <input
-                type="text"
+              <select
                 className="w-full p-2 border rounded text-sm sm:text-base mb-2"
                 name="walas"
                 value={guruData.walas}
                 onChange={handleChange}
-                placeholder="Wali Kelas..."
-                disabled={!isWalasEnabled} // Disable input jika isWalasEnabled false
-              />
+                disabled={!isWalasEnabled} // Disable dropdown jika isWalasEnabled false
+              >
+                <option value="" disabled>
+                  Pilih Wali Kelas...
+                </option>
+                {kelas1.map((item) => (
+                  <option key={item.id} value={item.id_kelas}>
+                    {item.kelas}{" "}
+                    {/* Sesuaikan dengan field yang diinginkan dari respons */}
+                  </option>
+                ))}
+              </select>
               <h2 className="text-sm mb-2 sm:text-sm font-bold">No. Telepon</h2>
               <input
                 type="text"
@@ -1119,7 +1201,8 @@ export default function DataGuru() {
                 <div className="overflow-x-auto">
                   <DataTable columns={guruColumns} data={paginatedData} />
                   <ToastContainer className="mt-14" />
-                  {isModalOpen && (
+                  {/* Column 2: Edit */}
+                  {isModalEdit && (
                     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
                       <div className="bg-white rounded p-4 shadow-lg space-y-4  max-h-screen overflow-y-auto">
                         <h3 className="pb-2 text-lg font-semibold">
@@ -1208,66 +1291,23 @@ export default function DataGuru() {
                           <h2 className="text-sm mb-2 sm:text-sm font-bold">
                             Mapel
                           </h2>
-                          <div className="lg:flex lg:flex-wrap md:flex md:flex-wrap">
-                            <label className="flex items-center space-x-2 md:w-1/4">
-                              <input
-                                type="checkbox"
-                                name="mapel"
-                                value="Matematika"
-                                className="form-checkbox text-blue-600"
-                              />
-                              <span className="text-sm sm:text-base">
-                                Matematika
-                              </span>
-                            </label>
-                            <label className="flex items-center space-x-2 md:w-1/4">
-                              <input
-                                type="checkbox"
-                                name="mapel"
-                                value="Bahasa Indonesia"
-                                className="form-checkbox text-blue-600"
-                              />
-                              <span className="text-sm sm:text-base">
-                                Bahasa Indonesia
-                              </span>
-                            </label>
-                            <label className="flex items-center space-x-2 md:w-1/4">
-                              <input
-                                type="checkbox"
-                                name="mapel"
-                                value="Bahasa Inggris"
-                                className="form-checkbox text-blue-600"
-                              />
-                              <span className="text-sm sm:text-base">
-                                Bahasa Inggris
-                              </span>
-                            </label>
-                            <label className="flex items-center space-x-2 md:w-1/4">
-                              <input
-                                type="checkbox"
-                                name="mapel"
-                                value="Ilmu Pengetahuan Alam"
-                                className="form-checkbox text-blue-600"
-                              />
-                              <span className="text-sm sm:text-base">
-                                Ilmu Pengetahuan Alam
-                              </span>
-                            </label>
-                          </div>
-                          {/* <div className="mb-2 lg:flex lg:flex-wrap md:flex md:flex-wrap">
+                          <div className="mb-2 lg:flex lg:flex-wrap md:flex md:flex-wrap">
                             {mapelList.length > 0 ? (
                               mapelList.map((mapel) => (
                                 <label
                                   key={mapel.id_mapel}
-                                  className="flex items-center space-x-2 md:w-1/4 mb-2"
+                                  className="flex items-center space-x-2 md:md:w-1/2 mb-2"
                                 >
                                   <input
                                     type="checkbox"
                                     name="mapel"
                                     value={mapel.id_mapel}
-                                    checked={guruData.id_mapel.includes(
-                                      mapel.id_mapel
-                                    )}
+                                    checked={
+                                      Array.isArray(editData?.id_mapel) &&
+                                      editData?.id_mapel.includes(
+                                        mapel?.id_mapel
+                                      )
+                                    }
                                     onChange={handleMapelCheckboxChange}
                                     className="form-checkbox text-blue-600"
                                   />
@@ -1279,55 +1319,65 @@ export default function DataGuru() {
                             ) : (
                               <p>Tidak ada data mata pelajaran.</p>
                             )}
-                          </div> */}
-
+                          </div>
                           <h2 className="text-sm mb-2 sm:text-sm font-bold">
                             Kelas
                           </h2>
-                          <div className="flex space-x-4">
-                            <label>
-                              <input
-                                type="checkbox"
-                                value="10"
-                                checked={editData.id_kelas?.includes("10")}
-                                onChange={handleEditCheckboxChange}
-                              />
-                              Kelas 10
-                            </label>
-                            <label>
-                              <input
-                                type="checkbox"
-                                value="11"
-                                checked={editData.id_kelas?.includes("11")}
-                                onChange={handleEditCheckboxChange}
-                                className="ml-2"
-                              />
-                              Kelas 11
-                            </label>
-                            <label>
-                              <input
-                                type="checkbox"
-                                value="12"
-                                checked={editData.id_kelas?.includes("12")}
-                                onChange={handleEditCheckboxChange}
-                                className="ml-2"
-                              />
-                              Kelas 12
-                            </label>
-                            {/* Tambahkan lebih banyak kelas sesuai kebutuhan */}
+                          <div className="mb-2 lg:flex lg:flex-wrap md:flex md:flex-wrap">
+                            {kelasList.map((kelas) => (
+                              <label
+                                key={kelas.id_kelas} // Pastikan id_kelas ada di data kelas
+                                className="flex items-center space-x-2 md:w-16 mb-2"
+                              >
+                                <input
+                                  type="checkbox"
+                                  name="kelas"
+                                  value={kelas.id_kelas} // Ganti dengan nama kolom yang sesuai dari database
+                                  checked={
+                                    Array.isArray(editData?.id_kelas) &&
+                                    editData?.id_kelas.includes(kelas?.id_kelas)
+                                  } // Cek apakah kelas sudah dipilih
+                                  onChange={handleEditCheckboxChange} // Panggil fungsi untuk mengubah state
+                                  className="form-checkbox text-blue-600"
+                                />
+                                <span className="text-sm sm:text-base">
+                                  {kelas.kelas}
+                                </span>
+                              </label>
+                            ))}
                           </div>
-
                           <h2 className="text-sm mb-2 sm:text-sm font-bold">
                             Jurusan
                           </h2>
-                          <input
-                            type="text"
-                            name="rombel"
-                            value={editData ? editData.rombel : ""}
-                            onChange={handleEditChange}
-                            className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                            placeholder="Rombel..."
-                          />
+                          <div className="flex flex-wrap space-x-4 mb-2">
+                            {rombelList.length > 0 ? (
+                              rombelList.map((rombel) => (
+                                <label
+                                  key={rombel.id_rombel}
+                                  className="flex items-center space-x-2 mb-1"
+                                >
+                                  <input
+                                    type="checkbox"
+                                    name="rombel"
+                                    value={rombel.id_rombel}
+                                    checked={
+                                      Array.isArray(editData.id_rombel) &&
+                                      editData.id_rombel.includes(
+                                        rombel.id_rombel
+                                      )
+                                    }
+                                    onChange={handleEditRombel}
+                                    className="form-checkbox text-blue-600"
+                                  />
+                                  <span className="text-sm sm:text-base">
+                                    {rombel.nama_rombel}
+                                  </span>
+                                </label>
+                              ))
+                            ) : (
+                              <p>Tidak ada data rombel.</p> // Tampilkan pesan jika tidak ada data
+                            )}
+                          </div>
 
                           <h2 className="text-sm mb-2 sm:text-sm font-bold">
                             Walas
@@ -1385,7 +1435,10 @@ export default function DataGuru() {
                             </button>
                             <button
                               type="button"
-                              onClick={() => setIsModalOpen(false)}
+                              onClick={() => {
+                                setIsModalEdit(false); // Tutup modal
+                                setOpenDropdownId(null); // Tutup dropdown juga
+                              }}
                               className="py-2 px-4 bg-gray-400 hover:bg-gray-500 text-white rounded text-sm sm:text-base"
                             >
                               Tutup
