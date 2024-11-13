@@ -36,13 +36,17 @@ export default function _Mapel() {
     // Data yang akan diisikan ke dalam file Excel untuk Mapel
   const data = [
     {
-      mapel: ""
+      id_mapel:"",
+      id_admin:"",
+      nama_mapel: "",
     },
   ];
 
   // Definisikan header file Excel
   const headers = [
-    "mapel"
+    'id_mapel',
+    'id_admin',
+    "nama_mapel",
   ];
 
   // Membuat worksheet
@@ -76,6 +80,22 @@ export default function _Mapel() {
     }
   };
 
+  const getAdmins = async () => {
+    try {
+      const response = await fetch(`${baseUrl}/admin/all-Admin`); // Ganti dengan endpoint API yang benar
+      const data = await response.json();
+      console.log('Data Admin:', data.data);
+      setAdmins(data.data); // Menyimpan data admin ke state
+    } catch (error) {
+      console.error('Error fetching admin data:', error);
+    }
+  };
+
+  // Panggil getAdmins saat pertama kali komponen dirender
+  useEffect(() => {
+    getAdmins();
+  }, []);
+
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     if (file) {
@@ -89,7 +109,7 @@ export default function _Mapel() {
           const sheet = workbook.Sheets[sheetName];
           const jsonData = XLSX.utils.sheet_to_json(sheet).map((row) => ({
             id_mapel: row.id_mapel || 'default_value',
-            id_admin: row.id_admin || 'default_value',
+            id_admin: mapelData.id_admin || 'default_value',
             nama_mapel: row.nama_mapel || 'default_value',
           }));
 
@@ -97,7 +117,7 @@ export default function _Mapel() {
           setMapel(jsonData); // Simpan data ke state
 
           // Lakukan pengiriman data ke server setelah file diproses
-          const response = await fetch('http://localhost:3005/mapel/add-mapel', {
+          const response = await fetch(`${baseUrl}/mapel/add-mapel`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -331,10 +351,17 @@ const filteredData = mapel.filter((item) => {
   // item.id_admin.toLowerCase().includes(searchTerm.toLowerCase())
 });
 
+ // Fungsi untuk mengurutkan data berdasarkan nama secara alfabetis
+ const sortedData = [...filteredData].sort((a, b) => {
+  if (a.nama_mapel < b.nama_mapel) return -1; // Urutkan dari A ke Z
+  if (a.nama_mapel > b.nama_mapel) return 1;
+  return 0;
+});
+
 // Menghitung pagination
-const totalData = filteredData.length; // Total item setelah difilter
+const totalData = sortedData.length; // Total item setelah difilter
 const startIndex = (currentPage - 1) * itemsPerPage; // Indeks awal untuk pagination
-const paginatedData = filteredData.slice(
+const paginatedData = sortedData.slice(
   startIndex,
   startIndex + itemsPerPage
 ); // Data yang akan ditampilkan

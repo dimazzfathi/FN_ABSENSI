@@ -278,10 +278,18 @@ export default function Tahun_Ajaran() {
       item.aktif.toLowerCase().includes(searchTerm.toLowerCase())
     );
   });
+
+  const sortedData = [...filteredData].sort((a, b) => {
+    if (a.tahun < b.tahun) return -1;
+    if (a.tahun > b.tahun) return 1;
+    return 0;
+  });
+
+
   // Menghitung pagination
-  const totalData = filteredData.length; // Total item setelah difilter
+  const totalData = sortedData.length; // Total item setelah difilter
   const startIndex = (currentPage - 1) * itemsPerPage; // Indeks awal untuk pagination
-  const paginatedData = filteredData.slice(
+  const paginatedData = sortedData.slice(
     startIndex,
     startIndex + itemsPerPage
   ); // Data yang akan ditampilkan
