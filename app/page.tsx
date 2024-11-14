@@ -916,30 +916,31 @@ const Page = () => {
           )}  
         </div>
 
-        <div className="flex flex-col lg:flex-row items-center justify-between p-4">
+        <div className="flex flex-col lg:flex-row items-stretch justify-between p-4">
           {/* Column 1: Digital Clock */}
-          <div className="flex items-center justify-center p-4 w-full lg:w-auto">
-            <div className="bg-white rounded-lg shadow-lg p-6 text-center">
-              <DigitalClock/> {/* Menambahkan ukuran font */}
+          <div className="flex items-center justify-center p-4 w-full lg:w-auto h-full lg:mt-11">
+            <div className="bg-white rounded-lg shadow-lg p-6 text-center h-full">
+              <DigitalClock className="text-9xl" /> {/* Menambahkan ukuran font */}
             </div>
           </div>
 
           {/* Column 2: Table */}
-          <div className="w-full lg:w-3/4 p-4 lg:mt-11">
-            <div className="bg-white p-3 rounded shadow-md">
-              <div className="bg-slate-600 p-2 rounded-lg">
+          <div className="w-full lg:w-3/4 p-4 lg:mt-11 h-full">
+            <div className="bg-white p-3 rounded shadow-md h-full">
+              <div className="bg-slate-600 p-2 rounded-lg h-full">
                 <div className="p-2">
                   <h2 className="text-sm pt-3 sm:text-2xl text-white font-bold">
                     Absensi Global
                   </h2>
                 </div>
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto h-full">
                   <DataTable columns={tableColumns} data={kelas} />
                 </div>
               </div>
             </div>
           </div>
         </div>
+
 
 
       {/* scan barcode */}

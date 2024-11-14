@@ -11,10 +11,10 @@ export type Siswa = {
   id_tahun_pelajaran: string;
   id_kelas: string;
   id_rombel: string;
-  // email?: string;
-  // pass?: string;
-  // foto?: string;
-  // barcode?: string;
+  email?: string;
+  pass?: string;
+  foto?: string;
+  barcode?: string;
   nama_wali: string;
   nomor_wali: string;
 };
@@ -45,10 +45,10 @@ export const addSiswa = async (siswaData: Siswa) => {
 };
 
 // Fungsi untuk mengedit siswa
-export const updateSiswa = async (id: string, nis: string, updatedData: Siswa): Promise<Siswa> => {
+export const updateSiswa = async (updatedData: Siswa): Promise<Siswa> => {
   try {
     // Membuat URL endpoint dengan id dan nis
-    const response = await axios.put(`${baseUrl}/siswa/edit-siswa/${id}/${nis}`, updatedData);
+    const response = await axios.put(`${baseUrl}/siswa/edit-siswa`, updatedData);
     console.log('Siswa updated:', response);
     return response.data as Siswa;
   } catch (error) {
@@ -59,7 +59,7 @@ export const updateSiswa = async (id: string, nis: string, updatedData: Siswa): 
 
 
 // Fungsi untuk menghapus siswa
-export const deleteSiswa = async (id: string): Promise<void> => {
+export const deleteSiswa = async (id:string): Promise<void> => {
   try {
       await axios.delete(`${baseUrl}/siswa/hapus-siswa/${id}`);
       console.log('Data siswa berhasil dihapus');

@@ -66,11 +66,11 @@ const DataTable = <T,>({
             {Array.isArray(data) &&
               data.map((row, rowIndex) => (
                 <tr key={rowIndex}>
-                  <td className="p-3 sm:p-3 text-gray border-b z-50">
+                  <td className="p-3 sm:p-3 text-white border-b z-50">
                     {rowIndex + 1} {/* Menampilkan nomor urut */}
                   </td>
                   {columns.map((column, colIndex) => (
-                    <td className="p-3 sm:p-3 text-gray border-b z-50" key={column.header}>
+                    <td className="p-3 sm:p-3 text-white border-b z-50" key={column.header}>
                       {/* Pastikan column.Cell ada sebelum mengaksesnya */}
                       {typeof column.Cell === "function" 
                         ? column.Cell({ row }) 
