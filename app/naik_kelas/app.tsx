@@ -14,7 +14,7 @@ export default function NaikKelas() {
   const fetchKelasSiswaTotal = async () => {
     try {
       const response = await axios.get(
-        `${baseUrl}/joinNonMaster/namaSiswaKelas`
+        `${baseUrl}/joinNonMaster/nama-siswa-kelas`
       );
       setKelas(response.data.data);
       console.log("ini siswa", response.data);
@@ -62,6 +62,9 @@ export default function NaikKelas() {
   const [filteredKelas, setFilteredKelas] = useState([]);
   const [selectedKelas, setSelectedKelas] = useState("");
   const [updatedKelas, setUpdatedKelas] = useState([]);
+  const [showLihatButton, setShowLihatButton] = useState(false); // State untuk tombol Lihat
+  const [showData, setShowData] = useState(false); // State untuk menampilkan data setelah klik Lihat
+  const [showUpdatedData, setShowUpdatedData] = useState(false);
   // Update `filteredKelas` setiap kali `selectedKelas` berubah
   useEffect(() => {
     let updatedKelas = kelas.filter((item) => {
@@ -96,9 +99,6 @@ export default function NaikKelas() {
       toast.error("Pilih Kelas baru sebelum mengirim.");
       return;
     }
-
-
-    
     // Filter data yang tidak memiliki `tinggalKelas: true`
     const dataToSubmit = filteredKelas
       .filter((item) => !item.tinggalKelas)
@@ -118,10 +118,14 @@ export default function NaikKelas() {
         !item.tinggalKelas ? { ...item, id_kelas: newIdKelas } : item
       );
       setUpdatedKelas(updatedData); // Simpan data yang diperbarui dalam state baru
+      setShowLihatButton(true);
     } catch (error) {
       toast.error("Gagal memperbarui data");
       console.error(error.response?.data || error.message);
     }
+  };
+  const handleLihatClick = () => {
+    setShowUpdatedData(true); // Tampilkan data setelah tombol Lihat diklik
   };
   const [isAllChecked, setIsAllChecked] = useState(false);
 
@@ -314,6 +318,14 @@ export default function NaikKelas() {
                 {jumlahLulus} siswa lulus
               </div>
             )}
+            {showLihatButton && (
+              <button
+                onClick={handleLihatClick} // Mengatur agar data ditampilkan saat tombol Lihat diklik
+                className="bg-lime-500 text-white py-2 px-4 rounded-md w-full mt-4"
+              >
+                Lihat
+              </button>
+            )}
           </div>
 
           {/* Tabel 2 */}
@@ -332,9 +344,9 @@ export default function NaikKelas() {
                   </tr>
                 </thead>
                 <tbody>
-                  {Array.isArray(updatedKelas) &&
-                    updatedKelas.map((item, index) => (
-                      <tr key={item.no || index}>
+                  {showUpdatedData && Array.isArray(filteredKelas) &&
+                    filteredKelas.map((item, index) => (
+                      <tr key={item.id_siswa || index}>
                         <td className="p-3 sm:p-3 text-white border-b">
                           {index + 1}
                         </td>

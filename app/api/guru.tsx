@@ -14,7 +14,7 @@ export type Guru = {
   foto: string;
   walas: string;
   barcode: string;
-  id_kelas: string[];
+  id_kelas: string;
   rombel: string;
   no_telp: string;
   // Tambahkan properti lain yang sesuai dengan struktur data di tabel 'admin'

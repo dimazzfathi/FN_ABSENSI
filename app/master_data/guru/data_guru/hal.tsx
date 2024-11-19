@@ -16,6 +16,8 @@ import {
 import useUserInfo from "@/app/components/useUserInfo";
 import Swal from "sweetalert2";
 import * as XLSX from "xlsx";
+import { motion, AnimatePresence } from "framer-motion";
+import { json } from "stream/consumers";
 
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -82,19 +84,19 @@ export default function DataGuru() {
     const data = [
       {
         id_guru: "",
-        id_admin: "",
+        id_admin: idAdmin || "",
         nip: "",
         nama_guru: "",
         jenis_kelamin: "",
-        // id_mapel: "",
-        // email: "",
-        // pass: "",
-        // foto: "",
-        // walas: "",
-        // barcode: "",
-        // id_kelas: "",
-        // rombel: "",
         no_telp: "",
+        id_mapel: "",
+        id_kelas: "",
+        id_rombel: "",
+        email: "",
+        pas: "",
+        foto: "",
+        walas: "",
+        barcode: "",
       },
     ];
 
@@ -105,34 +107,34 @@ export default function DataGuru() {
       "nip",
       "nama_guru",
       "jenis_kelamin",
-      // "mapel",
-      // "email",
-      // "pass",
-      // "foto",
-      // "walas",
-      // "barcode",
-      // "kelas",
-      // "jurusan",
       "no_telp",
+      "mata Pelajaran",
+      "kelas",
+      "rombel",
+      "email",
+      "pas",
+      "foto",
+      "walas",
+      "barcode",
     ];
-
+    console.log("ini format", headers);
     // Membuat worksheet
     const worksheet = XLSX.utils.json_to_sheet(data, { header: headers });
     const kelasText = ` Isi dengan Format:\n${kelas
       .map((kelas) => kelas.kelas)
       .join("\n")}`;
     // Menambahkan ke komentar worksheet sebagai satu entri
-    worksheet["L1"].c = [{ t: kelasText }];
+    worksheet["I1"].c = [{ t: kelasText }];
     const rombelText = ` Isi dengan Format:\n${rombel
       .map((rombel) => rombel.nama_rombel)
       .join("\n")}`;
     // Menambahkan ke komentar worksheet sebagai satu entri
-    worksheet["M1"].c = [{ t: rombelText }];
+    worksheet["J1"].c = [{ t: rombelText }];
     const mapelText = ` Isi dengan Format:\n${mapel
       .map((mapel) => mapel.nama_mapel)
       .join("\n")}`;
     // Menambahkan ke komentar worksheet sebagai satu entri
-    worksheet["F1"].c = [{ t: mapelText }];
+    worksheet["H1"].c = [{ t: mapelText }];
 
     // Membuat workbook
     const workbook = XLSX.utils.book_new();
@@ -173,20 +175,20 @@ export default function DataGuru() {
           const sheetName = workbook.SheetNames[0];
           const sheet = workbook.Sheets[sheetName];
           const jsonData = XLSX.utils.sheet_to_json(sheet).map((row) => ({
-            id_guru: row.id_guru || "default_value",
-            id_admin: row.id_admin || "default_value",
-            nip: row.nip || "default_value",
-            nama_guru: row.nama_guru || "default_value",
-            jenis_kelamin: row.jenis_kelamin || "default_value",
-            // id_mapel: row.id_mapel || "default_value",
-            // email: row.email || "default_value",
-            // pass: row.pass || "default_value",
-            // foto: row.foto || "default_value",
-            // walas: row.walas || "default_value",
-            // barcode: row.barcode || "default_value",
-            // id_kelas: row.id_kelas || "default_value",
-            // rombel: row.rombel || "default_value",
-            no_telp: row.no_telp || "default_value",
+            id_guru: row.id_guru || "-",
+            id_admin: row.id_admin || "-",
+            nip: row.nip || "-",
+            nama_guru: row.nama_guru || "-",
+            jenis_kelamin: row.jenis_kelamin || "-",
+            no_telp: row.no_telp || "-",
+            id_mapel: row.id_mapel || "-",
+            id_kelas: row.id_kelas || "-",
+            id_rombel: row.id_rombel || "-",
+            email: row.email || "-",
+            pas: row.pas || "-",
+            foto: row.foto || "-",
+            walas: row.walas || "-",
+            barcode: row.barcode || "-",
           }));
 
           console.log("Data dari Excel:", jsonData); // Log data dari Excel
@@ -267,15 +269,17 @@ export default function DataGuru() {
     // axios.defaults.headers.common['Authorization'] = token;
     const loadGuru = async () => {
       try {
-        const response = await axios.get(`${baseUrl}/guru/all-guru`);
-        console.log("Data guru yang diterima:", response.data); // Lihat data yang diterima
-        if (Array.isArray(response.data.data)) {
-          setGuru(response.data.data); // Pastikan data adalah array
-        } else {
-          console.error("Data tidak dalam format array");
-        }
+        const response = await fetchGuru();
+        console.log("Data guru yang diterima:", response); // Lihat data yang diterima
+
+        // Pastikan data adalah array, jika bukan maka jadikan array
+        const guruData = Array.isArray(response.data)
+          ? response.data
+          : [response.data];
+
+        setGuru(guruData); // Menggunakan data dalam bentuk array
       } catch (error) {
-        console.error("Error fetching rombel data:", error);
+        console.error("Error fetching guru data:", error);
       }
     };
     loadGuru();
@@ -443,7 +447,6 @@ export default function DataGuru() {
     nama_guru: "",
     jenis_kelamin: "",
     no_telp: "",
-    id_dg: "",
     id_mapel: [],
     id_kelas: [],
     id_rombel: [],
@@ -582,6 +585,12 @@ export default function DataGuru() {
     }
 
     try {
+      // const updatedGuruData = {
+      //   ...guruData,
+      //   id_mapel: guruData.id_mapel.length ? guruData.id_mapel : [],
+      //   id_kelas: guruData.id_kelas.length ? guruData.id_kelas : [],
+      //   id_rombel: guruData.id_rombel.length ? guruData.id_rombel : [],
+      // };
       const response = await addGuru([guruData]);
       console.log("API response:", response);
       console.log("Data yang dikirim ke backend:", [guruData]);
@@ -590,8 +599,13 @@ export default function DataGuru() {
         toast.error("Data sudah ada!");
       } else {
         toast.success("Tahun Guru berhasil ditambahkan!"); // Menampilkan pesan sukses
-        // Tambahkan Guru baru ke dalam GuruList
-        setGuru((prevGuruList) => [...prevGuruList, response.data]);
+        // Update GuruList dengan data baru tanpa refresh
+        setGuru((prevGuruList) => [
+          ...prevGuruList,
+          {
+            ...guruData,
+          },
+        ]);
 
         // Reset form
         setGuruData({
@@ -601,7 +615,6 @@ export default function DataGuru() {
           nama_guru: "",
           jenis_kelamin: "",
           no_telp: "",
-          id_dg: "",
           id_mapel: [],
           id_kelas: [],
           id_rombel: [],
@@ -778,20 +791,20 @@ export default function DataGuru() {
     setItemsPerPage(Number(e.target.value));
     setCurrentPage(1); //  Reset ke halaman pertama saat jumlah item per halaman berubah
   };
-  const validSearchTerm = searchTerm ? searchTerm.toLowerCase() : '';
+  const validSearchTerm = searchTerm ? searchTerm.toLowerCase() : "";
   // Memfilter data berdasarkan searchTerm
   const filteredData = guru.filter((item) => {
     // Asumsikan 'kelas' memiliki properti 'kelas' untuk dicari
     return (
-      (item?.nip?.toLowerCase().includes(validSearchTerm)) ||
-  (item?.nama_guru?.toLowerCase().includes(validSearchTerm)) ||
-  (item?.jenis_kelamin?.toLowerCase().includes(validSearchTerm)) ||
-  (item?.no_telp?.toLowerCase().includes(validSearchTerm)) ||
-  (item?.id_mapel?.toLowerCase().includes(validSearchTerm)) ||
-  (item?.id_kelas?.toLowerCase().includes(validSearchTerm)) ||
-  (item?.rombel?.toLowerCase().includes(validSearchTerm)) ||
-  (item?.email?.toLowerCase().includes(validSearchTerm)) ||
-  (item?.walas?.toLowerCase().includes(validSearchTerm))
+      item?.nip?.toLowerCase().includes(validSearchTerm) ||
+      item?.nama_guru?.toLowerCase().includes(validSearchTerm) ||
+      item?.jenis_kelamin?.toLowerCase().includes(validSearchTerm) ||
+      item?.no_telp?.toLowerCase().includes(validSearchTerm) ||
+      item?.id_mapel?.toLowerCase().includes(validSearchTerm) ||
+      item?.id_kelas?.toLowerCase().includes(validSearchTerm) ||
+      item?.rombel?.toLowerCase().includes(validSearchTerm) ||
+      item?.email?.toLowerCase().includes(validSearchTerm) ||
+      item?.walas?.toLowerCase().includes(validSearchTerm)
     );
   });
 
@@ -815,7 +828,55 @@ export default function DataGuru() {
   };
 
   const isResettable = searchTerm.length > 0; // Tombol reset aktif jika ada input pencarian
+  const [isMapelVisible, setIsMapelVisible] = useState(false);
+  const toggleMapelVisibility = () => {
+    setIsMapelVisible(!isMapelVisible);
+  };
+  const [isKelasVisible, setIsKelasVisible] = useState(false);
+  const toggleKelasVisibility = () => {
+    setIsKelasVisible(!isKelasVisible);
+  };
+  const [isRombelVisible, setIsRombelVisible] = useState(false);
+  const toggleRombelVisibility = () => {
+    setIsRombelVisible(!isRombelVisible);
+  };
+  const [dropdowns, setDropdowns] = useState([
+    { id: Date.now(), value: "1" }, // Contoh nilai awal
+  ]);
+  // Fungsi untuk menambah dropdown baru
+  const addDropdown = () => {
+    setDropdowns([...dropdowns, { id: Date.now(), value: "" }]); // Tambahkan dropdown baru dengan ID unik
+  };
+  // Fungsi untuk menghapus dropdown berdasarkan indeks
+  const removeDropdown = (index) => {
+    setDropdowns(dropdowns.filter((_, i) => i !== index));
+  };
+  // Fungsi untuk mengubah nilai dropdown
+  const handleDropdownChange = (index, value) => {
+    const updatedDropdowns = dropdowns.map((dropdown, i) =>
+      i === index ? { ...dropdown, value } : dropdown
+    );
+    setDropdowns(updatedDropdowns);
+  };
 
+  const [editDropdowns, setEditDropdowns] = useState([
+    { id: Date.now(), value: "" },
+  ]);
+  // Fungsi untuk menambah dropdown (Edit)
+  const addEditDropdown = () => {
+    setEditDropdowns([...editDropdowns, { id: Date.now(), value: "" }]);
+  };
+
+  // Fungsi untuk menghapus dropdown (Edit)
+  const removeEditDropdown = (index) => {
+    setEditDropdowns(editDropdowns.filter((_, i) => i !== index));
+  };
+  // Fungsi untuk mengubah value dropdown (Edit)
+  const handleEditCheck = (index, value) => {
+    const updated = [...editDropdowns];
+    updated[index].value = value;
+    setEditDropdowns(updated);
+  };
   return (
     <>
       <div className="rounded-lg max-w-full bg-slate-100">
@@ -850,7 +911,7 @@ export default function DataGuru() {
                   href="#"
                   className="text-teal-500 hover:text-teal-600 hover:underline"
                 >
-                  Siswa
+                  Guru
                 </a>
               </li>
               <li>
@@ -868,215 +929,369 @@ export default function DataGuru() {
               onSubmit={handleSubmit}
               className="bg-white rounded-lg shadow-md p-4 lg:p-6 border"
             >
-              <input
-                type="text"
-                className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                name="id_guru"
-                value={guruData.id_guru}
-                onChange={handleChange}
-                hidden="none"
-              />
-              <input
-                type="text"
-                className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                name="id_admin"
-                value={guruData.id_admin}
-                onChange={handleChange}
-                hidden="none"
-              />
-              <h2 className="text-sm mb-2 sm:text-sm font-bold">NIP</h2>
-              <input
-                type="text"
-                className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                name="nip"
-                value={guruData.nip}
-                onChange={handleChange}
-                placeholder="Nip..."
-              />
-              <h2 className="text-sm mb-2 sm:text-sm font-bold">Nama Guru</h2>
-              <input
-                type="text"
-                className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                name="nama_guru"
-                value={guruData.nama_guru}
-                onChange={handleChange}
-                placeholder="Nama Guru..."
-              />
-              <h2 className="text-sm mb-2 sm:text-sm font-bold">
-                Jenis Kelamin
-              </h2>
-              <select
-                className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                name="jenis_kelamin"
-                value={guruData.jenis_kelamin}
-                onChange={handleChange}
-              >
-                <option value="">Pilih Jenis Kelamin...</option>
-                <option value="L">Laki-laki</option>
-                <option value="P">Perempuan</option>
-              </select>
-              <h2 className="text-sm mb-2 sm:text-sm font-bold">Email</h2>
-              <input
-                type="email"
-                className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                name="email"
-                value={guruData.email}
-                onChange={handleChange}
-                placeholder="Email..."
-              />
-              <h2 className="text-sm mb-2 sm:text-sm font-bold">Password</h2>
-              <input
-                type="password"
-                className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                name="pas"
-                value={guruData.pas}
-                onChange={handleChange}
-                placeholder="Password..."
-              />
-              <h2 className="text-sm mb-2 sm:text-sm font-bold">Mapel</h2>
-              <div className="mb-2 lg:flex lg:flex-wrap md:flex md:flex-wrap">
-                {" "}
-                {mapelList.length > 0 ? (
-                  mapelList.map((mapel) => (
-                    <label
-                      key={mapel.id_mapel} // Pastikan id_mapel ada di data mapel
-                      className="flex items-center space-x-2 md:w-1/2 mb-2"
-                    >
-                      <input
-                        type="checkbox"
-                        name="mapel"
-                        value={mapel.id_mapel} // Ganti dengan nama kolom yang sesuai dari database
-                        checked={guruData.id_mapel.includes(mapel.id_mapel)} // Cek apakah mapel sudah dipilih
-                        onChange={handleMapelChange} // Panggil fungsi untuk mengubah state
-                        className="form-checkbox text-blue-600"
-                      />
-                      <span className="text-sm sm:text-base">
-                        {mapel.nama_mapel}
-                      </span>
-                    </label>
-                  ))
-                ) : (
-                  <p>Tidak ada data mata pelajaran.</p> // Tampilkan pesan jika tidak ada data
-                )}
-              </div>
-              <h2 className="text-sm mb-2 sm:text-sm font-bold">Kelas</h2>
-              <div className="mb-2 lg:flex lg:flex-wrap md:flex md:flex-wrap">
-                {kelasList.map((kelas) => (
-                  <label
-                    key={kelas.id_kelas} // Pastikan id_kelas ada di data kelas
-                    className="flex items-center space-x-2 md:w-16 mb-2"
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <input
+                  type="text"
+                  className="w-full p-2 border rounded text-sm sm:text-base mb-2"
+                  name="id_guru"
+                  value={guruData.id_guru}
+                  onChange={handleChange}
+                  hidden="none"
+                />
+                <input
+                  type="text"
+                  className="w-full p-2 border rounded text-sm sm:text-base mb-2"
+                  name="id_admin"
+                  value={guruData.id_admin}
+                  onChange={handleChange}
+                  hidden="none"
+                />
+                <div>
+                  <h2 className="block text-sm mb-2 sm:text-sm font-bold">
+                    NIP
+                  </h2>
+                  <input
+                    type="text"
+                    className="w-full p-2 border rounded text-sm sm:text-base mb-2"
+                    name="nip"
+                    value={guruData.nip}
+                    onChange={handleChange}
+                    placeholder="Nip..."
+                    pattern="\d*" // Hanya menerima angka
+                    onKeyPress={(e) => {
+                      if (!/[0-9]/.test(e.key)) {
+                        e.preventDefault(); // Mencegah input selain angka
+                      }
+                    }}
+                  />
+                </div>
+                <div>
+                  <h2 className="block text-sm mb-2 sm:text-sm font-bold">
+                    Nama Guru
+                  </h2>
+                  <input
+                    type="text"
+                    className="w-full p-2 border rounded text-sm sm:text-base mb-2"
+                    name="nama_guru"
+                    value={guruData.nama_guru}
+                    onChange={handleChange}
+                    placeholder="Nama Guru..."
+                  />
+                </div>
+                <div>
+                  <h2 className="text-sm mb-2 sm:text-sm font-bold">
+                    Jenis Kelamin
+                  </h2>
+                  <select
+                    className="w-full p-2 border rounded text-sm sm:text-base mb-2"
+                    name="jenis_kelamin"
+                    value={guruData.jenis_kelamin}
+                    onChange={handleChange}
                   >
+                    <option value="">Pilih Jenis Kelamin...</option>
+                    <option value="L">Laki-laki</option>
+                    <option value="P">Perempuan</option>
+                  </select>
+                </div>
+                <div>
+                  <h2 className="text-sm mb-2 sm:text-sm font-bold">Email</h2>
+                  <input
+                    type="email"
+                    className="w-full p-2 border rounded text-sm sm:text-base mb-2"
+                    name="email"
+                    value={guruData.email}
+                    onChange={handleChange}
+                    placeholder="Email..."
+                  />
+                </div>
+                <div>
+                  <h2 className="text-sm mb-2 sm:text-sm font-bold">
+                    Password
+                  </h2>
+                  <input
+                    type="password"
+                    className="w-full p-2 border rounded text-sm sm:text-base mb-2"
+                    name="pas"
+                    value={guruData.pas}
+                    onChange={handleChange}
+                    placeholder="Password..."
+                  />
+                </div>
+                <div>
+                  <h2 className="text-sm mb-2 sm:text-sm font-bold">
+                    Mengampu
+                  </h2>
+                  {/* <div
+                  onClick={toggleMapelVisibility}
+                  className="flex cursor-pointer text-black py-2 rounded-t"
+                >
+                  <span>
+                    {isMapelVisible
+                      ? "Klick Untuk Menutup Mata Pelajaran"
+                      : "Klick Untuk Melihat Mata Pelajaran"}
+                  </span>
+                  <span>{isMapelVisible ? "" : ""}</span>
+                </div>
+                <AnimatePresence>
+                  {isMapelVisible && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.5, ease: "easeInOut" }}
+                      className="mb-2 lg:flex lg:flex-wrap md:flex md:flex-wrap"
+                    >
+                      {" "}
+                      {mapelList.length > 0 ? (
+                        mapelList.map((mapel) => (
+                          <label
+                            key={mapel.id_mapel} // Pastikan id_mapel ada di data mapel
+                            className="flex items-center space-x-2 md:w-1/2 mb-2"
+                          >
+                            <input
+                              type="checkbox"
+                              name="mapel"
+                              value={mapel.id_mapel} // Ganti dengan nama kolom yang sesuai dari database
+                              checked={guruData.id_mapel.includes(
+                                mapel.id_mapel
+                              )} // Cek apakah mapel sudah dipilih
+                              onChange={handleMapelChange} // Panggil fungsi untuk mengubah state
+                              className="form-checkbox text-blue-600"
+                            />
+                            <span className="text-sm sm:text-base">
+                              {mapel.nama_mapel}
+                            </span>
+                          </label>
+                        ))
+                      ) : (
+                        <p>Tidak ada data mata pelajaran.</p> // Tampilkan pesan jika tidak ada data
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence> */}
+                  <div>
+                    {dropdowns.map((_, index) => (
+                      <div key={index} className="flex items-center mb-2">
+                        <select className="w-full p-2 border rounded text-sm sm:text-base mr-2">
+                          <option value="-">Pilih Opsi</option>
+                          <option value="1">Opsi 1</option>
+                          <option value="2">Opsi 2</option>
+                          <option value="3">Opsi 3</option>
+                        </select>
+
+                        {/* Tampilkan tombol '-' hanya jika ada lebih dari satu dropdown */}
+                        {dropdowns.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeDropdown(index)}
+                            className="p-2 bg-red-500 hover:bg-red-700 text-white rounded mr-2"
+                          >
+                            -
+                          </button>
+                        )}
+
+                        {/* Tampilkan tombol '+' hanya pada dropdown terakhir */}
+                        {index === dropdowns.length - 1 && (
+                          <button
+                            type="button"
+                            onClick={addDropdown}
+                            className="p-2 bg-blue-500 hover:bg-blue-700 text-white rounded"
+                          >
+                            +
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <h2 className="text-sm mb-2 sm:text-sm font-bold">Kelas</h2>
+                  <div
+                    onClick={toggleKelasVisibility}
+                    className="flex cursor-pointer text-black py-2 rounded-t"
+                  >
+                    <span>
+                      {isKelasVisible
+                        ? "Klick Untuk Menutup Kelas"
+                        : "Klick Untuk Melihat Kelas"}
+                    </span>
+                    <span>{isKelasVisible ? "" : ""}</span>
+                  </div>
+                  <AnimatePresence>
+                    {isKelasVisible && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.5, ease: "easeInOut" }}
+                        className="mb-2 lg:flex lg:flex-wrap md:flex md:flex-wrap"
+                      >
+                        {kelasList.map((kelas) => (
+                          <label
+                            key={kelas.id_kelas} // Pastikan id_kelas ada di data kelas
+                            className="flex items-center space-x-2 md:w-16 mb-2"
+                          >
+                            <input
+                              type="checkbox"
+                              name="kelas"
+                              value={kelas.id_kelas} // Ganti dengan nama kolom yang sesuai dari database
+                              checked={guruData.id_kelas.includes(
+                                kelas.id_kelas
+                              )} // Cek apakah kelas sudah dipilih
+                              onChange={handleCheckboxChange} // Panggil fungsi untuk mengubah state
+                              className="form-checkbox text-blue-600"
+                            />
+                            <span className="text-sm sm:text-base">
+                              {kelas.kelas}
+                            </span>
+                          </label>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+                <div>
+                  <h2 className="text-sm mb-2 sm:text-sm font-bold">Jurusan</h2>
+                  <div
+                    onClick={toggleRombelVisibility}
+                    className="flex cursor-pointer text-black py-2 rounded-t"
+                  >
+                    <span>
+                      {isRombelVisible
+                        ? "Klick Untuk Menutup Rombel"
+                        : "Klick Untuk Melihat Rombel"}
+                    </span>
+                    <span>{isRombelVisible ? "" : ""}</span>
+                  </div>
+                  <AnimatePresence>
+                    {isRombelVisible && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.5, ease: "easeInOut" }}
+                        className="flex flex-wrap space-x-4 mb-2"
+                      >
+                        {rombelList.length > 0 ? (
+                          rombelList.map((rombel) => (
+                            <label
+                              key={rombel.id_rombel}
+                              className="flex items-center space-x-2 mb-1"
+                            >
+                              <input
+                                type="checkbox"
+                                name="rombel"
+                                value={rombel.id_rombel}
+                                checked={guruData.id_rombel.includes(
+                                  rombel.id_rombel
+                                )}
+                                onChange={handleJurusanChange}
+                                className="form-checkbox text-blue-600"
+                              />
+                              <span className="text-sm sm:text-base">
+                                {rombel.nama_rombel}
+                              </span>
+                            </label>
+                          ))
+                        ) : (
+                          <p>Tidak ada data rombel.</p> // Tampilkan pesan jika tidak ada data
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+                <div>
+                  <label className="inline-flex items-center">
+                    <h2 className="text-sm mb-2 sm:text-sm font-bold pr-2 pt-1">
+                      Walas
+                    </h2>
                     <input
                       type="checkbox"
-                      name="kelas"
-                      value={kelas.id_kelas} // Ganti dengan nama kolom yang sesuai dari database
-                      checked={guruData.id_kelas.includes(kelas.id_kelas)} // Cek apakah kelas sudah dipilih
-                      onChange={handleCheckboxChange} // Panggil fungsi untuk mengubah state
-                      className="form-checkbox text-blue-600"
+                      checked={isWalasEnabled}
+                      onChange={handleToggle}
+                      className="hidden"
                     />
-                    <span className="text-sm sm:text-base">{kelas.kelas}</span>
-                  </label>
-                ))}
-              </div>
-              <h2 className="text-sm mb-2 sm:text-sm font-bold">Jurusan</h2>
-              <div className="flex flex-wrap space-x-4 mb-2">
-                {rombelList.length > 0 ? (
-                  rombelList.map((rombel) => (
-                    <label
-                      key={rombel.id_rombel}
-                      className="flex items-center space-x-2 mb-1"
+                    <span
+                      className={`w-10 h-5 flex items-center bg-gray-300 rounded-full p-1 cursor-pointer transition-colors duration-300 ${
+                        isWalasEnabled ? "bg-teal-400" : ""
+                      }`}
                     >
-                      <input
-                        type="checkbox"
-                        name="rombel"
-                        value={rombel.id_rombel}
-                        checked={guruData.id_rombel.includes(rombel.id_rombel)}
-                        onChange={handleJurusanChange}
-                        className="form-checkbox text-blue-600"
+                      <span
+                        className={`bg-white w-4 h-4 rounded-full shadow-md transform duration-300 ${
+                          isWalasEnabled ? "translate-x-5" : ""
+                        }`}
                       />
-                      <span className="text-sm sm:text-base">
-                        {rombel.nama_rombel}
-                      </span>
-                    </label>
-                  ))
-                ) : (
-                  <p>Tidak ada data rombel.</p> // Tampilkan pesan jika tidak ada data
-                )}
-              </div>
-              <label className="inline-flex items-center">
-                <h2 className="text-sm mb-2 sm:text-sm font-bold pr-2 pt-1">
-                  Walas
-                </h2>
-                <input
-                  type="checkbox"
-                  checked={isWalasEnabled}
-                  onChange={handleToggle}
-                  className="hidden"
-                />
-                <span
-                  className={`w-10 h-5 flex items-center bg-gray-300 rounded-full p-1 cursor-pointer transition-colors duration-300 ${
-                    isWalasEnabled ? "bg-teal-400" : ""
-                  }`}
-                >
-                  <span
-                    className={`bg-white w-4 h-4 rounded-full shadow-md transform duration-300 ${
-                      isWalasEnabled ? "translate-x-5" : ""
-                    }`}
-                  />
-                </span>
-                <span className="ml-2 text-sm"></span>
-              </label>
-              <select
-                className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                name="walas"
-                value={guruData.walas}
-                onChange={handleChange}
-                disabled={!isWalasEnabled} // Disable dropdown jika isWalasEnabled false
-              >
-                <option value="" disabled>
-                  Pilih Wali Kelas...
-                </option>
-                {kelas1.map((item) => (
-                  <option key={item.id} value={item.id_kelas}>
-                    {item.kelas}{" "}
-                    {/* Sesuaikan dengan field yang diinginkan dari respons */}
-                  </option>
-                ))}
-              </select>
-              <h2 className="text-sm mb-2 sm:text-sm font-bold">No. Telepon</h2>
-              <input
-                type="text"
-                className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                name="no_telp"
-                value={guruData.no_telp}
-                onChange={handleChange}
-                placeholder="Nomor telepon..."
-              />
-              <h2 className="text-sm mb-2 sm:text-sm font-bold">Barcode</h2>
-              <input
-                type="text"
-                className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                name="barcode"
-                value={guruData.barcode}
-                onChange={handleChange}
-              />
-              <h2 className="text-sm mb-2 sm:text-sm font-bold">Foto</h2>
-              <input
-                type="file"
-                name="foto"
-                onChange={handleFileChange} // Ganti event handler khusus untuk file
-                className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                placeholder="Pilih file foto..."
-              />
-              <div className="mt-4">
-                {/* Tombol Simpan */}
-                <div className="flex justify-end m-4 space-x-2 lg:mt-0 md:mt-0 md:z-50">
-                  <button
-                    type="submit"
-                    className="px-3 py-2 sm:px-4 sm:py-2 bg-teal-400 hover:bg-teal-500 text-white items-end rounded text-sm sm:text-base lg:w-24 md:w-24"
+                    </span>
+                    <span className="ml-2 text-sm"></span>
+                  </label>
+                  <select
+                    className="w-full p-2 border rounded text-sm sm:text-base mb-2"
+                    name="walas"
+                    value={guruData.walas}
+                    onChange={handleChange}
+                    disabled={!isWalasEnabled} // Disable dropdown jika isWalasEnabled false
                   >
-                    Simpan
-                  </button>
+                    <option value="" disabled>
+                      Pilih Wali Kelas...
+                    </option>
+                    {kelas1.map((item) => (
+                      <option key={item.id_siswa} value={item.id_kelas}>
+                        {item.kelas}{" "}
+                        {/* Sesuaikan dengan field yang diinginkan dari respons */}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <h2 className="text-sm mb-2 sm:text-sm font-bold">
+                    No. Telepon
+                  </h2>
+                  <input
+                    type="text"
+                    className="w-full p-2 border rounded text-sm sm:text-base mb-2"
+                    name="no_telp"
+                    value={guruData.no_telp}
+                    onChange={handleChange}
+                    placeholder="Nomor telepon..."
+                    pattern="\d*" // Hanya menerima angka
+                    onKeyPress={(e) => {
+                      if (!/[0-9]/.test(e.key)) {
+                        e.preventDefault(); // Mencegah input selain angka
+                      }
+                    }}
+                  />
+                </div>
+                <div>
+                  <h2 className="text-sm mb-2 sm:text-sm font-bold">Barcode</h2>
+                  <input
+                    type="text"
+                    className="w-full p-2 border rounded text-sm sm:text-base mb-2"
+                    name="barcode"
+                    value={guruData.barcode}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div>
+                  <h2 className="text-sm mb-2 sm:text-sm font-bold">Foto</h2>
+                  <input
+                    type="file"
+                    name="foto"
+                    onChange={handleFileChange} // Ganti event handler khusus untuk file
+                    className="w-full p-2 border rounded text-sm sm:text-base mb-2"
+                    placeholder="Pilih file foto..."
+                  />
+                </div>
+                <div></div>
+                <div className="mt-4">
+                  {/* Tombol Simpan */}
+                  <div className="flex justify-end m-4 space-x-2 lg:mt-0 md:mt-0 md:z-50">
+                    <button
+                      type="submit"
+                      className="px-3 py-2 sm:px-4 sm:py-2 bg-teal-400 hover:bg-teal-500 text-white items-end rounded text-sm sm:text-base lg:w-24 md:w-24"
+                    >
+                      Simpan
+                    </button>
+                  </div>
                 </div>
               </div>
             </form>
@@ -1291,8 +1506,8 @@ export default function DataGuru() {
                           <h2 className="text-sm mb-2 sm:text-sm font-bold">
                             Mapel
                           </h2>
-                          <div className="mb-2 lg:flex lg:flex-wrap md:flex md:flex-wrap">
-                            {mapelList.length > 0 ? (
+                          <div className=" mb-2 lg:flex lg:flex-wrap md:flex md:flex-wrap">
+                            {/* {mapelList.length > 0 ? (
                               mapelList.map((mapel) => (
                                 <label
                                   key={mapel.id_mapel}
@@ -1318,7 +1533,46 @@ export default function DataGuru() {
                               ))
                             ) : (
                               <p>Tidak ada data mata pelajaran.</p>
-                            )}
+                            )} */}
+                            <div className="w-full">
+                              {editDropdowns.map((dropdown, index) => (
+                                <div
+                                  key={dropdown.id}
+                                  className="flex items-center mb-2"
+                                >
+                                  <select
+                                    value={dropdown.value}
+                                    onChange={(e) =>
+                                      handleEditCheck(index, e.target.value)
+                                    }
+                                    className="w-full p-2 border rounded text-sm sm:text-base mr-2"
+                                  >
+                                    <option value="">Pilih Opsi</option>
+                                    <option value="1">Opsi 1</option>
+                                    <option value="2">Opsi 2</option>
+                                    <option value="3">Opsi 3</option>
+                                  </select>
+                                  {editDropdowns.length > 1 && (
+                                    <button
+                                      type="button"
+                                      onClick={() => removeEditDropdown(index)}
+                                      className="p-2 bg-red-500 hover:bg-red-700 text-white rounded mr-2"
+                                    >
+                                      -
+                                    </button>
+                                  )}
+                                  {index === editDropdowns.length - 1 && (
+                                    <button
+                                      type="button"
+                                      onClick={addEditDropdown}
+                                      className="p-2 bg-blue-500 hover:bg-blue-700 text-white rounded"
+                                    >
+                                      +
+                                    </button>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
                           </div>
                           <h2 className="text-sm mb-2 sm:text-sm font-bold">
                             Kelas
@@ -1470,7 +1724,6 @@ export default function DataGuru() {
                     </div>
                   )}
                 </div>
-
                 <div className="mt-4 flex justify-between items-center">
                   <div className="text-sm text-white">
                     Halaman {currentPage} dari {totalPages}

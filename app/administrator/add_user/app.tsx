@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import Pw from "./pass";
+import axios from "axios";
 import bcrypt from "bcryptjs"; // Pastikan bcryptjs sudah terinstal
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { toast, ToastContainer } from "react-toastify";
@@ -57,7 +58,7 @@ export default function DataSiswa() {
   }, []);
 
   const adminColumns = [
-    { header: "ID", accessor: "id_admin" as keyof Admin },
+    { header: "Id_admin", accessor: "id_admin" as keyof Admin },
     { header: "Nama", accessor: "nama_admin" as keyof Admin },
     { header: "Alamat", accessor: "alamat" as keyof Admin },
     { header: "Jk", accessor: "jenis_kelamin" as keyof Admin },

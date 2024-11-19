@@ -108,12 +108,6 @@ const ProfileCard = () => {
              <li>
                <span className="text-gray-500">/</span>
              </li>
-             <li>
-               <a href="#" className="text-teal-500 hover:underline">Administrator</a>
-             </li>
-             <li>
-               <span className="text-gray-500">/</span>
-             </li>
              <li className="text-gray-500">Profile</li>
            </ol>
          </nav>
