@@ -200,8 +200,6 @@ const handleEditRombelChange = (e) => {
     { header: 'Tahun Ajaran', accessor: 'tahun' as keyof Siswa },
     { header: 'Kelas', accessor: 'kelas' as keyof Siswa },
     { header: 'Jurusan', accessor: 'nama_rombel' as keyof Siswa },
-    { header: 'Email', accessor: 'email' as keyof Siswa },
-    { header: 'Barcode', accessor: 'barcode' as keyof Siswa },
     { header: 'Nama Wali', accessor: 'nama_wali' as keyof Siswa },
     {
       header: 'No Wali',
@@ -232,7 +230,7 @@ const handleEditRombelChange = (e) => {
               &#8942; {/* Simbol menu */}
             </button>
             {openDropdownId === row.id_siswa && ( // Hanya tampilkan dropdown jika id_siswa sesuai
-              <div className="absolute -ml-64 mt-2 w-48 bg-white border rounded shadow-md">
+              <div className="absolute -ml-36 mt-2 w-48 bg-white border rounded shadow-md">
                 <button
                   onClick={() => handleEditClick(row)}
                   className="block w-full  px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-200"
@@ -316,41 +314,48 @@ const handleEditRombelChange = (e) => {
     setSelectedEditRombel(row.id_rombel);
 };
   // Handle perubahan input pada form edit
-const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-  if (editData) {
-    const { name, value } = e.target;
-
-    // Update editData berdasarkan input yang berubah
-    setEditData(prev => (prev ? { ...prev, [name]: value } : null));
-  }
+  // Handler umum untuk input teks
+  // Fungsi untuk handle perubahan input form
+const handleEditChange = (e) => {
+  const { name, value } = e.target;
+  setEditData((prev) => ({
+    ...prev,
+    [name]: value,
+  }));
 };
+  
 
 // Fungsi untuk submit data yang sudah diedit
-const handleEditSubmit = async (e: React.FormEvent) => {
-  e.preventDefault(); // Mencegah refresh halaman
-
-  if (!editData) {
-    toast('Data siswa tidak ditemukan.');
-    return;
-  }
+// Fungsi untuk mengirimkan data yang sudah diedit
+const handleEditSubmit = async (e) => {
+  e.preventDefault();
 
   try {
-    // Memanggil fungsi API untuk mengupdate data siswa
-    const updatedSiswa = await updateSiswa([editData]);
-    console.log('Data siswa berhasil diperbarui:', updatedSiswa);
-    setIsModalOpen(false);
+    const response = await axios.put(`${baseUrl}/siswa/edit-siswa`,[
+      editData, // Mengirim array karena backend menerima array
+    ]);
 
-    // Menampilkan notifikasi setelah sukses
-    toast('Data siswa berhasil diperbarui!');
+    if (response.data.success) {
+      toast('Data berhasil diperbarui!');
+      setIsModalOpen(false); // Menutup modal
+      // Auto refresh data siswa dengan mengupdate state
+      setDataSiswa((prevData) => {
+        console.log("Data sebelumnya:", prevData); // Debugging untuk melihat data sebelumnya
+        const updatedData = prevData.map((siswa) =>
+          siswa.id_siswa === editData.id_siswa ? { ...siswa, ...editData } : siswa
+        );
+        console.log("Data setelah update:", updatedData); // Debugging untuk melihat data setelah diupdate
+        return updatedData;
+      });
+      setOpenDropdownId(null); // Tutup dropdown juga
+    } else {
+      toast('Terjadi kesalahan saat memperbarui data.');
+    }
   } catch (error) {
-    // Menangani error dengan informasi yang lebih baik
-    console.error('Gagal memperbarui data siswa:', error.response?.data || error.message);
-    toast('Terjadi kesalahan saat memperbarui data siswa.');
+    console.error("error apa ini", error.response?.data);
+    toast('Gagal mengupdate data.');
   }
 };
-
-
-
 
   const handleDeleteClickk = (row) => {
     setSelectedRow(row); // Simpan data yang ingin dihapus
@@ -465,31 +470,6 @@ const handleEditSubmit = async (e: React.FormEvent) => {
       toast.error('Terjadi kesalahan saat menambahkan data siswa');
     }
   };
- 
-  // Fungsi untuk menangani edit
-  const handleEdit = async (updatedRow: Siswa) => {
-  try {
-    // Pastikan updatedRow memiliki id_siswa dan nis
-    if (!updatedRow.id_siswa || !updatedRow.nis) {
-      throw new Error('ID Siswa atau NIS tidak ditemukan');
-    }
-
-    // Update state di frontend
-    setDataSiswa((prevSiswa) =>
-      prevSiswa.map((siswa) =>
-        siswa.id_siswa === updatedRow.id_siswa ? updatedRow : siswa
-      )
-    );
-    // Kirim request ke backend dengan id dan nis yang benar
-    const updatedSiswa = await updateSiswa(updatedRow.id_siswa, updatedRow.nis, updatedRow);
-    console.log('Response from backend:', updatedSiswa);
-    toast.success('Data siswa berhasil diperbarui!');
-  } catch (error) {
-    // Tampilkan lebih banyak detail error dari response server
-    console.error('Gagal memperbarui data di backend:', error.response?.data || error.message);
-    toast.error(`Gagal memperbarui data: ${error.response?.data?.message || error.message}`);
-  }
-};
 
 const handleDelete = async (deletedRow) => {
   const confirmed = window.confirm(`Apakah Anda yakin ingin menghapus siswa ${deletedRow.nama_siswa}?`);
@@ -515,17 +495,12 @@ const handleDelete = async (deletedRow) => {
   //tombol untuk filter, pindah halaman, search dan reset
   const [itemsPerPage, setItemsPerPage] = useState(5); // Atur ke angka default
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState(''); // State untuk menyimpan query pencarian
 
   // Memfilter data berdasarkan searchTerm
-  const filteredData = dataSiswa.filter((item) => {
-    return (
-      (item.nis?.toString().toLowerCase().includes(searchTerm.toLowerCase()) || '') ||
-      (item.nama_siswa ? item.nama_siswa.toString().toLowerCase().includes(searchTerm.toLowerCase()) : false) ||
-      (item.jenis_kelamin ? item.jenis_kelamin.toLowerCase().includes(searchTerm.toLowerCase()) : false) ||
-      (item.id_kelas ? item.id_kelas.toString().toLowerCase().includes(searchTerm.toLowerCase()) : false) ||
-      (item.id_rombel ? item.id_rombel.toString().toLowerCase().includes(searchTerm.toLowerCase()) : false)
-    );
-  });
+  const filteredData = dataSiswa.filter((siswa) => 
+    siswa.nama_siswa.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   // Fungsi untuk mengurutkan data berdasarkan nama secara alfabetis
   const sortedData = [...filteredData].sort((a, b) => {
@@ -562,11 +537,11 @@ const handleDelete = async (deletedRow) => {
 
   // Fungsi untuk mengatur ulang pencarian
   const handleResetClick = () => {
-    setSearchTerm(""); // Reset search term
+    setSearchQuery(""); // Reset search term
     setCurrentPage(1); // Reset ke halaman pertama
   };
 
-  const isResettable = searchTerm.length > 0; // Tombol reset aktif jika ada input pencarian
+  const isResettable = searchQuery.length > 0; // Tombol reset aktif jika ada input pencarian
 
   const handleDownloadFormatClick = () => {
     // Data yang akan diisikan ke dalam file Excel
@@ -577,13 +552,13 @@ const handleDelete = async (deletedRow) => {
         nis: "",
         nama_siswa: "",
         jenis_kelamin: "",
-        tahun_ajaran: "",
-        kelas: "",
-        rombel: "",
-        email: "",
-        pass: "",
-        foto: "",
-        barcode: "",
+        id_tahun_pelajaran: "",
+        id_kelas: "",
+        id_rombel: "",
+        // email: "",
+        // pass: "",
+        // foto: "",
+        // barcode: "",
         nama_wali: "",
         nomor_wali: "",
       },
@@ -596,13 +571,13 @@ const handleDelete = async (deletedRow) => {
       "nis",
       "nama_siswa",
       "jenis_kelamin",
-      "tahun_ajaran",
-      "kelas",
-      "rombel",
-      "email",
-      "pass",
-      "foto",
-      "barcode",
+      "id_tahun_pelajaran",
+      "id_kelas",
+      "id_rombel",
+      // "email",
+      // "pass",
+      // "foto",
+      // "barcode",
       "nama_wali",
       "nomor_wali",
     ];
@@ -754,17 +729,26 @@ worksheet["H1"].c = [{ t:rombelText}];
           const result = await response.json();
           if (response.ok) {
             console.log('Data berhasil dikirim', result);
-          } else {
-            console.error('Gagal mengirim data:', result.error || response.statusText);
-          }
-        } catch (error) {
-          console.error('Error membaca file Excel atau mengirim data:', error);
+          // Ambil data terbaru setelah sukses menyimpan
+          const updatedSiswaResponse = await fetch(`${baseUrl}/siswa/all-siswa`);
+          const updatedSiswaData = await updatedSiswaResponse.json();
+          setDataSiswa(updatedSiswaData.data); // Update state dengan data terbaru
+          toast.success('Data siswa berhasil ditambahkan!');
+        } else {
+          console.error('Gagal mengirim data:', result.error || response.statusText);
+          toast.error('Gagal menambahkan data siswa');
         }
-      };
+      } catch (error) {
+        console.error('Error membaca file Excel atau mengirim data:', error);
+        toast.error('Terjadi kesalahan saat mengolah data');
+      }
+    };
 
-      reader.readAsArrayBuffer(file); // Mulai membaca file Excel
-    }
-  };
+    reader.readAsArrayBuffer(file); // Mulai membaca file Excel
+  }
+};
+
+
   
   return (
     <>
@@ -1039,23 +1023,50 @@ worksheet["H1"].c = [{ t:rombelText}];
                   </div>
                 </div>
                 {/* Filter Dropdown */}
-                <div className="grid grid-cols-1 sm:grid-cols-6 gap-4 mt-4">
-                  <div className="lg:flex-row justify-between items-center">
-                    <div className=" items-center lg:mb-0 space-x-2 mb-3 lg:order-1">
-                      <select
-                        value={itemsPerPage}
-                        onChange={(e) => handleItemsPerPageChange(e.target.value)}
-                        min="1" // Menambahkan batas minimum
-                        className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base"
-                      >
-                        <option value={1}>1</option>
-                        <option value={5}>5</option>
-                        <option value={10}>10</option>
-                        <option value={20}>20</option>
-                      </select>
-                    </div>
+                <div className="flex flex-wrap justify-start items-center w-full mt-4 ">
+                  {/* Div untuk Items per Page (sebelah kiri) */}
+                  <div className="flex items-center ">
+                    <select
+                      id="items-per-page"
+                      value={itemsPerPage}
+                      onChange={(e) => handleItemsPerPageChange(e.target.value)}
+                      className="p-2 border border-gray-300 rounded text-sm sm:text-base"
+                    >
+                      <option value={1}>1</option>
+                      <option value={5}>5</option>
+                      <option value={10}>10</option>
+                      <option value={20}>20</option>
+                    </select>
                   </div>
-            </div>      
+
+                  {/* Div untuk Search (sebelah kanan) */}
+                  <div className="flex items-center sm:mt-0 ">
+                    <input
+                      id="search"
+                      type="text"
+                      placeholder="Search by Name"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)} // Update search query
+                      className="p-2 border ml-3 border-gray-300 rounded text-sm sm:text-base w-36"
+                    />
+                  </div>
+                  <div className=" flex items-center mt-3 lg:mt-0 md:mt-0 lg:mb-0 space-x-2 lg:order-1 w-full lg:w-auto md:w-auto ">
+                    <button
+                      onClick={handleResetClick}
+                      disabled={!isResettable}
+                      className={`w-full p-2 lg:ml-3 md:ml-3 rounded text-sm sm:text-base transition  ${
+                        isResettable
+                          ? "text-white bg-red-500 hover:bg-red-600 cursor-pointer"
+                          : "text-gray-400 bg-gray-300 cursor-not-allowed"
+                      }`}
+                    >
+                      <p>Reset</p>
+                    </button>
+                  </div>
+                </div>
+
+
+    
               <div className="overflow-x-auto">
                 <DataTable 
                   columns={siswaColumns}
@@ -1070,33 +1081,31 @@ worksheet["H1"].c = [{ t:rombelText}];
                         <form onSubmit={handleEditSubmit}>
                           <input
                             type="text"
-                            name="nama_siswa"
-                            value={editData ? editData.nama_siswa : ""}
+                            name="nis"
+                            value={editData ? editData.nis :""}
                             onChange={handleEditChange}
-                            className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                            placeholder="Nama Siswa..."
+                            placeholder="NIS"
+                            className="mt-1 p-2 border rounded-md w-full"
                           />
-
                           <input
                             type="text"
-                            name="nis"
-                            value={editData ? editData.nis : ""}
+                            name="nama_siswa"
+                            value={editData ? editData.nama_siswa :""}
                             onChange={handleEditChange}
-                            className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                            placeholder="Nis..."
+                            placeholder="Nama Siswa"
+                            className="mt-1 p-2 border rounded-md w-full"
                           />
-
                           <select
                             name="jenis_kelamin"
-                            value={editData ? editData.jenis_kelamin : ""}
+                            value={editData ? editData.jenis_kelamin :""}
                             onChange={handleEditChange}
-                            className="w-full p-2 border rounded text-sm sm:text-base mb-2"
+                            className="mt-1 p-2 border rounded-md w-full"
+                            
                           >
-                            <option value="">Pilih Jenis Kelamin</option>
+                            <option value="">Pilih</option>
                             <option value="L">Laki-laki</option>
                             <option value="P">Perempuan</option>
                           </select>
-
                           <select
                               name="id_tahun_pelajaran"
                               value={selectedEditTahun}
@@ -1110,7 +1119,6 @@ worksheet["H1"].c = [{ t:rombelText}];
                                   </option>
                               ))}
                           </select>
-
                           <select
                               name="id_kelas"
                               value={selectedEditKelas}
@@ -1124,7 +1132,6 @@ worksheet["H1"].c = [{ t:rombelText}];
                                   </option>
                               ))}
                           </select>
-
                           <select
                               name="id_rombel"
                               value={selectedEditRombel}
@@ -1138,70 +1145,37 @@ worksheet["H1"].c = [{ t:rombelText}];
                                   </option>
                               ))}
                           </select>
-
                           <input
                             type="email"
                             name="email"
-                            value={editData ? editData.email : ""}
+                            value={editData?.email || ""} 
                             onChange={handleEditChange}
-                            className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                            placeholder="Email..."
+                            placeholder="Email (Opsional)"
+                            className="mt-1 p-2 border rounded-md w-full"
                           />
-
-                          <div className="relative w-full">
-                            <input
-                              type={passwordVisible ? "text" : "password"} // Ubah tipe input berdasarkan state
-                              name="pass"
-                              value={formData.pass}
-                              onChange={handleChange}
-                              placeholder="Password..."
-                              className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                              
-                            />
-                            <span
-                              onClick={togglePasswordVisibility}
-                              className="absolute inset-y-0 right-2 pb-2 flex items-center cursor-pointer text-gray-600"
-                            >
-                              {passwordVisible ? <FaEye /> : <FaEyeSlash />}
-                            </span>
-                          </div>
-
+                          <input
+                            type="password"
+                            name="pass"
+                            value={editData ? editData.pass :""}
+                            onChange={handleEditChange}
+                            placeholder="Password (Opsional)"
+                            className="mt-1 p-2 border rounded-md w-full"
+                          />
                           <input
                             type="file"
                             name="foto"
-                            accept="image/*"
-                            onChange={handleFotoChange}
+                            onChange={handleEditChange}
+                            placeholder="Foto (Opsional)"
                             className="mt-1 p-2 border rounded-md w-full"
                           />
-                          {fotoPreview && <img src={fotoPreview} alt="Preview Foto" className="mt-2 h-20 w-20" />}
-
                           <input
                             type="text"
                             name="barcode"
-                            value={editData ? editData.barcode : ""}
+                            value={editData ? editData.barcode :""}
                             onChange={handleEditChange}
-                            className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                            placeholder="Barcode..."
+                            placeholder="Barcode (Opsional)"
+                            className="mt-1 p-2 border rounded-md w-full"
                           />
-
-                          <input
-                            type="text"
-                            name="nama_wali"
-                            value={editData ? editData.nama_wali : ""}
-                            onChange={handleEditChange}
-                            className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                            placeholder="Nama wali..."
-                          />
-
-                          <input
-                            type="text"
-                            name="nomor_wali"
-                            value={editData ? editData.nomor_wali : ""}
-                            onChange={handleEditChange}
-                            className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                            placeholder="Nomor wali..."
-                          />
-
                           <button
                             type="submit"
                             className="py-2 sm:px-4 sm:py-2 bg-teal-400 hover:bg-teal-500 text-white rounded text-sm sm:text-base"

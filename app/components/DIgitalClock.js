@@ -55,10 +55,10 @@ export default function DigitalClock() {
 
   return (
     <div>
-      <div className="text-xl font-bold text-gray-800">
+      <div className="text-2xl font-bold text-gray-800">
         {dayName}, {date} {monthName} {year}
       </div>
-      <div className="text-6xl font-bold text-gray-800">
+      <div className="text-7xl font-bold text-gray-800">
         {hours}:{minutes}:{seconds}
       </div>
     </div>
