@@ -75,6 +75,22 @@ const Page = () => {
     { header: "Walas", accessor: "walas" },
     
   ];
+
+  // Fungsi untuk menangani blur (keluar dari fokus) pada input pencarian
+  const handleSearchBlur = () => {
+    setIsSearchFocused(false);
+    if (barcodeInputRef.current) {
+      barcodeInputRef.current.focus();
+    }
+  };
+  const searchInputRef = useRef(null);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  // Fungsi untuk menangani fokus ke input pencarian
+  const handleSearchFocus = () => {
+    setIsSearchFocused(true);
+  };
+
+
   const [clickedRowIndex, setClickedRowIndex] = useState(null);
   const tableRef = useRef(null);
   const buttonRef = useRef(null); // Ref untuk tombol "Kirim"
@@ -498,6 +514,24 @@ const Page = () => {
       }, 1000);
     }
   };
+  useEffect(() => {
+    const handleFocus = () => {
+      if (barcodeInputRef.current) {
+        barcodeInputRef.current.focus();
+      }
+    };
+
+    // Fokus pada input saat komponen dimuat
+    handleFocus();
+
+    // Tambahkan event listener ke seluruh dokumen
+    document.addEventListener("click", handleFocus);
+
+    // Bersihkan event listener saat komponen di-unmount
+    return () => {
+      document.removeEventListener("click", handleFocus);
+    };
+  }, []);
   
   //state untuk dropdown aksi
   const [openDropdown, setOpenDropdown] = useState(null);
@@ -518,7 +552,7 @@ const Page = () => {
       </div>
 
     {/* Column 1: Input */}
-        <div className="relative">
+        <div className="relative ">
           <div className="text-white px-4 py-2 rounded flex items-center">
             <span
               onClick={handleDropdownToggle}
@@ -528,16 +562,16 @@ const Page = () => {
             </span>
           </div>
           {isDropdownVisible && (
-            <div className="w-full p-4 lg:p-6">
+            <div className="lg:absolute lg:w-1/3 md:w-1/4 p-4 lg:p-6 top-full mt-2">
               <div className="bg-white rounded-lg shadow-md p-4 lg:p-6 border">
                 <div className="flex flex-col items-center justify-center">
-                  <h1 className="font-bold text-xl text-center lg:text-3xl">
+                  <h1 className="font-bold text-xl text-center lg:text-2xl">
                     Tombol untuk siswa
                   </h1>
                   <div>
                     <div className="flex space-x-4 lg:mt-4">
                       <button
-                        className="bg-blue-500 w-32 lg:w-40 lg:text-xl md:w-40 md:text-xl text-white px-4 py-2 mr-2 rounded "
+                        className="bg-blue-500 w-32 lg:w-32 lg:text-base md:w-32 md:text-xl text-white px-4 py-2 mr-2 rounded "
                         onClick={togglePopupSakit}
                       >
                         Sakit
@@ -557,11 +591,13 @@ const Page = () => {
                                   <option value="12">12</option>
                                 </select>
                                 <input
-                                  type="text"
-                                  placeholder="Search..."
-                                  className="border border-gray-300 rounded px-2 py-1"
-                                  value={searchTermSakit}
-                                  onChange={handleSearchSakitChange} // Tambahkan handler untuk pencarian
+                                 type="text"
+                                 placeholder="Search..."
+                                 className="border border-gray-300 rounded px-2 py-1"
+                                 value={searchTermSakit}
+                                 onChange={handleSearchSakitChange} // Handle perubahan pencarian
+                                 onFocus={handleSearchFocus} // Menangani saat input pencarian di-fokus
+                                 onBlur={handleSearchBlur} // Menangani saat input pencarian kehilangan fokus
                                 />
                               </div>
 
@@ -647,7 +683,7 @@ const Page = () => {
                         </div>
                       )}
                       <button
-                        className="bg-orange-500 lg:w-44 lg:text-xl md:w-44 md:text-xl text-white px-4 py-2 mr-2 rounded"
+                        className="bg-orange-500 lg:w-44 lg:text-base md:w-44 md:text-xl text-white px-4 py-2 mr-2 rounded"
                         onClick={togglePopupKeteranganLain} // Panggil fungsi untuk toggle pop-up
                       >
                         Keterangan Lain
@@ -916,24 +952,28 @@ const Page = () => {
           )}  
         </div>
 
-        <div className="flex flex-col lg:flex-row items-center justify-between p-4">
+        <div className="flex flex-col lg:flex-row items-stretch justify-between p-4">
           {/* Column 1: Digital Clock */}
-          <div className="flex items-center justify-center p-4 w-full lg:w-auto">
-            <div className="bg-white rounded-lg shadow-lg p-6 text-center">
-              <DigitalClock/> {/* Menambahkan ukuran font */}
+          <div
+            className={`flex items-center justify-center p-4 w-full lg:w-auto h-full ${
+              isDropdownVisible ? "md:mt-40 lg:mt-60" : "md:mt-0 lg:mt-0"
+            }`}
+          >
+            <div className="bg-white rounded-lg shadow-lg p-6 text-center h-full lg:ml-5">
+              <DigitalClock className="" /> {/* Menambahkan ukuran font */}
             </div>
           </div>
 
           {/* Column 2: Table */}
-          <div className="w-full lg:w-3/4 p-4 lg:mt-11">
-            <div className="bg-white p-3 rounded shadow-md">
-              <div className="bg-slate-600 p-2 rounded-lg">
+          <div className="w-full lg:w-2/3 p-4 h-full">
+            <div className="bg-white p-3 rounded shadow-md h-full">
+              <div className="bg-slate-600 p-2 rounded-lg h-full">
                 <div className="p-2">
                   <h2 className="text-sm pt-3 sm:text-2xl text-white font-bold">
                     Absensi Global
                   </h2>
                 </div>
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto h-full">
                   <DataTable columns={tableColumns} data={kelas} />
                 </div>
               </div>
@@ -942,16 +982,18 @@ const Page = () => {
         </div>
 
 
+
       {/* scan barcode */}
       <div className="p-4">
         
         <input
           ref={barcodeInputRef}
           type="text"
-          value={barcode}
-          onChange={handleBarcodeChange}
+          // value={barcode}
+          // onChange={handleBarcodeChange}
           placeholder="Scan Barcode"
-          // className=" pointer-events-none" // Menyembunyikan input
+          className="pointer-events-auto"
+          readOnly // Membuat input hanya menerima input dari scanner
         />
       </div>
     </>

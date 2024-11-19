@@ -8,6 +8,7 @@ import {
   UserGroupIcon,
   IdentificationIcon,
 } from "@heroicons/react/24/outline";
+import DataTable from "../components/dataTabel";
 
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -34,6 +35,54 @@ const AdminPage = () => {
     }
     axios.defaults.headers.common["Authorization"] = token;
   }, [router]);
+
+  const [siswaData, setSiswaData] = useState([]);
+  const fetchNamaKelas = async () => {
+    try {
+      const response = await axios.get(
+        `${baseUrl}/joinNonMaster/nama-siswa-kelas`
+      );
+      setSiswaData(response.data.data); // Menyimpan data ke state kelas
+      console.log("total", response.data);
+    } catch (error) {
+      console.error("Fetch error:", error); // Menangani kesalahan
+    }
+  };
+  useEffect(() => {
+    fetchNamaKelas(); // Panggil fungsi fetch saat komponen di-mount
+  }, []);
+
+  const [kelas, setKelas] = useState([]);
+  const fetchKelasSiswaTotal = async () => {
+    try {
+      const response = await axios.get(
+        `${baseUrl}/joinNonMaster/total-kelas-siswa`
+      );
+      setKelas(response.data.data); // Menyimpan data ke state kelas
+      console.log("total", response.data);
+    } catch (error) {
+      console.error("Fetch error:", error); // Menangani kesalahan
+    }
+  };
+  useEffect(() => {
+    fetchKelasSiswaTotal(); // Panggil fungsi fetch saat komponen di-mount
+  }, []);
+  
+  //   const headers = Object.keys(siswaData[0]);
+  
+
+  const tableColumns = [
+    { header: "Kelas", accessor: "kelas" },
+    { header: "Jumlah Siswa", accessor: "total_siswa" },
+    { header: "H", accessor: "h" },
+    { header: "S", accessor: "s" },
+    { header: "I", accessor: "i" },
+    { header: "A", accessor: "a" },
+    { header: "T", accessor: "t" },
+    { header: "Walas", accessor: "walas" },
+    
+  ];
+
   return (
     <div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6 xl:grid-cols-3 2xl:gap-7.5 px-6">
@@ -81,53 +130,12 @@ const AdminPage = () => {
         {/* Column 1: Input */}
         <div className="w-full lg:w-1/2 p-4 lg:p-6">
           <div className="bg-white rounded-lg shadow-md p-4 lg:p-6 border overflow-x-auto">
-            <table className="min-w-full bg-white ">
-              <thead>
-                <tr>
-                  <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">
-                    NO
-                  </th>
-                  <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">
-                    KELAS
-                  </th>
-                  <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">
-                    JUMLAH
-                  </th>
-                  <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">
-                    H
-                  </th>
-                  <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">
-                    S
-                  </th>
-                  <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">
-                    I
-                  </th>
-                  <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">
-                    A
-                  </th>
-                  <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">
-                    T
-                  </th>
-                  <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">
-                    WALAS
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td className="px-6 py-4 border-b border-gray-300 text-sm"></td>
-                  <td className="px-6 py-4 border-b border-gray-300 text-sm"></td>
-                  <td className="px-6 py-4 border-b border-gray-300 text-sm"></td>
-                  <td className="px-6 py-4 border-b border-gray-300 text-sm"></td>
-                  <td className="px-6 py-4 border-b border-gray-300 text-sm"></td>
-                  <td className="px-6 py-4 border-b border-gray-300 text-sm"></td>
-                  <td className="px-6 py-4 border-b border-gray-300 text-sm"></td>
-                  <td className="px-6 py-4 border-b border-gray-300 text-sm"></td>
-                  <td className="px-6 py-4 border-b border-gray-300 text-sm"></td>
-                </tr>
-                {/* Tambahkan baris lain sesuai kebutuhan */}
-              </tbody>
-            </table>
+            <div className="bg-slate-600 p-2 rounded-lg h-full">
+              <div className="overflow-x-auto h-full">
+                <DataTable columns={tableColumns} data={kelas} />
+              </div>
+            </div>
+            
           </div>
         </div>
         {/* Column 2: Table */}

@@ -4,7 +4,7 @@ import React from 'react';
 const Navbar = () => {
   return (
     <header className="bg-teal-500 py-4 shadow-lg">
-      <div className="container mx-auto flex flex-col md:flex-row justify-between items-center md:pl-5 md:pr-5">
+      <div className="container mx-auto flex flex-col md:flex-row justify-between items-center md:pl-24 md:pr-24 ">
         {/* Logo di sebelah kiri */}
         <div className="flex-shrink-0 mb-4 md:mb-0">
             <img src="/image/logo smk new2.png" alt="" width={112} height={112} className='mt-1'/>

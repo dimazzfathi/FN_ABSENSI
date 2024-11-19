@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
-import TimeDropdown from './TimeDropdown'; // Pastikan nama file benar
+import TimeDropdown from './TImeDropdown'; // Pastikan nama file benar
 
 const hal = ({ time, onChange }) => {
 
@@ -36,9 +36,9 @@ const hal = ({ time, onChange }) => {
 };
 
 const Schedule = () => {
-  const [arrivalTimes, setArrivalTimes] = useState([{ hours: '07', minutes: '00' }, { hours: '07', minutes: '30' }]);
+  const [arrivalTimes, setArrivalTimes] = useState([{ hours: '05', minutes: '00' }, { hours: '06', minutes: '30' }]);
   const [departureTimes, setDepartureTimes] = useState([{ hours: '14', minutes: '00' }, { hours: '14', minutes: '30' }]);
-  const [latenessTimes, setLatenessTimes] = useState([{ hours: '07', minutes: '16' }, { hours: '09', minutes: '00' }]);
+  const [latenessTimes, setLatenessTimes] = useState([{ hours: '07', minutes: '00' }, { hours: '09', minutes: '00' }]);
   const [savedData, setSavedData] = useState({});
   const [selectedDays, setSelectedDays] = useState([]);
   const [saveResult, setSaveResult] = useState({});
@@ -104,37 +104,49 @@ const Schedule = () => {
     setSelectedDays(savedDays);
   }, []);
   
-  const handleSave = () => {
-    const days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
-    const selected = days.filter(day => checkboxRefs.current[day]?.checked);
-    
-    // Simpan data ke localStorage
-    localStorage.setItem('selectedDays', JSON.stringify(selected));
-    setSelectedDays(selected);
+  const handleEditClick = () => {
+    setIsEditing(true); // Masuk ke mode edit
+  };
+  
+  const handleSaveClick = () => {
+    const newData = {
+      arrival: { from: arrivalTimes[0], to: arrivalTimes[1] },
+      departure: { from: departureTimes[0], to: departureTimes[1] },
+      lateness: { from: latenessTimes[0], to: latenessTimes[1] },
+    };
+  
+    const updatedData = { ...savedData };
+  
+    selectedDays.forEach((day) => {
+      updatedData[day] = newData;
+    });
+  
+    localStorage.setItem('savedResults', JSON.stringify(updatedData)); // Simpan data ke localStorage
+    setSavedData(updatedData);
+    setIsEditing(false); // Keluar dari mode edit
   };
 
-    const handleSaveClick = () => {
-      const newData = {
-        arrival: { from: arrivalTimes[0], to: arrivalTimes[1] },
-        departure: { from: departureTimes[0], to: departureTimes[1] },
-        lateness: { from: latenessTimes[0], to: latenessTimes[1] },
-      };
-    
-      const updatedData = { ...savedData };
-    
-      selectedDays.forEach((day) => {
-        updatedData[day] = newData;
-      });
-    
-      localStorage.setItem('savedResults', JSON.stringify(updatedData)); // Simpan data ke localStorage
-      setSavedData(updatedData);
-      setIsEditing(false); // Exit edit mode
-    };
-    
+  const [logo, setLogo] = useState(null);
+  const [instansiName, setInstansiName] = useState('');
 
-  
-  
-  
+  const handleLogoChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogo(reader.result); // Save the logo data URL
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleInstansiNameChange = (event) => {
+    setInstansiName(event.target.value);
+  };
+
+  const handleSave = () => {
+    // Add any save logic here if needed, like sending data to the server or saving in localStorage
+  };
 
   return (
     <>
@@ -148,7 +160,7 @@ const Schedule = () => {
               <h2 className="text-lg font-semibold mb-4"> Hari dan Atur Waktu</h2>
               {/* Checkbox Rendering untuk Hari */}
                 <div className="flex flex-wrap mb-4">
-                  {['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat'].map((day) => (
+                  {['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'].map((day) => (
                     <div key={day} className="flex items-center mr-4 mb-2">
                       <input 
                         type="checkbox" 
@@ -160,7 +172,6 @@ const Schedule = () => {
                     </div>
                   ))}
                 </div>
-
                 {/* Bagian waktu datang, pulang, dan keterlambatan */}
                 <div className="flex flex-row flex-wrap gap-4">
                   <div className="flex-1">
@@ -172,6 +183,7 @@ const Schedule = () => {
                           <TimeDropdown
                             time={`${arrivalTimes[0].hours}:${arrivalTimes[0].minutes}`}
                             onChange={(value) => handleTimeChange('arrival', value, 0)}
+                            disabled={!isEditing} // Disable dropdown jika tidak dalam mode edit
                           />
                         </div>
                         <span className='mt-7'>-</span>
@@ -180,12 +192,12 @@ const Schedule = () => {
                           <TimeDropdown
                             time={`${arrivalTimes[1].hours}:${arrivalTimes[1].minutes}`}
                             onChange={(value) => handleTimeChange('arrival', value, 1)}
+                            disabled={!isEditing} // Disable dropdown jika tidak dalam mode edit
                           />
                         </div>
                       </div>
                     </div>
                   </div>
-
                   <div className="flex-1">
                     <h2 className="text-lg font-semibold text-slate-600 mb-2">Waktu Pulang</h2>
                     <div className="flex flex-col">
@@ -195,6 +207,7 @@ const Schedule = () => {
                           <TimeDropdown
                             time={`${departureTimes[0].hours}:${departureTimes[0].minutes}`}
                             onChange={(value) => handleTimeChange('departure', value, 0)}
+                            disabled={!isEditing} // Disable dropdown jika tidak dalam mode edit
                           />
                         </div>
                         <span className='mt-7'>-</span>
@@ -203,12 +216,12 @@ const Schedule = () => {
                           <TimeDropdown
                             time={`${departureTimes[1].hours}:${departureTimes[1].minutes}`}
                             onChange={(value) => handleTimeChange('departure', value, 1)}
+                            disabled={!isEditing} // Disable dropdown jika tidak dalam mode edit
                           />
                         </div>
                       </div>
                     </div>
                   </div>
-
                   <div className="flex-1">
                     <h2 className="text-lg font-semibold text-slate-600 mb-2">Keterlambatan</h2>
                     <div className="flex flex-col">
@@ -217,7 +230,8 @@ const Schedule = () => {
                           <span className="text-sm text-slate-600 mb-1">Dari</span>
                           <TimeDropdown
                             time={`${latenessTimes[0].hours}:${latenessTimes[0].minutes}`}
-                            onChange={(value) => handleTimeChange('departure', value, 0)}
+                            onChange={(value) => handleTimeChange('lateness', value, 0)}
+                            disabled={!isEditing} // Disable dropdown jika tidak dalam mode edit
                           />
                         </div>
                         <span className='mt-7'>-</span>
@@ -225,140 +239,144 @@ const Schedule = () => {
                           <span className="text-sm text-slate-600 mb-1">Sampai</span>
                           <TimeDropdown
                             time={`${latenessTimes[1].hours}:${latenessTimes[1].minutes}`}
-                            onChange={(value) => handleTimeChange('departure', value, 1)}
+                            onChange={(value) => handleTimeChange('lateness', value, 1)}
+                            disabled={!isEditing} // Disable dropdown jika tidak dalam mode edit
                           />
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
-
-                  <div className="flex justify-end mt-4">
-                    <button 
-                      className="px-4 py-2 bg-teal-400 text-white rounded-md hover:bg-teal-500"
-                      onClick={handleSaveClick}
-                    >
-                      Simpan
-                    </button>
-                  </div>
+                <div className="flex justify-end mt-4">
+                  <button 
+                    className="px-4 py-2 bg-slate-600 text-white rounded-md hover:bg-slate-700 mr-2"
+                    onClick={handleEditClick}
+                  >
+                    Edit
+                  </button>
+                  <button 
+                    className="px-4 py-2 bg-teal-400 text-white rounded-md hover:bg-teal-500"
+                    onClick={handleSaveClick}
+                  >
+                    Simpan
+                  </button>
+                </div>
             </div>
-
-
-
             {/* Kolom 2 - Hasil Simpanan */}
             <div className="p-4 mt-4 border rounded-lg bg-slate-600 text-white">
-  <h2 className="text-lg font-semibold mb-4">Hasil</h2>
-  <div className="p-4 border rounded-md bg-white text-slate-600">
-    {Object.keys(savedData).length > 0 ? (
-      <div className="result grid grid-cols-1 md:grid-cols-2 gap-4">
-        {Object.keys(savedData).map((day) => {
-          const dayData = savedData[day];
-          if (
-            dayData &&
-            dayData.arrival &&
-            dayData.departure &&
-            dayData.lateness &&
-            dayData.arrival.from &&
-            dayData.arrival.to &&
-            dayData.departure.from &&
-            dayData.departure.to &&
-            dayData.lateness.from &&
-            dayData.lateness.to
-          ) {
-            return (
-              <div
-                key={day}
-                className="bg-white p-4 rounded-lg shadow-md text-slate-600"
-              >
-                <h3 className="text-lg font-semibold">{day}</h3>
-                <p>
-                  Datang dari jam {dayData.arrival.from.hours}:
-                  {dayData.arrival.from.minutes} sampai {dayData.arrival.to.hours}:
-                  {dayData.arrival.to.minutes}
-                </p>
-                <p>
-                  Pulang dari jam {dayData.departure.from.hours}:
-                  {dayData.departure.from.minutes} sampai {dayData.departure.to.hours}:
-                  {dayData.departure.to.minutes}
-                </p>
-                <p>
-                  Batas Terlambat dari jam {dayData.lateness.from.hours}:
-                  {dayData.lateness.from.minutes} sampai {dayData.lateness.to.hours}:
-                  {dayData.lateness.to.minutes}
-                </p>
+              <h2 className="text-lg font-semibold mb-4">Hasil</h2>
+              <div className="p-4 border rounded-md bg-white text-slate-600">
+                {Object.keys(savedData).length > 0 ? (
+                  <div className="result grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {Object.keys(savedData).map((day) => {
+                      const dayData = savedData[day];
+                      if (
+                        dayData &&
+                        dayData.arrival &&
+                        dayData.departure &&
+                        dayData.lateness &&
+                        dayData.arrival.from &&
+                        dayData.arrival.to &&
+                        dayData.departure.from &&
+                        dayData.departure.to &&
+                        dayData.lateness.from &&
+                        dayData.lateness.to
+                      ) {
+                        return (
+                          <div
+                            key={day}
+                            className="bg-white p-4 rounded-lg shadow-md text-slate-600"
+                          >
+                            <h3 className="text-lg font-semibold">{day}</h3>
+                            <p>
+                              Datang dari jam {dayData.arrival.from.hours}:
+                              {dayData.arrival.from.minutes} sampai {dayData.arrival.to.hours}:
+                              {dayData.arrival.to.minutes}
+                            </p>
+                            <p>
+                              Pulang dari jam {dayData.departure.from.hours}:
+                              {dayData.departure.from.minutes} sampai {dayData.departure.to.hours}:
+                              {dayData.departure.to.minutes}
+                            </p>
+                            <p>
+                              Batas Terlambat dari jam {dayData.lateness.from.hours}:
+                              {dayData.lateness.from.minutes} sampai {dayData.lateness.to.hours}:
+                              {dayData.lateness.to.minutes}
+                            </p>
+                          </div>
+                        );
+                      }
+                      return null; // Tidak merender apapun jika data tidak lengkap
+                    })}
+                  </div>
+                ) : (
+                  <p>Belum ada data yang disimpan.</p>
+                )}
               </div>
-            );
-          }
-          return null; // Tidak merender apapun jika data tidak lengkap
-        })}
-      </div>
-    ) : (
-      <p>Belum ada data yang disimpan.</p>
-    )}
-  </div>
-</div>
-
+            </div>
           </div>
 
           {/* Kolom 2 - Hari dalam Seminggu */}
           <div className="p-4 border rounded-lg bg-white shadow-md">
-          <div className="p-4 border rounded-lg bg-white shadow-md">
-            <h2 className="text-lg font-semibold mb-4 text-slate-600">Hari Libur dalam Seminggu</h2>
-            <div className="flex flex-wrap gap-4">
-              {['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'].map((day) => (
-                <div key={day} className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id={day}
-                    ref={(el) => checkboxRefs.current[day] = el}
-                    className="mr-2"
-                  />
-                  <span className="font-semibold text-slate-600">{day}</span>
-                </div>
-              ))}
-            </div>
+            <div className="p-4 border rounded-lg bg-white shadow-md">
+              <h2 className="text-lg font-semibold mb-4 text-slate-600">Upload Logo dan Nama Instansi</h2>
 
-            <div className="flex justify-end mt-4">
-              <button
-                onClick={handleSave}
-                className="bg-teal-400 text-white px-4 py-2 rounded-lg shadow-md hover:bg-teal-500"
-              >
-                Simpan
-              </button>
-            </div>
-          </div>
-
-          {/* Kolom Hasil */}
-          <div className="p-4 border rounded-lg bg-slate-600  shadow-md mt-4">
-            <h2 className="text-lg font-semibold mb-4  text-white"> Hari Libur</h2>
-              <div className='bp-4 '>
-                <div id="result" className="text-white">
-                  {selectedDays.length > 0 ? (
-                    <div className="flex flex-wrap gap-2 items-center">
-                      {selectedDays.length === 1 ? (
-                        <div>
-                          <label className="block mb-1 text-white">{selectedDays[0]}</label>
-                        </div>
-                      ) : (
-                        selectedDays.map((day, index) => (
-                          <span key={day} className="flex items-center">
-                            <label className="text-white">
-                              {day}
-                              {index < selectedDays.length - 1 ? ( // Add separators between days
-                                index === selectedDays.length - 2 ? ' & ' : ', '
-                              ) : ''}
-                            </label>
-                          </span>
-                        ))
-                      )}
-                    </div>
-                  ) : (
-                    <p>Tidak ada hari libur yang dipilih.</p>
-                  )}
-                </div>
+              {/* Logo Upload */}
+              <div className="flex items-center mb-4">
+                <label htmlFor="logo" className="mr-4 text-slate-600 font-semibold">Upload Logo</label>
+                <input
+                  type="file"
+                  id="logo"
+                  accept="image/*"
+                  className="border rounded-lg p-2"
+                  onChange={handleLogoChange}
+                />
               </div>
+
+              {/* Instansi Name Input */}
+              <div className="mb-4">
+                <label htmlFor="instansiName" className="block mb-2 text-slate-600 font-semibold">Nama Instansi</label>
+                <input
+                  type="text"
+                  id="instansiName"
+                  value={instansiName}
+                  onChange={handleInstansiNameChange}
+                  className="border rounded-lg p-2 w-full"
+                  placeholder="Masukkan Nama Instansi"
+                />
+              </div>
+
+              {/* Save Button */}
+              <div className="flex justify-end mt-4">
+                <button
+                  onClick={handleSave}
+                  className="bg-teal-400 text-white px-4 py-2 rounded-lg shadow-md hover:bg-teal-500"
+                >
+                  Simpan
+                </button>
+              </div>
+            </div>
+
+            {/* Kolom Hasil */}
+            <div className="p-4 border rounded-lg bg-slate-600 shadow-md mt-4">
+              <h2 className="text-lg font-semibold mb-4 text-white">Logo dan Nama Instansi</h2>
+              <div className="text-white">
+                {logo && (
+                  <div className="mb-4">
+                    <img src={logo} alt="Logo" className="w-24 h-24 object-contain" />
+                  </div>
+                )}
+                {instansiName ? (
+                  <div className="text-white">
+                    <p className="text-white">Nama Instansi: {instansiName}</p>
+                  </div>
+                ) : (
+                  <p className="text-white">Nama instansi belum diisi.</p>
+                )}
+              </div>
+            </div>
           </div>
-          </div>
+
         </div>
       </div>
     </div>
