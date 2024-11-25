@@ -24,6 +24,35 @@ const AdminPage = () => {
   const router = useRouter();
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const [totalSiswa, setTotalSiswa] = useState([]); // Menggunakan angka untuk total siswa// Inisialisasi dengan array kosong
+
+  useEffect(() => {
+    // Fungsi untuk mengambil data dari API
+    const fetchData = async () => {
+      try {
+        const response = await fetch(`${baseUrl}/total-kelas-siswa`);
+        const result = await response.json();
+
+        // Memeriksa apakah response berhasil
+        if (result.Status === 200) {
+          // Menghitung total siswa dari response.data
+          const total = result.data.reduce((sum, item) => sum + item.total_siswa, 0);
+
+          // Menyimpan total siswa ke dalam state
+          setTotalSiswa(total);
+
+          // Menyimpan data kelas ke dalam state
+          setKelas(result.data);
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+
+    fetchData();
+  }, []); // Empty dependency array untuk menjalankan fetch hanya sekali saat komponen pertama kali dimuat
+
   // const router = useRouter();
 
   useEffect(() => {
@@ -59,7 +88,7 @@ const AdminPage = () => {
         `${baseUrl}/joinNonMaster/total-kelas-siswa`
       );
       setKelas(response.data.data); // Menyimpan data ke state kelas
-      console.log("total", response.data);
+      console.log("total siswa", response.data);
     } catch (error) {
       console.error("Fetch error:", error); // Menangani kesalahan
     }
@@ -92,10 +121,16 @@ const AdminPage = () => {
           </div>
           <div className="mt-4 flex items-end justify-between">
             <div>
-              <span className="text-sm font-medium">Total Siswa</span>
+            <h1>Total Siswa: </h1>
             </div>
+
             <span className="flex items-center gap-1 text-sm font-medium text-meta-3 undefined ">
-              0
+            {kelas.map((item, index) => (
+            <tr key={index}>
+              <td>{item.total_siswa}</td>
+            </tr>
+          ))}
+
             </span>
           </div>
         </div>

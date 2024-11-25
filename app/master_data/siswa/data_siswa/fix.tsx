@@ -35,14 +35,17 @@ export default function DataSiswa() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isIdSiswaValid, setIsIdSiswaValid] = useState(true);
   const [tahunPelajaran, setTahunPelajaran] = useState([]);
+  const sortedTahunPelajaran = tahunPelajaran.sort((a, b) => a.tahun.localeCompare(b.tahun));
   const [tahunEditPelajaran, setTahunEditPelajaran] = useState([]);
   const [selectedTahun, setSelectedTahun] = useState('');
   const [selectedEditTahun, setSelectedEditTahun] = useState('');
   const [kelas, setKelas] = useState([]);
+  const sortedKelas = kelas.sort((a, b) => a.kelas.localeCompare(b.kelas));
   const [selectedKelas, setSelectedKelas] = useState('');
   const [selectedEditKelas, setSelectedEditKelas] = useState('');
   const [rombel, setRombel] = useState([]);
   const [selectedRombel, setSelectedRombel] = useState('');
+  const sortedRombel = rombel.sort((a, b) => a.nama_rombel.localeCompare(b.nama_rombel));
   const [selectedEditRombel, setSelectedEditRombel] = useState('');
   const [dataSiswa, setDataSiswa] = useState<Siswa[]>([]);
   const [foto, setFoto] = useState(null);
@@ -90,7 +93,7 @@ export default function DataSiswa() {
     };
 
     fetchTahunPelajaran();
-}, []);
+  }, []);
     useEffect(() => {
       const fetchTahunPelajaran = async () => {
           try {
@@ -105,91 +108,171 @@ export default function DataSiswa() {
       fetchTahunPelajaran();
     }, []);
 
-const handleTahunChange = (event) => {
-  const value = event.target.value;
-   // Log ID yang dipilih untuk memastikan
-   console.log('ID Tahun Pelajaran yang dipilih:', value);
-  setSelectedTahun(value);
-  setFormData((prevData) => ({
-      ...prevData,
-      id_tahun_pelajaran: value // Memperbarui formData
-  }));
-};
-
-const handleEditTahunChange = (e) => {
-  const { value } = e.target;
-  console.log('ID Tahun Pelajaran yang dipilih:', value);
-  setSelectedEditTahun(value); // Update state untuk dropdown tahun ajaran
-  setEditData((prev) => ({ ...prev, id_tahun_pelajaran: value })); // Update id_tahun_pelajaran di editData
-};
-
-
-useEffect(() => {
-  const fetchKelas = async () => {
-      try {
-          const response = await axios.get(`${baseUrl}/kelas/all-kelas`); // Sesuaikan dengan URL API Anda
-          setKelas(response.data.data);
-          console.log('data berhasil di fetch', response);
-      } catch (error) {
-          console.error('Error fetching tahun pelajaran:', error);
-      }
+  const handleTahunChange = (event) => {
+    const value = event.target.value;
+    // Log ID yang dipilih untuk memastikan
+    console.log('ID Tahun Pelajaran yang dipilih:', value);
+    setSelectedTahun(value);
+    setFormData((prevData) => ({
+        ...prevData,
+        id_tahun_pelajaran: value // Memperbarui formData
+    }));
   };
 
-  fetchKelas();
-}, []);
-
-const handleKelasChange = (event) => {
-  const value = event.target.value;
-  console.log('ID Kelas yang dipilih:', value);
-  setSelectedKelas(value);
-  setFormData((prevData) => ({
-      ...prevData,
-      id_kelas: value // Memperbarui formData
-  }));
-};
-
-const handleEditKelasChange = (e) => {
-  const { value } = e.target;
-  console.log('ID Rombel yang dipilih:', value);
-  setSelectedEditKelas(value); // Update state untuk dropdown kelas
-  setEditData((prev) => ({ ...prev, id_kelas: value })); // Update id_kelas di editData
-};
-
-
-useEffect(() => {
-  const fetchRombel = async () => {
-      try {
-          const response = await axios.get(`${baseUrl}/rombel/all-rombel`); // Sesuaikan dengan URL API Anda
-          setRombel(response.data.data);
-          console.log('data berhasil di fetch', response);
-      } catch (error) {
-          console.error('Error fetching tahun pelajaran:', error);
-      }
+  const handleEditTahunChange = (e) => {
+    const { value } = e.target;
+    console.log('ID Tahun Pelajaran yang dipilih:', value);
+    setSelectedEditTahun(value); // Update state untuk dropdown tahun ajaran
+    setEditData((prev) => ({ ...prev, id_tahun_pelajaran: value })); // Update id_tahun_pelajaran di editData
   };
 
-  fetchRombel();
-}, []);
 
-const handleRombelChange = (event) => {
-  const value = event.target.value;
-  console.log('ID Rombel yang dipilih:', value);
-  setSelectedRombel(value);
-  setFormData((prevData) => ({
-      ...prevData,
-      id_rombel: value // Memperbarui formData
-  }));
-};
+  useEffect(() => {
+    const fetchKelas = async () => {
+        try {
+            const response = await axios.get(`${baseUrl}/kelas/all-kelas`); // Sesuaikan dengan URL API Anda
+            setKelas(response.data.data);
+            console.log('data berhasil di fetch', response);
+        } catch (error) {
+            console.error('Error fetching tahun pelajaran:', error);
+        }
+    };
 
-const handleEditRombelChange = (e) => {
-  const { value } = e.target;
-  console.log('ID Rombel yang dipilih:', value);
-  setSelectedEditRombel(value); // Update state untuk dropdown rombel
-  setEditData((prev) => ({ ...prev, id_rombel: value })); // Update id_rombel di editData
-};
+    fetchKelas();
+  }, []);
+
+  const handleKelasChange = (event) => {
+    const value = event.target.value;
+    console.log('ID Kelas yang dipilih:', value);
+    setSelectedKelas(value);
+    setFormData((prevData) => ({
+        ...prevData,
+        id_kelas: value // Memperbarui formData
+    }));
+  };
+
+  const handleEditKelasChange = (e) => {
+    const { value } = e.target;
+    console.log('ID Rombel yang dipilih:', value);
+    setSelectedEditKelas(value); // Update state untuk dropdown kelas
+    setEditData((prev) => ({ ...prev, id_kelas: value })); // Update id_kelas di editData
+  };
 
 
+  useEffect(() => {
+    const fetchRombel = async () => {
+        try {
+            const response = await axios.get(`${baseUrl}/rombel/all-rombel`); // Sesuaikan dengan URL API Anda
+            setRombel(response.data.data);
+            console.log('data berhasil di fetch', response);
+        } catch (error) {
+            console.error('Error fetching tahun pelajaran:', error);
+        }
+    };
+
+    fetchRombel();
+  }, []);
+
+  const handleRombelChange = (event) => {
+    const value = event.target.value;
+    console.log('ID Rombel yang dipilih:', value);
+    setSelectedRombel(value);
+    setFormData((prevData) => ({
+        ...prevData,
+        id_rombel: value // Memperbarui formData
+    }));
+  };
+
+  const handleEditRombelChange = (e) => {
+    const { value } = e.target;
+    console.log('ID Rombel yang dipilih:', value);
+    setSelectedEditRombel(value); // Update state untuk dropdown rombel
+    setEditData((prev) => ({ ...prev, id_rombel: value })); // Update id_rombel di editData
+  };
 
 
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedSiswa, setSelectedSiswa] = useState<string[]>([]); // Array untuk menyimpan id siswa yang dipilih
+  const [isAllSelected, setIsAllSelected] = useState(false);
+  // const handleSelectedSiswa = (id: string) => {
+  //   setSelectedSiswa((prev) =>
+  //     prev.includes(id)
+  //       ? prev.filter((siswaId) => siswaId !== id)
+  //       : [...prev, id]
+  //   );
+  // };
+
+  const handleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedSiswa([]);
+    } else {
+      setSelectedSiswa(formData.map((siswa) => siswa.id_siswa));
+    }
+    setIsAllSelected(!isAllSelected);
+  };
+
+  const handleSelectSiswa = (id_siswa: string) => {
+    if (selectedSiswa.includes(id_siswa)) {
+      // Jika siswa sudah ada di dalam array, hapus
+      setSelectedSiswa(selectedSiswa.filter(id => id !== id_siswa));
+    } else {
+      // Jika belum ada, tambahkan
+      setSelectedSiswa([...selectedSiswa, id_siswa]);
+    }
+  };
+
+  // Fungsi untuk menampilkan modal konfirmasi
+  const showDeleteModal = () => {
+    setIsDeleteModalOpen(true); // Menampilkan modal
+  };
+  
+  const confirmDelete = async () => {
+    if (selectedSiswa.length === 0) {
+      toast.error('Pilih siswa yang ingin dihapus!');
+      setIsDeleteModalOpen(false);
+      return;
+    }
+  
+    try {
+      // Panggil fungsi backend untuk menghapus siswa yang dipilih
+      await Promise.all(selectedSiswa.map(async (id_siswa) => {
+        await deleteSiswa(id_siswa); // Pastikan deleteSiswa adalah fungsi yang memanggil API backend untuk menghapus data
+      }));
+  
+      // Setelah sukses, update state di frontend
+      setDataSiswa((prevSiswa) => {
+        const updatedSiswa = prevSiswa.filter((siswa) => !selectedSiswa.includes(siswa.id_siswa));
+  
+        // Periksa apakah data di halaman saat ini masih cukup, jika tidak arahkan ke halaman sebelumnya
+        const totalItems = updatedSiswa.length;
+        const totalPages = Math.ceil(totalItems / itemsPerPage);
+  
+        // Jika currentPage melebihi total halaman baru, arahkan ke halaman sebelumnya
+        if (currentPage > totalPages) {
+          setCurrentPage(totalPages);
+        }
+  
+        return updatedSiswa;
+      });
+  
+      toast.success('Siswa yang dipilih berhasil dihapus');
+      setSelectedSiswa([]);
+      setIsDeleteModalOpen(false); // Reset selectedSiswa setelah penghapusan
+    } catch (error) {
+      console.error('Error deleting siswa:', error);
+      toast.error('Gagal menghapus siswa');
+    }
+  };
+
+
+   // Fungsi untuk membatalkan penghapusan
+   const cancelDelete = () => {
+    setIsDeleteModalOpen(false); // Tutup modal tanpa melakukan apa-apa
+  };
+  
+  
+  
+  
   // fields untuk DataTabel
   const siswaColumns = [
     
@@ -254,6 +337,23 @@ const handleEditRombelChange = (e) => {
           </div>
         );
       },
+    },
+    {
+      header: () => (
+        <input
+          type="checkbox"
+          checked={isAllSelected}
+          onChange={handleSelectAll}
+        />
+      ),
+      accessor: "select",
+      Cell: ({ row }: { row: any }) => (
+        <input
+          type="checkbox"
+          checked={selectedSiswa.includes(row.id_siswa)}
+          onChange={() => handleSelectSiswa(row.id_siswa)}
+        />
+      ),
     },
   ];
 
@@ -404,11 +504,19 @@ const handleEditSubmit = async (e) => {
    // Handler umum untuk input teks
    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    if (name === "nis" && !/^\d*$/.test(value)) {
+  
+    // Validasi untuk nis dan nomor_wali agar hanya menerima angka
+    if (
+      (name === "nis" || name === "nomor_wali") &&
+      !/^\d*$/.test(value)
+    ) {
       return; // Jika bukan angka, jangan update state
     }
+  
+    // Update state dengan nilai yang valid
     setFormData((prevData) => ({ ...prevData, [name]: value }));
   };
+  
   // Handler khusus untuk input foto
   const handleEditFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -428,6 +536,20 @@ const handleEditSubmit = async (e) => {
   //state untuk simpan
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+      // Validasi: Pastikan nis, nama_siswa, dan jenis_kelamin tidak kosong
+    if (!formData.nis || !formData.nama_siswa || !formData.jenis_kelamin) {
+      // Temukan input yang kosong dan beri fokus pada input pertama yang kosong
+      if (!formData.nis) {
+        document.getElementById('nis-input')?.focus();
+      } else if (!formData.nama_siswa) {
+        document.getElementById('nama-siswa-input')?.focus();
+      } else if (!formData.jenis_kelamin) {
+        document.getElementById('jenis-kelamin-input')?.focus();
+      }
+      toast.error('Semua field (NIS, Nama Siswa, dan Jenis Kelamin) harus diisi!');
+      return; // Menghentikan proses submit jika ada input yang kosong
+    }
 
     try {
       // Gantikan dengan URL server Anda
@@ -817,6 +939,7 @@ worksheet["H1"].c = [{ t:rombelText}];
                 <label className="block text-sm font-medium">NIS</label>
                 <input
                   type="text"
+                  id="nis-input"
                   name="nis"
                   value={formData.nis}
                   onChange={handleChange}
@@ -828,6 +951,7 @@ worksheet["H1"].c = [{ t:rombelText}];
                 <label className="block text-sm font-medium">Nama Siswa</label>
                 <input
                   type="text"
+                  id="nama-siswa-input"
                   name="nama_siswa"
                   value={formData.nama_siswa}
                   onChange={handleChange}
@@ -839,6 +963,7 @@ worksheet["H1"].c = [{ t:rombelText}];
                 <label className="block text-sm font-medium">Jenis Kelamin</label>
                 <select
                   name="jenis_kelamin"
+                  id="jenis-kelamin-input"
                   value={formData.jenis_kelamin}
                   onChange={handleChange}
                   className="mt-1 p-2 border rounded-md w-full"
@@ -858,7 +983,7 @@ worksheet["H1"].c = [{ t:rombelText}];
                       className="mt-1 p-2 border rounded-md w-full"
                   >
                       <option>Pilih Tahun Pelajaran</option>
-                      {tahunPelajaran.map((tahun) => (
+                      {sortedTahunPelajaran.map((tahun) => (
                           <option key={tahun.id_tahun_pelajaran} value={tahun.id_tahun_pelajaran}>
                               {tahun.tahun}
                           </option>
@@ -874,7 +999,7 @@ worksheet["H1"].c = [{ t:rombelText}];
                       className="mt-1 p-2 border rounded-md w-full"
                   >
                       <option>Pilih Kelas</option>
-                      {kelas.map((kelas) => (
+                      {sortedKelas.map((kelas) => (
                           <option key={kelas.id_kelas} value={kelas.id_kelas}>
                               {kelas.kelas}
                           </option>
@@ -890,7 +1015,7 @@ worksheet["H1"].c = [{ t:rombelText}];
                       className="mt-1 p-2 border rounded-md w-full"
                   >
                       <option>Pilih Jurusan</option>
-                      {rombel.map((rombel) => (
+                      {sortedRombel.map((rombel) => (
                           <option key={rombel.id_rombel} value={rombel.id_rombel}>
                               {rombel.nama_rombel}
                           </option>
@@ -1023,9 +1148,9 @@ worksheet["H1"].c = [{ t:rombelText}];
                   </div>
                 </div>
                 {/* Filter Dropdown */}
-                <div className="flex flex-wrap justify-start items-center w-full mt-4 ">
+                <div className="flex flex-wrap justify-start items-center w-full mt-4">
                   {/* Div untuk Items per Page (sebelah kiri) */}
-                  <div className="flex items-center ">
+                  <div className="flex items-center">
                     <select
                       id="items-per-page"
                       value={itemsPerPage}
@@ -1040,7 +1165,7 @@ worksheet["H1"].c = [{ t:rombelText}];
                   </div>
 
                   {/* Div untuk Search (sebelah kanan) */}
-                  <div className="flex items-center sm:mt-0 ">
+                  <div className="flex items-center sm:mt-0 ml-3">
                     <input
                       id="search"
                       type="text"
@@ -1050,11 +1175,13 @@ worksheet["H1"].c = [{ t:rombelText}];
                       className="p-2 border ml-3 border-gray-300 rounded text-sm sm:text-base w-36"
                     />
                   </div>
-                  <div className=" flex items-center mt-3 lg:mt-0 md:mt-0 lg:mb-0 space-x-2 lg:order-1 w-full lg:w-auto md:w-auto ">
+
+                  {/* Tombol Reset */}
+                  <div className="flex items-center mt-3 lg:mt-0 md:mt-0 lg:mb-0 space-x-2 lg:order-1 w-full lg:w-auto md:w-auto">
                     <button
                       onClick={handleResetClick}
                       disabled={!isResettable}
-                      className={`w-full p-2 lg:ml-3 md:ml-3 rounded text-sm sm:text-base transition  ${
+                      className={`w-full p-2 lg:ml-3 md:ml-3 rounded text-sm sm:text-base transition ${
                         isResettable
                           ? "text-white bg-red-500 hover:bg-red-600 cursor-pointer"
                           : "text-gray-400 bg-gray-300 cursor-not-allowed"
@@ -1063,10 +1190,40 @@ worksheet["H1"].c = [{ t:rombelText}];
                       <p>Reset</p>
                     </button>
                   </div>
+
+                  {/* Tombol Hapus Siswa Terpilih dengan margin kiri dan atas */}
+                  <div className="ml-3 ">
+                    <button
+                      onClick={showDeleteModal}
+                      className="px-4 py-2 bg-red-600 text-white rounded text-base"
+                    >
+                      Hapus Siswa Terpilih
+                    </button>
+                    {/* Modal Konfirmasi Penghapusan */}
+                    {isDeleteModalOpen && (
+                      <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50">
+                        <div className="bg-white p-6 rounded-md shadow-lg w-96">
+                          <h3 className="text-lg font-semibold mb-4">Konfirmasi Penghapusan</h3>
+                          <p className="mb-4">Apakah Anda yakin ingin menghapus siswa yang dipilih?</p>
+                          <div className="flex justify-between">
+                            <button
+                              onClick={cancelDelete}
+                              className="px-4 py-2 bg-gray-300 text-gray-700 rounded"
+                            >
+                              Batal
+                            </button>
+                            <button
+                              onClick={confirmDelete}
+                              className="px-4 py-2 bg-red-600 text-white rounded"
+                            >
+                              Hapus
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
-
-
-    
               <div className="overflow-x-auto">
                 <DataTable 
                   columns={siswaColumns}
