@@ -76,21 +76,6 @@ const Page = () => {
     
   ];
 
-  // Fungsi untuk menangani blur (keluar dari fokus) pada input pencarian
-  const handleSearchBlur = () => {
-    setIsSearchFocused(false);
-    if (barcodeInputRef.current) {
-      barcodeInputRef.current.focus();
-    }
-  };
-  const searchInputRef = useRef(null);
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
-  // Fungsi untuk menangani fokus ke input pencarian
-  const handleSearchFocus = () => {
-    setIsSearchFocused(true);
-  };
-
-
   const [clickedRowIndex, setClickedRowIndex] = useState(null);
   const tableRef = useRef(null);
   const buttonRef = useRef(null); // Ref untuk tombol "Kirim"
@@ -490,41 +475,34 @@ const Page = () => {
   
   //variabel  dan function untuk barcode
   const [barcode, setBarcode] = useState('');
-  const barcodeInputRef = useRef(null);
-  const handleBarcodeChange = (e) => {
-    const newBarcode = e.target.value;
-    setBarcode(newBarcode);
-
-    // Ketika barcode dipindai dan panjang barcode sudah cukup
-    if (newBarcode.length >= 6) { // Sesuaikan panjang barcode sesuai kebutuhan
-      const updatedKelas = kelas.map((item) => {
-        // Periksa apakah barcode cocok
-        if (item.barcode === newBarcode) {
-          return { ...item, h: item.h + 1 }; // Tambahkan 1 ke nilai "H"
-        }
-        return item;
-      });
-
-      // Setel data yang diperbarui
-      setKelas(updatedKelas);
-
-      // Mengosongkan input barcode setelah 1 detik
-      setTimeout(() => {
-        setBarcode('');
-      }, 1000);
-    }
+  const barcodeInputRef = useRef<HTMLInputElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const handleSearchClick = (event: React.MouseEvent) => {
+    // Mencegah fokus kembali ke barcode saat klik di search
+    event.stopPropagation();
   };
+  
   useEffect(() => {
-    const handleFocus = () => {
-      if (barcodeInputRef.current) {
-        barcodeInputRef.current.focus();
+    const handleFocus = (event: MouseEvent) => {
+      // Mengecek jika klik terjadi di luar input barcode dan input search
+      if (
+        barcodeInputRef.current &&
+        !barcodeInputRef.current.contains(event.target as Node) &&
+        !searchInputRef.current?.contains(event.target as Node)
+      ) {
+        // Fokus ke input barcode jika klik terjadi di luar kedua input tersebut
+        if (barcodeInputRef.current) {
+          barcodeInputRef.current.focus();
+        }
       }
     };
 
-    // Fokus pada input saat komponen dimuat
-    handleFocus();
+    // Fokus pada input barcode saat komponen dimuat
+    if (barcodeInputRef.current) {
+      barcodeInputRef.current.focus();
+    }
 
-    // Tambahkan event listener ke seluruh dokumen
+    // Menambahkan event listener untuk klik di seluruh dokumen
     document.addEventListener("click", handleFocus);
 
     // Bersihkan event listener saat komponen di-unmount
@@ -591,13 +569,12 @@ const Page = () => {
                                   <option value="12">12</option>
                                 </select>
                                 <input
+                                 ref={searchInputRef}
                                  type="text"
-                                 placeholder="Search..."
-                                 className="border border-gray-300 rounded px-2 py-1"
-                                 value={searchTermSakit}
-                                 onChange={handleSearchSakitChange} // Handle perubahan pencarian
-                                 onFocus={handleSearchFocus} // Menangani saat input pencarian di-fokus
-                                 onBlur={handleSearchBlur} // Menangani saat input pencarian kehilangan fokus
+                                 placeholder="Search"
+                                 className="pointer-events-auto border border-gray-300 rounded px-2 py-1"
+                                 onClick={handleSearchClick} // Menghentikan propagasi klik untuk input search
+                                 onChange={handleSearchSakitChange}
                                 />
                               </div>
 
@@ -703,6 +680,7 @@ const Page = () => {
                                   <option value="12">12</option>
                                 </select>
                                 <input
+                                  ref={searchInputRef}
                                   type="text"
                                   placeholder="Search..."
                                   className="border border-gray-300 rounded px-2 py-1"
@@ -989,96 +967,93 @@ const Page = () => {
         <input
           ref={barcodeInputRef}
           type="text"
-          // value={barcode}
-          // onChange={handleBarcodeChange}
           placeholder="Scan Barcode"
           className="pointer-events-auto"
-          readOnly // Membuat input hanya menerima input dari scanner
         />
       </div>
     </>
   );
 };
-function DropdownMenu({ isOpen, onClick, onEdit, onDelete, onClose }) {
-  const dropdownRef = useRef(null);
+// function DropdownMenu({ isOpen, onClick, onEdit, onDelete, onClose }) {
+//   const dropdownRef = useRef(null);
 
-  // Fungsi untuk menutup dropdown saat pengguna mengklik di luar dropdown.
-  const handleClickOutside = (event) => {
-    console.log("Clicked outside"); // Debugging
-    if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-      console.log("Outside detected"); // Debugging
-      if (typeof onClick === "function") {
-        onClick(); // Memanggil fungsi onClose untuk menutup dropdown
-      }
-    }
-  };
+//   // Fungsi untuk menutup dropdown saat pengguna mengklik di luar dropdown.
+//   const handleClickOutside = (event) => {
+//     console.log("Clicked outside"); // Debugging
+//     if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+//       console.log("Outside detected"); // Debugging
+//       if (typeof onClick === "function") {
+//         onClick(); // Memanggil fungsi onClose untuk menutup dropdown
+//       }
+//     }
+//   };
 
-  useEffect(() => {
-    console.log("Effect ran", isOpen); // Debugging
-    // Menambahkan event listener untuk menangani klik di luar dropdown jika dropdown terbuka.
-    if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    } else {
-      // Menghapus event listener ketika dropdown ditutup.
-      document.removeEventListener("mousedown", handleClickOutside);
-    }
+//   useEffect(() => {
+//     console.log("Effect ran", isOpen); // Debugging
+//     // Menambahkan event listener untuk menangani klik di luar dropdown jika dropdown terbuka.
+//     if (isOpen) {
+//       document.addEventListener("mousedown", handleClickOutside);
+//     } else {
+//       // Menghapus event listener ketika dropdown ditutup.
+//       document.removeEventListener("mousedown", handleClickOutside);
+//     }
 
-    // Cleanup function untuk menghapus event listener saat komponen di-unmount atau isOpen berubah.
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      console.log("Cleanup"); // Debugging
-    };
-  }, [isOpen]);
+//     // Cleanup function untuk menghapus event listener saat komponen di-unmount atau isOpen berubah.
+//     return () => {
+//       document.removeEventListener("mousedown", handleClickOutside);
+//       console.log("Cleanup"); // Debugging
+//     };
+//   }, [isOpen]);
 
-  return (
-    <div className="relative" ref={dropdownRef}>
-      <button
-        onClick={onClick}
-        className="p-1 z-40  text-white text-xs sm:text-sm"
-      >
-        &#8942;
-      </button>
-      {isOpen && (
-        <div
-          className="absolute z-50 mt-1 w-24 sm:w-32 bg-slate-600 border rounded-md shadow-lg"
-          style={{ left: "-62px", top: "20px" }} // Menggeser dropdown ke kiri
-        >
-          <button
-            className="block w-full px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm hover:bg-slate-500"
-            onClick={() => {
-              alert("Detail clicked");
-              if (typeof onClose === "function") {
-                onClose(); // Menutup dropdown setelah detail diklik
-              }
-            }}
-          >
-            Detail
-          </button>
-          <button
-            onClick={() => {
-              onEdit();
-              if (typeof onClose === "function") {
-                onClose(); // Menutup dropdown setelah edit diklik
-              }
-            }}
-            className="block w-full px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm hover:bg-slate-500"
-          >
-            Edit
-          </button>
-          <button
-            onClick={() => {
-              onDelete();
-              if (typeof onClose === "function") {
-                onClose(); // Menutup dropdown setelah delete diklik
-              }
-            }}
-            className="block w-full px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm hover:bg-slate-500"
-          >
-            Hapus
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
+//   return (
+//     <div className="relative" ref={dropdownRef}>
+//       <button
+//         onClick={onClick}
+//         className="p-1 z-40  text-white text-xs sm:text-sm"
+//       >
+//         &#8942;
+//       </button>
+//       {isOpen && (
+//         <div
+//           className="absolute z-50 mt-1 w-24 sm:w-32 bg-slate-600 border rounded-md shadow-lg"
+//           style={{ left: "-62px", top: "20px" }} // Menggeser dropdown ke kiri
+//         >
+//           <button
+//             className="block w-full px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm hover:bg-slate-500"
+//             onClick={() => {
+//               alert("Detail clicked");
+//               if (typeof onClose === "function") {
+//                 onClose(); // Menutup dropdown setelah detail diklik
+//               }
+//             }}
+//           >
+//             Detail
+//           </button>
+//           <button
+//             onClick={() => {
+//               onEdit();
+//               if (typeof onClose === "function") {
+//                 onClose(); // Menutup dropdown setelah edit diklik
+//               }
+//             }}
+//             className="block w-full px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm hover:bg-slate-500"
+//           >
+//             Edit
+//           </button>
+//           <button
+//             onClick={() => {
+//               onDelete();
+//               if (typeof onClose === "function") {
+//                 onClose(); // Menutup dropdown setelah delete diklik
+//               }
+//             }}
+//             className="block w-full px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm hover:bg-slate-500"
+//           >
+//             Hapus
+//           </button>
+//         </div>
+//       )}
+//     </div>
+//   );
+// }
 export default Page;
