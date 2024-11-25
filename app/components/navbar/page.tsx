@@ -367,6 +367,13 @@ const Navbar = ({
                                 </p>
                               </Link>
                             </li>
+                            <li>
+                              <Link href="/master_data/guru/mengampu">
+                                <p className="block px-4 py-2 hover:bg-teal-200 rounded opacity-70">
+                                  Mengampu
+                                </p>
+                              </Link>
+                            </li>
                           </ul>
                         )}
                       </div>

@@ -8,14 +8,12 @@ export type Guru = {
   nip: string;
   nama_guru: string;
   jenis_kelamin: string;
-  id_mapel: string;
   email: string;
   pass: string;
   foto: string;
   walas: string;
+  staf: string;
   barcode: string;
-  id_kelas: string;
-  rombel: string;
   no_telp: string;
   // Tambahkan properti lain yang sesuai dengan struktur data di tabel 'admin'
 };

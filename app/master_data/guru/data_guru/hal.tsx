@@ -89,13 +89,11 @@ export default function DataGuru() {
         nama_guru: "",
         jenis_kelamin: "",
         no_telp: "",
-        id_mapel: "",
-        id_kelas: "",
-        id_rombel: "",
         email: "",
         pas: "",
         foto: "",
         walas: "",
+        staf: "",
         barcode: "",
       },
     ];
@@ -108,13 +106,11 @@ export default function DataGuru() {
       "nama_guru",
       "jenis_kelamin",
       "no_telp",
-      "mata Pelajaran",
-      "kelas",
-      "rombel",
       "email",
       "pas",
       "foto",
       "walas",
+      "staf",
       "barcode",
     ];
     console.log("ini format", headers);
@@ -162,7 +158,6 @@ export default function DataGuru() {
       fileInputRef.current.click(); // Trigger input file secara manual
     }
   };
-
   const handleFileUploadChange = (event) => {
     const file = event.target.files[0];
     if (file) {
@@ -181,13 +176,11 @@ export default function DataGuru() {
             nama_guru: row.nama_guru || "-",
             jenis_kelamin: row.jenis_kelamin || "-",
             no_telp: row.no_telp || "-",
-            id_mapel: row.id_mapel || "-",
-            id_kelas: row.id_kelas || "-",
-            id_rombel: row.id_rombel || "-",
             email: row.email || "-",
             pas: row.pas || "-",
             foto: row.foto || "-",
             walas: row.walas || "-",
+            staf: row.walas || "-",
             barcode: row.barcode || "-",
           }));
 
@@ -224,7 +217,6 @@ export default function DataGuru() {
 
   const [guru, setGuru] = useState<Guru[]>([]);
   const [editData, setEditData] = useState<Guru | null>(null);
-  const [openDropdownId, setOpenDropdownId] = useState<number | null>(null); // Menyimpan ID baris yang dropdown-nya terbuka
   const [isModalEdit, setIsModalEdit] = useState(false); // State untuk mengontrol modal
   const [selectedRow, setSelectedRow] = useState(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -232,13 +224,17 @@ export default function DataGuru() {
   const fileInputRef = useRef(null);
   const [isGuruValid, setIsGuruValid] = useState(true);
   const [dataGuru, setDataGuru] = useState<Guru[]>([]);
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null); // Menyimpan ID baris yang dropdown-nya terbuka
   const handleToggleDropdown = (id_guru: string) => {
-    setOpenDropdownId(openDropdownId === id_guru ? null : id_guru); // Toggle dropdown
+    setOpenDropdownId((prev) => (prev === id_guru ? null : id_guru)); // Toggle dropdown
   };
   const [rombelList, setRombelList] = useState([]);
   const [mapelList, setMapelList] = useState([]);
   const [kelasList, setKelasList] = useState([]);
   const [isWalasEnabled, setIsWalasEnabled] = useState(false); // State untuk kontrol on/off
+  const [isStaffEnabled, setIsStaffEnabled] = useState(false);
+  const [isWalasEditEnabled, setIsWalasEditEnabled] = useState(false);
+  const [isStaffEditEnabled, setIsStaffEditEnabled] = useState(false);
   const { idAdmin } = useUserInfo();
   const [admins, setAdmins] = useState<
     { id_admin: string; nama_admin: string }[]
@@ -258,6 +254,51 @@ export default function DataGuru() {
       return newState;
     });
   };
+  const handleToggleWalasEdit = () => {
+    setIsWalasEditEnabled((prevState) => {
+      const newState = !prevState;
+
+      // Jika toggle dimatikan (isWalasEnabled false), kosongkan nilai walas
+      if (!newState) {
+        setEditData((prevData) => ({
+          ...prevData,
+          walas: "", // Kosongkan input walas
+        }));
+      }
+
+      return newState;
+    });
+  };
+  const handleToggleStaff = () => {
+    setIsStaffEnabled((prevState) => {
+      const newState = !prevState;
+
+      // Jika toggle dimatikan (isWalasEnabled false), kosongkan nilai walas
+      if (!newState) {
+        setGuruData((prevData) => ({
+          ...prevData,
+          staf: "", // Kosongkan input walas
+        }));
+      }
+
+      return newState;
+    });
+  };
+  const handleToggleStaffEdit = () => {
+    setIsStaffEditEnabled((prevState) => {
+      const newState = !prevState;
+
+      // Jika toggle dimatikan (isWalasEnabled false), kosongkan nilai walas
+      if (!newState) {
+        setEditData((prevData) => ({
+          ...prevData,
+          staf: "", // Kosongkan input walas
+        }));
+      }
+
+      return newState;
+    });
+  }
   useEffect(() => {
     //   const token = Cookies.get('token');
     //   console.log(token)
@@ -394,13 +435,11 @@ export default function DataGuru() {
     { header: "Guru", accessor: "nama_guru" as keyof Guru },
     { header: "Nip", accessor: "nip" as keyof Guru },
     { header: "Jk", accessor: "jenis_kelamin" as keyof Guru },
-    { header: "Mapel", accessor: "nama_mapel" as keyof Guru },
     { header: "Email", accessor: "email" as keyof Guru },
     // { header: "Pass", accessor: "pass" as keyof Guru },
     { header: "Walas", accessor: "walas" as keyof Guru },
+    { header: "Staff", accessor: "staf" as keyof Guru },
     { header: "Barcode", accessor: "barcode" as keyof Guru },
-    { header: "Kelas", accessor: "kelas" as keyof Guru },
-    { header: "Jurusan", accessor: "nama_rombel" as keyof Guru },
     { header: "No", accessor: "no_telp" as keyof Guru },
     {
       header: "Aksi",
@@ -414,7 +453,10 @@ export default function DataGuru() {
               &#8942; {/* Simbol menu */}
             </button>
             {openDropdownId === row.id_guru && ( // Hanya tampilkan dropdown jika id_guru sesuai
-              <div className="absolute mt-2 bg-white border rounded shadow-md lg:-ml-2 md:-ml-96">
+              <div
+                className="absolute mt-2 bg-white border rounded shadow-md lg:-ml-2"
+                style={{ marginLeft: "-450px" }}
+              >
                 <button
                   onClick={() => handleEditClick(row)}
                   className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-200"
@@ -429,7 +471,7 @@ export default function DataGuru() {
                 </button>
                 <button
                   onClick={() => handleDetailClick(row)}
-                  className="block w-full px-4 py-2 text-left text-sm text-black-700 hover:bg-gray-200"
+                  className="block w-full px-4 py-2 text-left text-sm text-black hover:bg-gray-200"
                 >
                   Detail
                 </button>
@@ -447,13 +489,11 @@ export default function DataGuru() {
     nama_guru: "",
     jenis_kelamin: "",
     no_telp: "",
-    id_mapel: [],
-    id_kelas: [],
-    id_rombel: [],
     email: "",
     pas: "",
     foto: "",
     walas: "",
+    staf: "",
     barcode: "",
   });
 
@@ -615,13 +655,11 @@ export default function DataGuru() {
           nama_guru: "",
           jenis_kelamin: "",
           no_telp: "",
-          id_mapel: [],
-          id_kelas: [],
-          id_rombel: [],
           email: "",
           pas: "",
           foto: "",
           walas: "",
+          staf: "",
           barcode: "",
         });
       }
@@ -660,51 +698,7 @@ export default function DataGuru() {
       [name]: value,
     }));
   };
-  // Handle update data setelah form edit disubmit
-  // const handleEditSubmit = async (e) => {
-  //   e.preventDefault();
 
-  //   if (editData) {
-  //     const formData = new FormData();
-
-  //     // Tambahkan data lain ke formData
-  //     formData.append("id_guru", editData.id_guru);
-  //     formData.append("id_admin", editData.id_admin);
-  //     formData.append("nip", editData.nip);
-  //     formData.append("nama_guru", editData.nama_guru);
-  //     formData.append("jenis_kelamin", editData.jenis_kelamin);
-  //     formData.append("id_mapel", editData.id_mapel);
-  //     formData.append("email", editData.email);
-  //     formData.append("pass", editData.pass);
-  //     formData.append("walas", editData.walas);
-  //     formData.append("barcode", editData.barcode);
-  //     formData.append("id_kelas", Array.isArray(editData.id_kelas) ? editData.id_kelas.join(",") : ""); // Pastikan id_kelas array diubah menjadi string
-  //     formData.append("rombel", editData.rombel);
-  //     formData.append("no_telp", editData.no_telp);
-
-  //     // Tambahkan file foto jika ada
-  //     if (editData.foto) {
-  //       formData.append("foto", editData.foto);
-  //     }
-
-  //     try {
-  //       // Panggil fungsi updateGuru dengan id_guru dan nip
-  //       await updateGuru(editData.id_guru, editData.nip, editData);
-
-  //       // Update data guru di state utama jika berhasil
-  //       setGuru((prev) =>
-  //         prev.map((guru) =>
-  //           guru.id_guru === editData.id_guru ? { ...guru, ...editData } : guru
-  //         )
-  //       );
-  //       toast.success("Data berhasil diperbarui!");
-  //       setIsModalEdit(false);
-  //       setOpenDropdownId(null);
-  //     } catch (error) {
-  //       toast.error("Terjadi kesalahan saat mengedit data");
-  //     }
-  //   }
-  // };
   const handleEditSubmit = async (e) => {
     e.preventDefault();
 
@@ -715,13 +709,10 @@ export default function DataGuru() {
       formData.append("nip", editData.nip);
       formData.append("nama_guru", editData.nama_guru);
       formData.append("jenis_kelamin", editData.jenis_kelamin);
-      formData.append("id_mapel", editData.id_mapel);
       formData.append("email", editData.email);
       formData.append("pass", editData.pass);
       formData.append("walas", editData.walas);
       formData.append("barcode", editData.barcode);
-      formData.append("id_kelas", editData.id_kelas);
-      formData.append("rombel", editData.rombel);
       formData.append("no_telp", editData.no_telp);
 
       // Tambahkan file foto jika ada
@@ -800,9 +791,6 @@ export default function DataGuru() {
       item?.nama_guru?.toLowerCase().includes(validSearchTerm) ||
       item?.jenis_kelamin?.toLowerCase().includes(validSearchTerm) ||
       item?.no_telp?.toLowerCase().includes(validSearchTerm) ||
-      item?.id_mapel?.toLowerCase().includes(validSearchTerm) ||
-      item?.id_kelas?.toLowerCase().includes(validSearchTerm) ||
-      item?.rombel?.toLowerCase().includes(validSearchTerm) ||
       item?.email?.toLowerCase().includes(validSearchTerm) ||
       item?.walas?.toLowerCase().includes(validSearchTerm)
     );
@@ -1017,7 +1005,7 @@ export default function DataGuru() {
                     placeholder="Password..."
                   />
                 </div>
-                <div>
+                {/* <div>
                   <h2 className="text-sm mb-2 sm:text-sm font-bold">
                     Mengampu
                   </h2>
@@ -1069,7 +1057,7 @@ export default function DataGuru() {
                     </motion.div>
                   )}
                 </AnimatePresence> */}
-                  <div>
+                {/* <div>
                     {dropdowns.map((_, index) => (
                       <div key={index} className="flex items-center mb-2">
                         <select className="w-full p-2 border rounded text-sm sm:text-base mr-2">
@@ -1079,7 +1067,6 @@ export default function DataGuru() {
                           <option value="3">Opsi 3</option>
                         </select>
 
-                        {/* Tampilkan tombol '-' hanya jika ada lebih dari satu dropdown */}
                         {dropdowns.length > 1 && (
                           <button
                             type="button"
@@ -1090,7 +1077,6 @@ export default function DataGuru() {
                           </button>
                         )}
 
-                        {/* Tampilkan tombol '+' hanya pada dropdown terakhir */}
                         {index === dropdowns.length - 1 && (
                           <button
                             type="button"
@@ -1103,8 +1089,8 @@ export default function DataGuru() {
                       </div>
                     ))}
                   </div>
-                </div>
-                <div>
+                </div> */}
+                {/* <div>
                   <h2 className="text-sm mb-2 sm:text-sm font-bold">Kelas</h2>
                   <div
                     onClick={toggleKelasVisibility}
@@ -1199,7 +1185,7 @@ export default function DataGuru() {
                       </motion.div>
                     )}
                   </AnimatePresence>
-                </div>
+                </div> */}
                 <div>
                   <label className="inline-flex items-center">
                     <h2 className="text-sm mb-2 sm:text-sm font-bold pr-2 pt-1">
@@ -1242,6 +1228,41 @@ export default function DataGuru() {
                     ))}
                   </select>
                 </div>
+                <div>
+                  <label className="inline-flex items-center">
+                    <h2 className="text-sm mb-2 sm:text-sm font-bold pr-2 pt-1">
+                      Staff
+                    </h2>
+                    <input
+                      type="checkbox"
+                      checked={isStaffEnabled}
+                      onChange={handleToggleStaff} // Ganti fungsi untuk mengatur state
+                      className="hidden"
+                    />
+                    <span
+                      className={`w-10 h-5 flex items-center bg-gray-300 rounded-full p-1 cursor-pointer transition-colors duration-300 ${
+                        isStaffEnabled ? "bg-teal-400" : ""
+                      }`}
+                    >
+                      <span
+                        className={`bg-white w-4 h-4 rounded-full shadow-md transform duration-300 ${
+                          isStaffEnabled ? "translate-x-5" : ""
+                        }`}
+                      />
+                    </span>
+                    <span className="ml-2 text-sm"></span>
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full p-2 border rounded text-sm sm:text-base mb-2"
+                    name="staf"
+                    value={guruData.staf} // Sesuaikan dengan state yang Anda gunakan
+                    onChange={handleChange} // Fungsi untuk menangani perubahan nilai input
+                    placeholder="Staff bagian..."
+                    disabled={!isStaffEnabled} // Disable input jika isStaffEnabled false
+                  />
+                </div>
+
                 <div>
                   <h2 className="text-sm mb-2 sm:text-sm font-bold">
                     No. Telepon
@@ -1452,6 +1473,12 @@ export default function DataGuru() {
                             onChange={handleEditChange}
                             className="w-full p-2 border rounded text-sm sm:text-base mb-2"
                             placeholder="nip..."
+                            pattern="\d*" // Hanya menerima angka
+                            onKeyPress={(e) => {
+                              if (!/[0-9]/.test(e.key)) {
+                                e.preventDefault(); // Mencegah input selain angka
+                              }
+                            }}
                           />
 
                           <h2 className="text-sm mb-2 sm:text-sm font-bold">
@@ -1503,147 +1530,86 @@ export default function DataGuru() {
                             placeholder="pass..."
                           />
 
-                          <h2 className="text-sm mb-2 sm:text-sm font-bold">
-                            Mapel
-                          </h2>
-                          <div className=" mb-2 lg:flex lg:flex-wrap md:flex md:flex-wrap">
-                            {/* {mapelList.length > 0 ? (
-                              mapelList.map((mapel) => (
-                                <label
-                                  key={mapel.id_mapel}
-                                  className="flex items-center space-x-2 md:md:w-1/2 mb-2"
-                                >
-                                  <input
-                                    type="checkbox"
-                                    name="mapel"
-                                    value={mapel.id_mapel}
-                                    checked={
-                                      Array.isArray(editData?.id_mapel) &&
-                                      editData?.id_mapel.includes(
-                                        mapel?.id_mapel
-                                      )
-                                    }
-                                    onChange={handleMapelCheckboxChange}
-                                    className="form-checkbox text-blue-600"
-                                  />
-                                  <span className="text-sm sm:text-base">
-                                    {mapel.nama_mapel}
-                                  </span>
-                                </label>
-                              ))
-                            ) : (
-                              <p>Tidak ada data mata pelajaran.</p>
-                            )} */}
-                            <div className="w-full">
-                              {editDropdowns.map((dropdown, index) => (
-                                <div
-                                  key={dropdown.id}
-                                  className="flex items-center mb-2"
-                                >
-                                  <select
-                                    value={dropdown.value}
-                                    onChange={(e) =>
-                                      handleEditCheck(index, e.target.value)
-                                    }
-                                    className="w-full p-2 border rounded text-sm sm:text-base mr-2"
-                                  >
-                                    <option value="">Pilih Opsi</option>
-                                    <option value="1">Opsi 1</option>
-                                    <option value="2">Opsi 2</option>
-                                    <option value="3">Opsi 3</option>
-                                  </select>
-                                  {editDropdowns.length > 1 && (
-                                    <button
-                                      type="button"
-                                      onClick={() => removeEditDropdown(index)}
-                                      className="p-2 bg-red-500 hover:bg-red-700 text-white rounded mr-2"
-                                    >
-                                      -
-                                    </button>
-                                  )}
-                                  {index === editDropdowns.length - 1 && (
-                                    <button
-                                      type="button"
-                                      onClick={addEditDropdown}
-                                      className="p-2 bg-blue-500 hover:bg-blue-700 text-white rounded"
-                                    >
-                                      +
-                                    </button>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                          <h2 className="text-sm mb-2 sm:text-sm font-bold">
-                            Kelas
-                          </h2>
-                          <div className="mb-2 lg:flex lg:flex-wrap md:flex md:flex-wrap">
-                            {kelasList.map((kelas) => (
-                              <label
-                                key={kelas.id_kelas} // Pastikan id_kelas ada di data kelas
-                                className="flex items-center space-x-2 md:w-16 mb-2"
+                          <div>
+                            <label className="inline-flex items-center">
+                              <h2 className="text-sm mb-2 sm:text-sm font-bold pr-2 pt-1">
+                                Walas
+                              </h2>
+                              <input
+                                type="checkbox"
+                                checked={isWalasEditEnabled}
+                                onChange={handleToggleWalasEdit}
+                                className="hidden"
+                              />
+                              <span
+                                className={`w-10 h-5 flex items-center bg-gray-300 rounded-full p-1 cursor-pointer transition-colors duration-300 ${
+                                  isWalasEditEnabled ? "bg-teal-400" : ""
+                                }`}
                               >
-                                <input
-                                  type="checkbox"
-                                  name="kelas"
-                                  value={kelas.id_kelas} // Ganti dengan nama kolom yang sesuai dari database
-                                  checked={
-                                    Array.isArray(editData?.id_kelas) &&
-                                    editData?.id_kelas.includes(kelas?.id_kelas)
-                                  } // Cek apakah kelas sudah dipilih
-                                  onChange={handleEditCheckboxChange} // Panggil fungsi untuk mengubah state
-                                  className="form-checkbox text-blue-600"
+                                <span
+                                  className={`bg-white w-4 h-4 rounded-full shadow-md transform duration-300 ${
+                                    isWalasEditEnabled ? "translate-x-5" : ""
+                                  }`}
                                 />
-                                <span className="text-sm sm:text-base">
-                                  {kelas.kelas}
-                                </span>
-                              </label>
-                            ))}
-                          </div>
-                          <h2 className="text-sm mb-2 sm:text-sm font-bold">
-                            Jurusan
-                          </h2>
-                          <div className="flex flex-wrap space-x-4 mb-2">
-                            {rombelList.length > 0 ? (
-                              rombelList.map((rombel) => (
-                                <label
-                                  key={rombel.id_rombel}
-                                  className="flex items-center space-x-2 mb-1"
+                              </span>
+                              <span className="ml-2 text-sm"></span>
+                            </label>
+                            <select
+                              className="w-full p-2 border rounded text-sm sm:text-base mb-2"
+                              name="walas"
+                              value={editData ? editData.walas : ""}
+                              onChange={handleEditChange}
+                              disabled={!isWalasEditEnabled} // Disable dropdown jika isWalasEditEnabled false
+                            >
+                              <option value="" disabled>
+                                Pilih Wali Kelas...
+                              </option>
+                              {kelas1.map((item) => (
+                                <option
+                                  key={item.id_siswa}
+                                  value={item.kelas}
                                 >
-                                  <input
-                                    type="checkbox"
-                                    name="rombel"
-                                    value={rombel.id_rombel}
-                                    checked={
-                                      Array.isArray(editData.id_rombel) &&
-                                      editData.id_rombel.includes(
-                                        rombel.id_rombel
-                                      )
-                                    }
-                                    onChange={handleEditRombel}
-                                    className="form-checkbox text-blue-600"
-                                  />
-                                  <span className="text-sm sm:text-base">
-                                    {rombel.nama_rombel}
-                                  </span>
-                                </label>
-                              ))
-                            ) : (
-                              <p>Tidak ada data rombel.</p> // Tampilkan pesan jika tidak ada data
-                            )}
+                                  {item.kelas}{" "}
+                                  {/* Sesuaikan dengan field yang diinginkan dari respons */}
+                                </option>
+                              ))}
+                            </select>
                           </div>
 
-                          <h2 className="text-sm mb-2 sm:text-sm font-bold">
-                            Walas
-                          </h2>
-                          <input
-                            type="text"
-                            name="walas"
-                            value={editData ? editData.walas : ""}
-                            onChange={handleEditChange}
-                            className="w-full p-2 border rounded text-sm sm:text-base mb-2"
-                            placeholder="Walas..."
-                          />
+                          <div>
+                            <label className="inline-flex items-center">
+                              <h2 className="text-sm mb-2 sm:text-sm font-bold pr-2 pt-1">
+                                Staff
+                              </h2>
+                              <input
+                                type="checkbox"
+                                checked={isStaffEditEnabled}
+                                onChange={handleToggleStaffEdit} // Ganti fungsi untuk mengatur state
+                                className="hidden"
+                              />
+                              <span
+                                className={`w-10 h-5 flex items-center bg-gray-300 rounded-full p-1 cursor-pointer transition-colors duration-300 ${
+                                  isStaffEditEnabled ? "bg-teal-400" : ""
+                                }`}
+                              >
+                                <span
+                                  className={`bg-white w-4 h-4 rounded-full shadow-md transform duration-300 ${
+                                    isStaffEditEnabled ? "translate-x-5" : ""
+                                  }`}
+                                />
+                              </span>
+                              <span className="ml-2 text-sm"></span>
+                            </label>
+                            <input
+                              type="text"
+                              className="w-full p-2 border rounded text-sm sm:text-base mb-2"
+                              name="staf"
+                              value={editData ? editData.staf : ""}
+                              onChange={handleEditChange} // Fungsi untuk menangani perubahan nilai input
+                              placeholder="Staff bagian..."
+                              disabled={!isStaffEditEnabled} // Disable input jika isStaffEditEnabled false
+                            />
+                          </div>
 
                           <h2 className="text-sm mb-2 sm:text-sm font-bold">
                             No. Telepon
@@ -1655,6 +1621,12 @@ export default function DataGuru() {
                             onChange={handleEditChange}
                             className="w-full p-2 border rounded text-sm sm:text-base mb-2"
                             placeholder="No. Telepon..."
+                            pattern="\d*" // Hanya menerima angka
+                            onKeyPress={(e) => {
+                              if (!/[0-9]/.test(e.key)) {
+                                e.preventDefault(); // Mencegah input selain angka
+                              }
+                            }}
                           />
 
                           <h2 className="text-sm mb-2 sm:text-sm font-bold">

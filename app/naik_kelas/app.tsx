@@ -39,24 +39,6 @@ export default function NaikKelas() {
   }, []);
   const [jumlahLulus, setJumlahLulus] = useState(0);
   const [showLulusNotif, setShowLulusNotif] = useState(false);
-
-  const handleLulus = () => {
-    // Pisahkan siswa yang lulus dan siswa yang tinggal kelas
-    const siswaLulus = kelas.filter((siswa) => !siswa.tinggalKelas);
-    const siswaTinggalKelas = kelas.filter((siswa) => siswa.tinggalKelas);
-
-    // Set jumlah siswa yang lulus
-    setJumlahLulus(siswaLulus.length);
-
-    // Hapus siswa yang lulus dari tabel pertama
-    setKelas(siswaTinggalKelas);
-
-    // Tambahkan siswa yang tinggal kelas ke tabel kedua (dataNaik)
-    setDataNaik(siswaTinggalKelas);
-
-    // Tampilkan notifikasi lulus
-    setShowLulusNotif(true);
-  };
   const [searchName, setSearchName] = useState("");
   const [newIdKelas, setNewIdKelas] = useState("");
   const [filteredKelas, setFilteredKelas] = useState([]);
@@ -136,6 +118,30 @@ export default function NaikKelas() {
       prev.map((item) => ({ ...item, tinggalKelas: newState }))
     );
   };
+
+  const handleLulus = () => {
+    // Pisahkan siswa yang lulus dan siswa yang tinggal kelas
+    const siswaLulus = filteredKelas.filter((siswa) => !siswa.tinggalKelas);
+    const siswaTinggalKelas = filteredKelas.filter(
+      (siswa) => siswa.tinggalKelas
+    );
+
+    // Set jumlah siswa yang lulus
+    setJumlahLulus(siswaLulus.length);
+
+    // Hapus siswa yang lulus dari tabel pertama
+    setFilteredKelas(siswaTinggalKelas);
+
+    // Tambahkan siswa yang tinggal kelas ke tabel kedua (dataNaik)
+    // setDataNaik((prev) => [...prev, ...siswaLulus]);
+
+    // Tampilkan notifikasi lulus
+    setShowLulusNotif(true);
+    // Sembunyikan notifikasi setelah 5 detik
+    setTimeout(() => {
+      setShowLulusNotif(false);
+    }, 3000); // 5000 ms = 5 detik
+  };
   return (
     <div className="rounded-lg max-w-full p-3 bg-slate-100">
       <ToastContainer className="mt-14" />
@@ -164,13 +170,13 @@ export default function NaikKelas() {
             value={searchName}
             onChange={(e) => setSearchName(e.target.value)}
             // style={{ marginBottom: '10px', padding: '5px', width: '200px' }}
-            className="mt-1 h-11 p-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
+            className="mt-1 h-11 md:w-48 lg:w-48 w-96 p-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
           />
-          <p className="inline-block mx-2">Dari</p>
+          <p className="md:inline-block mx-2 my-2">Dari</p>
           <select
             value={selectedKelas}
             onChange={(e) => setSelectedKelas(e.target.value)}
-            className="p-2 border rounded "
+            className="p-2 border rounded md:w-28 lg:w-48 w-96"
           >
             <option value="">Kelas</option>
             {/* Ambil daftar kelas unik untuk opsi dropdown */}
@@ -183,7 +189,7 @@ export default function NaikKelas() {
                 )
               )}
           </select>
-          <p className="inline-block mx-2">Naik ke</p>
+          <p className="md:inline-block mx-2 my-2">Naik ke</p>
           {/* <select
             id="naikKelas"
             value={selectedKelas1}
@@ -206,7 +212,7 @@ export default function NaikKelas() {
           <select
             value={newIdKelas}
             onChange={(e) => setNewIdKelas(e.target.value)}
-            className="p-2 border rounded"
+            className="p-2 border rounded  md:w-32 lg:w-48 w-96"
           >
             <option value="">Pilih Kelas</option>
             {Array.isArray(allKelas) && allKelas.length > 0 ? (
@@ -344,7 +350,8 @@ export default function NaikKelas() {
                   </tr>
                 </thead>
                 <tbody>
-                  {showUpdatedData && Array.isArray(filteredKelas) &&
+                  {showUpdatedData &&
+                    Array.isArray(filteredKelas) &&
                     filteredKelas.map((item, index) => (
                       <tr key={item.id_siswa || index}>
                         <td className="p-3 sm:p-3 text-white border-b">
