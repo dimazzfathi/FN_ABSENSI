@@ -249,7 +249,7 @@ export default function NaikKelas() {
                       No
                     </th>
                     <th className="p-2 sm:p-3 bg-slate-500 text-white">Nama</th>
-                    <th className="p-2 sm:p-3 bg-slate-500 text-white">
+                    <th className="p-2 sm:p-3 bg-slate-500 text-white w-24">
                       Kelas
                     </th>
                     <th className="p-2 sm:p-3 bg-slate-500 rounded-r-xl text-white">

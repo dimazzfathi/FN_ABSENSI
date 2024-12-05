@@ -91,10 +91,10 @@ export default function DataGuru() {
         no_telp: "",
         email: "",
         pas: "",
-        foto: "",
         walas: "",
         staf: "",
         barcode: "",
+        foto: "",
       },
     ];
 
@@ -108,29 +108,29 @@ export default function DataGuru() {
       "no_telp",
       "email",
       "pas",
-      "foto",
       "walas",
       "staf",
       "barcode",
+      "foto",
     ];
     console.log("ini format", headers);
     // Membuat worksheet
     const worksheet = XLSX.utils.json_to_sheet(data, { header: headers });
-    const kelasText = ` Isi dengan Format:\n${kelas
-      .map((kelas) => kelas.kelas)
-      .join("\n")}`;
-    // Menambahkan ke komentar worksheet sebagai satu entri
-    worksheet["I1"].c = [{ t: kelasText }];
-    const rombelText = ` Isi dengan Format:\n${rombel
-      .map((rombel) => rombel.nama_rombel)
-      .join("\n")}`;
-    // Menambahkan ke komentar worksheet sebagai satu entri
-    worksheet["J1"].c = [{ t: rombelText }];
-    const mapelText = ` Isi dengan Format:\n${mapel
-      .map((mapel) => mapel.nama_mapel)
-      .join("\n")}`;
-    // Menambahkan ke komentar worksheet sebagai satu entri
-    worksheet["H1"].c = [{ t: mapelText }];
+    // const kelasText = ` Isi dengan Format:\n${kelas
+    //   .map((kelas) => kelas.kelas)
+    //   .join("\n")}`;
+    // // Menambahkan ke komentar worksheet sebagai satu entri
+    // worksheet["I1"].c = [{ t: kelasText }];
+    // const rombelText = ` Isi dengan Format:\n${rombel
+    //   .map((rombel) => rombel.nama_rombel)
+    //   .join("\n")}`;
+    // // Menambahkan ke komentar worksheet sebagai satu entri
+    // worksheet["J1"].c = [{ t: rombelText }];
+    // const mapelText = ` Isi dengan Format:\n${mapel
+    //   .map((mapel) => mapel.nama_mapel)
+    //   .join("\n")}`;
+    // // Menambahkan ke komentar worksheet sebagai satu entri
+    // worksheet["H1"].c = [{ t: mapelText }];
 
     // Membuat workbook
     const workbook = XLSX.utils.book_new();
@@ -178,10 +178,10 @@ export default function DataGuru() {
             no_telp: row.no_telp || "-",
             email: row.email || "-",
             pas: row.pas || "-",
-            foto: row.foto || "-",
             walas: row.walas || "-",
-            staf: row.walas || "-",
+            staf: row.staf || "-",
             barcode: row.barcode || "-",
+            foto: row.foto || "-",
           }));
 
           console.log("Data dari Excel:", jsonData); // Log data dari Excel
@@ -643,7 +643,18 @@ export default function DataGuru() {
         setGuru((prevGuruList) => [
           ...prevGuruList,
           {
-            ...guruData,
+            id_guru: guruData.id_guru || "-",
+            id_admin: guruData.id_admin || "-",
+            nip: guruData.nip || "-",
+            nama_guru: guruData.nama_guru || "-",
+            jenis_kelamin: guruData.jenis_kelamin || "-",
+            no_telp: guruData.no_telp || "-",
+            email: guruData.email || "-",
+            pas: guruData.pas || "-",
+            foto: guruData.foto || "-",
+            walas: guruData.walas || "-",
+            staf: guruData.staf || "-",
+            barcode: guruData.barcode || "-",
           },
         ]);
 
@@ -1218,7 +1229,7 @@ export default function DataGuru() {
                     disabled={!isWalasEnabled} // Disable dropdown jika isWalasEnabled false
                   >
                     <option value="" disabled>
-                      Pilih Wali Kelas...
+                      Pilih Kelas...
                     </option>
                     {kelas1.map((item) => (
                       <option key={item.id_siswa} value={item.id_kelas}>
@@ -1562,7 +1573,7 @@ export default function DataGuru() {
                               disabled={!isWalasEditEnabled} // Disable dropdown jika isWalasEditEnabled false
                             >
                               <option value="" disabled>
-                                Pilih Wali Kelas...
+                                Pilih Kelas...
                               </option>
                               {kelas1.map((item) => (
                                 <option

@@ -9,7 +9,7 @@ export type Guru = {
   nama_guru: string;
   jenis_kelamin: string;
   email: string;
-  pass: string;
+  pas: string;
   foto: string;
   walas: string;
   staf: string;

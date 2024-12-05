@@ -6,6 +6,10 @@ import DataTable from "../components/dataTabel";
 import axios from "axios";
 import Cookies from "js-cookie"; // Import js-cookie
 import { useRouter } from "next/navigation";
+import { FaWhatsapp } from "react-icons/fa"; // Menggunakan icon dari react-icons
+import * as XLSX from "xlsx";
+import { jsPDF } from "jspdf";
+import "jspdf-autotable"; // Pastikan ini diimpor
 
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -76,33 +80,6 @@ const Filters = () => {
 
   const handleKelasChange = (e) => {
     setSelectedKelas(e.target.value);
-  };
-
-  const getMonthYearOptions = () => {
-    const monthNames = [
-      "Januari",
-      "Februari",
-      "Maret",
-      "April",
-      "Mei",
-      "Juni",
-      "Juli",
-      "Agustus",
-      "September",
-      "Oktober",
-      "November",
-      "Desember",
-    ];
-    const currentYear = new Date().getFullYear();
-    const futureYears = 4; // Menampilkan tahun hingga 5 tahun ke depan
-    const options = [];
-
-    for (let year = currentYear; year <= currentYear + futureYears; year++) {
-      monthNames.forEach((month) => {
-        options.push({ month, year });
-      });
-    }
-    return options;
   };
 
   // const monthYearOptions = getMonthYearOptions();
@@ -207,19 +184,123 @@ const Filters = () => {
   const getAttendanceStatus = (student, day) => {
     return student.attendance[day] || "-";
   };
-
   const handlePrint = () => {
     window.print();
   };
-
   const handleExportPDF = () => {
-    // Logika untuk ekspor PDF
-  };
+    const doc = new jsPDF();
 
+    // Menambahkan judul pada PDF
+    doc.text("Laporan Absensi Siswa", 14, 10);
+
+    // Menyiapkan data tabel
+    const tableColumn = [
+      "No",
+      "Nama Siswa",
+      ...datesArray.map((date) => `${date}`),
+      "Hadir",
+      "Alpha",
+      "Sakit",
+      "Izin",
+      "Terlambat",
+      "Nomor Wali",
+    ];
+
+    const tableRows = filteredSiswaData.map((item, index) => {
+      const rowData = [
+        index + 1, // Nomor urut
+        item.nama_siswa, // Nama siswa
+        ...datesArray.map((date) => {
+          return item.absensi && item.absensi[date]
+            ? item.absensi[date] === "H"
+              ? "Hadir"
+              : item.absensi[date] === "A"
+              ? "Alpha"
+              : item.absensi[date] === "S"
+              ? "Sakit"
+              : item.absensi[date] === "I"
+              ? "Izin"
+              : item.absensi[date] === "T"
+              ? "Terlambat"
+              : "-"
+            : "-";
+        }),
+        item.absensi && item.absensi["H"] ? item.absensi["H"] : "-",
+        item.absensi && item.absensi["A"] ? item.absensi["A"] : "-",
+        item.absensi && item.absensi["S"] ? item.absensi["S"] : "-",
+        item.absensi && item.absensi["I"] ? item.absensi["I"] : "-",
+        item.absensi && item.absensi["T"] ? item.absensi["T"] : "-",
+        item.nomor_wali, // Nomor Wali
+      ];
+      return rowData;
+    });
+
+    // Menambahkan tabel ke dalam PDF
+    doc.autoTable({
+      head: [tableColumn],
+      body: tableRows,
+      startY: 20, // Menyesuaikan posisi vertikal awal tabel
+      theme: "grid",
+      headStyles: { fillColor: [41, 128, 185], textColor: [255, 255, 255] }, // Gaya header tabel
+      styles: { cellPadding: 3, fontSize: 10 }, // Gaya sel tabel
+    });
+
+    // Mengekspor file PDF
+    doc.save("Absensi_Siswa.pdf");
+  };
   const handleExportExcel = () => {
-    // Logika untuk ekspor Excel
-  };
+    // Membuat worksheet dari data siswa
+    const wsData = filteredSiswaData.map((item, index) => {
+      const rowData = [
+        index + 1, // Nomor urut
+        item.nama_siswa, // Nama Siswa
+        ...datesArray.map((date) => {
+          return item.absensi && item.absensi[date]
+            ? item.absensi[date] === "H"
+              ? "Hadir"
+              : item.absensi[date] === "A"
+              ? "Alpha"
+              : item.absensi[date] === "S"
+              ? "Sakit"
+              : item.absensi[date] === "I"
+              ? "Izin"
+              : item.absensi[date] === "T"
+              ? "Terlambat"
+              : "-"
+            : "-";
+        }),
+        item.absensi && item.absensi["H"] ? item.absensi["H"] : "-",
+        item.absensi && item.absensi["A"] ? item.absensi["A"] : "-",
+        item.absensi && item.absensi["S"] ? item.absensi["S"] : "-",
+        item.absensi && item.absensi["I"] ? item.absensi["I"] : "-",
+        item.absensi && item.absensi["T"] ? item.absensi["T"] : "-",
+        item.nomor_wali, // Nomor Wali
+      ];
+      return rowData;
+    });
 
+    // Membuat worksheet dan workbook
+    const ws = XLSX.utils.aoa_to_sheet([
+      [
+        "No", // Header kolom pertama
+        "Nama Siswa", // Header kolom kedua
+        ...datesArray.map((date) => `${date}`), // Header untuk tanggal
+        "Hadir", // Jumlah hadir
+        "Alpha", // Jumlah alpha
+        "Sakit", // Jumlah sakit
+        "Izin", // Jumlah izin
+        "Terlambat", // Jumlah terlambat
+        "Nomor Wali", // Nomor Wali
+      ],
+      ...wsData, // Data siswa
+    ]);
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Absensi Siswa");
+
+    // Mengekspor file Excel
+    XLSX.writeFile(wb, "Absensi_Siswa.xlsx");
+  };
   const handleExportJPG = () => {
     // Logika untuk ekspor JPG
   };
@@ -228,7 +309,7 @@ const Filters = () => {
   const fetchNamaKelas = async () => {
     try {
       const response = await axios.get(
-        `${baseUrl}/joinNonMaster/namaSiswaKelas`
+        `${baseUrl}/joinNonMaster/nama-siswa-kelas`
       );
       setSiswaData(response.data.data); // Menyimpan data ke state kelas
       console.log("total", response.data);
@@ -242,38 +323,51 @@ const Filters = () => {
   // Mendapatkan tanggal sekarang
   const currentDate = new Date();
   const currentDay = currentDate.getDate();
+  const currentMonth = currentDate.getMonth() + 1;
+  const currentYear = currentDate.getFullYear();
 
-  // Membuat array tanggal mulai dari 1 hingga hari ini
-  const datesArray = Array.from({ length: currentDay }, (_, i) => i + 1);
-  const [selectedMonthYear, setSelectedMonthYear] = useState("");
-  const [monthYearOptions, setMonthYearOptions] = useState([]);
-  useEffect(() => {
-    // Mendapatkan bulan dan tahun sekarang
-    const currentDate = new Date();
-    const currentMonth = currentDate.getMonth(); // Bulan saat ini (0-11)
-    const currentYear = currentDate.getFullYear(); // Tahun saat ini
+  // Membuat array bulan dan tahun
+  const monthsArray = [
+    "Januari",
+    "Februari",
+    "Maret",
+    "April",
+    "Mei",
+    "Juni",
+    "Juli",
+    "Agustus",
+    "September",
+    "Oktober",
+    "November",
+    "Desember",
+  ];
 
-    // Membuat array bulan dan tahun untuk dropdown
-    const options = [];
-    for (let month = 0; month <= currentMonth; month++) {
-      const monthName = new Date(currentYear, month).toLocaleString("default", {
-        month: "long",
-      }); // Mendapatkan nama bulan
-      options.push({
-        month: monthName,
-        year: currentYear,
-      });
-    }
+  // Menyusun opsi bulan untuk tahun sekarang
+  const monthYearOptions = monthsArray.map((month, index) => ({
+    label: `${month} ${currentYear}`,
+    value: `${currentYear}-${index + 1}`, // Format nilai: "YYYY-MM"
+  }));
 
-    // Mengatur state dengan options yang telah dibuat
-    setMonthYearOptions(options);
-    setSelectedMonthYear(`${options[options.length - 1].month} ${currentYear}`); // Set default ke bulan sekarang
-  }, []);
+  // State untuk menyimpan bulan dan tahun yang dipilih
+  const [selectedMonthYear, setSelectedMonthYear] = useState(
+    `${currentYear}-${currentMonth}`
+  );
 
-  const handleMonthYearChange = (e) => {
-    setSelectedMonthYear(e.target.value);
-  };
-  
+  // Mendapatkan bulan dan tahun dari pilihan
+  const [selectedYear, selectedMonth] = selectedMonthYear
+    .split("-")
+    .map(Number);
+
+  // Membuat array tanggal sesuai bulan dan tahun yang dipilih
+  const datesArray = Array.from(
+    {
+      length:
+        selectedYear === currentYear && selectedMonth === currentMonth
+          ? currentDay // Hanya hingga tanggal hari ini untuk bulan & tahun saat ini
+          : new Date(selectedYear, selectedMonth, 0).getDate(), // Semua tanggal untuk bulan lainnya
+    },
+    (_, i) => i + 1
+  );
   // Filter siswa berdasarkan kelas yang dipilih
   const filteredSiswaData = selectedKelas
     ? siswaData.filter((siswa) => siswa.kelas === selectedKelas)
@@ -304,15 +398,12 @@ const Filters = () => {
                 <div className="items-center lg:mb-0 space-x-2 lg:order-1">
                   <select
                     value={selectedMonthYear}
-                    onChange={handleMonthYearChange}
+                    onChange={(e) => setSelectedMonthYear(e.target.value)}
                     className="w-full p-2 border border-gray-300 rounded text-sm sm:text-xs"
                   >
-                    {monthYearOptions.map((option, index) => (
-                      <option
-                        key={index}
-                        value={`${option.month} ${option.year}`}
-                      >
-                        {`${option.month} ${option.year}`}
+                    {monthYearOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
                       </option>
                     ))}
                   </select>
@@ -376,7 +467,7 @@ const Filters = () => {
 
             {/* Tabel */}
             <div className="overflow-x-auto">
-              <table className="min-w-full border-collapse ">
+              {/* <table className="min-w-full border-collapse ">
                 <thead>
                   <tr style={{ fontSize: "12px" }}>
                     <th className="p-2 sm:p-3 rounded-l-lg bg-slate-500 text-white text-left ">
@@ -498,13 +589,13 @@ const Filters = () => {
                           rel="noopener noreferrer"
                         >
                           <i className="fab fa-whatsapp fa-lg"></i>{" "}
-                          {/* Ikon WhatsApp */}
+                          {/* Ikon WhatsApp
                         </a>
                       </td>
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </table> */}
               <table className="w-full text-left mt-4 border-collapse">
                 <thead>
                   <tr className="ml-2">
@@ -601,7 +692,19 @@ const Filters = () => {
                             : "-"}
                         </td>
                         <td className="border-b text-white text-xs sm:text-xs p-2">
-                          {item.nomor_wali}
+                          {item.nomor_wali && (
+                            <a
+                              href={`https://wa.me/${item.nomor_wali.replace(
+                                /[^0-9]/g,
+                                ""
+                              )}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-white hover:text-green-500"
+                            >
+                              <FaWhatsapp className="text-green-500 text-xl" />
+                            </a>
+                          )}
                         </td>
                       </tr>
                     ))}

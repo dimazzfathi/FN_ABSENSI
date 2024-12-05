@@ -24,7 +24,6 @@ import { faSignOutAlt } from "@fortawesome/free-solid-svg-icons";
 import useUserInfo from "../useUserInfo"; // Pastikan path file sesuai
 
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-import { useRouter } from 'next/navigation';
 
 const Navbar = ({
   toggleSidebar,
@@ -33,7 +32,6 @@ const Navbar = ({
   toggleSidebar: () => void;
   isOpen: false;
 }) => {
-  
   const [isToggleSidebar, setToggleSidebar] = useState(false);
   // const [isOpen, setIsOpen] = useState(false);
   const [isClick, setisClick] = useState(false);
@@ -62,75 +60,13 @@ const Navbar = ({
     setGuruOpen(false);
     setAdminOpen(false);
   };
-  
-  // State untuk menyimpan data tahun ajaran, kelas, dan rombel
-  const [tahunAjaran, setTahunAjaran] = useState([]);
-const [kelas, setKelas] = useState([]);
-const [rombel, setRombel] = useState([]);
-const [isDataLoaded, setIsDataLoaded] = useState(false);
 
-const router = useRouter();
-
-// Ambil data tahun ajaran, kelas, dan rombel dari API
-// Tambahkan fungsi untuk me-refresh data
-const toggleSiswa = async () => {
-  try {
-    const tahunAjaranResponse = await fetch(`${baseUrl}/tahun-pelajaran/all-tahun-pelajaran`);
-    const tahunAjaranData = await tahunAjaranResponse.json();
-
-    const kelasResponse = await fetch(`${baseUrl}/kelas/all-kelas`);
-    const kelasData = await kelasResponse.json();
-
-    const rombelResponse = await fetch(`${baseUrl}/rombel/all-rombel`);
-    const rombelData = await rombelResponse.json();
-
-    // Validasi langsung menggunakan data yang baru diambil
-    if (!tahunAjaranData.data || tahunAjaranData.data.length === 0) {
-      console.log("Navigasi ke halaman tahun ajaran");
-      router.push('/master_data/akademik/thn_ajaran');
-      return;
-    }
-
-    if (!kelasData.data || kelasData.data.length === 0) {
-      console.log("Navigasi ke halaman kelas");
-      router.push('/master_data/akademik/kelas');
-      return;
-    }
-
-    if (!rombelData.data || rombelData.data.length === 0) {
-      console.log("Navigasi ke halaman rombel");
-      router.push('/master_data/akademik/jurusan');
-      return;
-    }
-
-    // Jika semua valid, buka halaman siswa
-    setTahunAjaran(tahunAjaranData.data);
-    setKelas(kelasData.data);
-    setRombel(rombelData.data);
+  const toggleSiswa = () => {
     setSiswaOpen(!isSiswaOpen);
     setAkademikOpen(false);
     setGuruOpen(false);
     setAdminOpen(false);
-  } catch (error) {
-    console.error("Error fetching data:", error);
-  }
-};
-
-// Fungsi pengecekan data
-const checkTahunAjaran = () => {
-  console.log("Pengecekan tahun ajaran:", tahunAjaran && tahunAjaran.length > 0);
-  return tahunAjaran && tahunAjaran.length > 0;
-};
-
-const checkKelas = () => {
-  console.log("Pengecekan kelas:", kelas && kelas.length > 0);
-  return kelas && kelas.length > 0;
-};
-
-const checkRombel = () => {
-  console.log("Pengecekan rombel:", rombel && rombel.length > 0);
-  return rombel && rombel.length > 0;
-};
+  };
 
   const toggleGuru = () => {
     setGuruOpen(!isGuruOpen);
@@ -178,7 +114,30 @@ const checkRombel = () => {
   };
 
   const { namaAdmin, status } = useUserInfo();
+  const [profileImage, setProfileImage] = useState("/default-image.jpg"); // Gambar default
 
+  useEffect(() => {
+    // Ambil gambar dari Local Storage
+    const savedImage = localStorage.getItem("profileImage");
+    if (savedImage) {
+      setProfileImage(savedImage);
+    }
+
+    // Tambahkan event listener untuk sinkronisasi real-time
+    const handleStorageChange = () => {
+      const updatedImage = localStorage.getItem("profileImage");
+      if (updatedImage) {
+        setProfileImage(updatedImage);
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    // Hapus event listener saat komponen di-unmount
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
   return (
     <>
       <nav className="bg-teal-500 z-30 relative sticky top-0 shadow-lg">
@@ -222,10 +181,19 @@ const checkRombel = () => {
                   <span className="block italic text-sm">{status}</span>
                   {/* <span className='block text-xs text-dark'>Admin</span> */}
                 </span>
-                <span className="w-10 h-10 rounded-full">
+                {/* <span className="w-10 h-10 rounded-full">
                   <img
                     src="/image/logo 2.jpg"
                     alt=""
+                    width={112}
+                    height={112}
+                    className="bg-black w-auto h-auto rounded-full"
+                  />
+                </span> */}
+                <span className="w-10 h-10 rounded-full">
+                  <img
+                    src={profileImage}
+                    alt="Profile"
                     width={112}
                     height={112}
                     className="bg-black w-auto h-auto rounded-full"
