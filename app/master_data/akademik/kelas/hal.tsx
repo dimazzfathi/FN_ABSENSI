@@ -245,6 +245,79 @@ export default function _Kelas() {
     }
   };
 
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedKelasIds, setSelectedKelasIds] = useState<string[]>([]);
+  const [selectAll, setSelectAll] = useState(false);
+  // Fungsi untuk menampilkan modal konfirmasi
+  const showDeleteModal = () => {
+    setIsDeleteModalOpen(true); // Menampilkan modal
+  };
+  
+  const confirmDelete = async () => {
+    if (selectedKelasIds.length === 0) {
+      toast.error('Pilih kelas yang ingin dihapus!');
+      setIsDeleteModalOpen(false);
+      return;
+    }
+  
+    try {
+      // Panggil fungsi backend untuk menghapus siswa yang dipilih
+      await Promise.all(selectedKelasIds.map(async (id_kelas) => {
+        await deleteKelas(id_kelas); // Pastikan deleteSiswa adalah fungsi yang memanggil API backend untuk menghapus data
+      }));
+  
+      // Setelah sukses, update state di frontend
+      setKelas((prevKelas) => {
+        const updatedKelas = prevKelas.filter((kelas) => !selectedKelasIds.includes(kelas.id_kelas));
+  
+        // Periksa apakah data di halaman saat ini masih cukup, jika tidak arahkan ke halaman sebelumnya
+        const totalItems = updatedKelas.length;
+        const totalPages = Math.ceil(totalItems / itemsPerPage);
+  
+        // Jika currentPage melebihi total halaman baru, arahkan ke halaman sebelumnya
+        if (currentPage > totalPages) {
+          setCurrentPage(totalPages > 0 ? totalPages : 1); // Pastikan tidak mengarahkan ke halaman 0
+        }
+        
+        return updatedKelas;
+      });
+  
+      toast.success('Kelas yang dipilih berhasil dihapus');
+      setSelectedKelasIds([]);
+      setSelectAll(false); // Reset checkbox "Select All"
+      setIsDeleteModalOpen(false); // Reset selectedSiswa setelah penghapusan
+    } catch (error) {
+      console.error('Error deleting kelas:', error);
+      toast.error('Gagal menghapus kelas');
+    }
+  };
+
+
+   // Fungsi untuk membatalkan penghapusan
+   const cancelDelete = () => {
+    setIsDeleteModalOpen(false); // Tutup modal tanpa melakukan apa-apa
+  };
+  
+  
+  const handleCheckboxChange = (id: string) => {
+    setSelectedKelasIds((prevSelected) =>
+      prevSelected.includes(id)
+        ? prevSelected.filter((kelasId) => kelasId !== id)
+        : [...prevSelected, id]
+    );
+  };
+  const handleSelectAllChange = () => {
+    setSelectAll(!selectAll);
+    if (!selectAll) {
+      const allIds = kelas.map((kelas) => kelas.id_kelas);
+      setSelectedKelasIds(allIds);
+    } else {
+      setSelectedKelasIds([]);
+    }
+  };
+
+  
+
   const kelasColumns = [
     //adalah istilah yang digunakan dalam konteks tabel, terutama saat menggunakan pustaka seperti React Table, untuk menunjukkan kunci atau nama properti dalam data yang akan diambil dan ditampilkan di kolom tabel tertentu
     // { header: "No", accessor: (_: any, index: number) => index + 1 },
@@ -287,6 +360,23 @@ export default function _Kelas() {
         );
       },
     },
+    {
+      header: (
+        <input
+          type="checkbox"
+          checked={selectAll}
+          onChange={handleSelectAllChange}
+        />
+      ),
+      accessor: 'select',
+      Cell: ({ row }: { row: Kelas }) => (
+        <input
+          type="checkbox"
+          checked={selectedKelasIds.includes(row.id_kelas)}
+          onChange={() => handleCheckboxChange(row.id_kelas)}
+        />
+      ),
+    }
   ];
 
   //tombol untuk filter, pindah halaman, search dan reset
@@ -436,45 +526,82 @@ export default function _Kelas() {
                   </div>
                 </div>
                 {/* Filter Dropdown */}
-                <div className="grid grid-cols-1 sm:grid-cols-6 gap-4 mt-4">
-                  <div className="lg:flex-row justify-between items-center">
-                    <div className=" items-center lg:mb-0 space-x-2 mb-3 lg:order-1">
-                      <select
-                        id="itemsPerPage"
-                        value={itemsPerPage}
-                        onChange={handleItemsPerPageChange}
-                        className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base"
-                      >
-                        <option value={5}>5</option>
-                        <option value={10}>10</option>
-                        <option value={20}>20</option>
-                      </select>
+                <div className="flex flex-wrap justify-start items-center w-full mt-4">
+              {/* Dropdown Items per Page */}
+              <div className="flex items-center">
+                <select
+                  id="items-per-page"
+                  value={itemsPerPage}
+                  onChange={(e) => handleItemsPerPageChange(e.target.value)}
+                  className="p-2 border border-gray-300 rounded text-sm sm:text-base"
+                >
+                  <option value={1}>1</option>
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                </select>
+              </div>
+
+              {/* Input Search */}
+              <div className="flex items-center ml-3">
+              <input
+                                    type="text"
+                                    placeholder="Cari..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base"
+                                  />
+              </div>
+
+              {/* Tombol Reset */}
+              <div className="flex items-center mt-3 lg:mt-0 md:mt-0 lg:mb-0 space-x-2 lg:order-1 w-full lg:w-auto md:w-auto">
+                <button
+                  onClick={handleResetClick}
+                  disabled={!isResettable}
+                  className={`w-full p-2 lg:ml-3 md:ml-3 rounded text-sm sm:text-base transition ${
+                    isResettable
+                      ? "text-white bg-red-500 hover:bg-red-600 cursor-pointer"
+                      : "text-gray-400 bg-gray-300 cursor-not-allowed"
+                  }`}
+                >
+                  Reset
+                </button>
+              </div>
+
+              {/* Tombol Hapus Siswa Terpilih */}
+              <div className="ml-3">
+                <button
+                  onClick={showDeleteModal}
+                  className="px-4 py-2 bg-red-600 text-white rounded text-base"
+                >
+                  Hapus Siswa Terpilih
+                </button>
+
+                {/* Modal Konfirmasi Penghapusan */}
+                {isDeleteModalOpen && (
+                  <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50">
+                    <div className="bg-white p-6 rounded-md shadow-lg w-96">
+                      <h3 className="text-lg font-semibold mb-4">Konfirmasi Penghapusan</h3>
+                      <p className="mb-4">Apakah Anda yakin ingin menghapus siswa yang dipilih?</p>
+                      <div className="flex justify-between">
+                        <button
+                          onClick={cancelDelete}
+                          className="px-4 py-2 bg-gray-300 text-gray-700 rounded"
+                        >
+                          Batal
+                        </button>
+                        <button
+                          onClick={confirmDelete}
+                          className="px-4 py-2 bg-red-600 text-white rounded"
+                        >
+                          Hapus
+                        </button>
+                      </div>
                     </div>
                   </div>
-
-                  <div className=" items-center lg:mb-0 space-x-2 lg:order-1">
-                    <input
-                      type="text"
-                      placeholder="Cari..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base"
-                    />
-                  </div>
-                  <div className=" items-center lg:mb-0 space-x-2 lg:order-1">
-                    <button
-                      onClick={handleResetClick}
-                      disabled={!isResettable}
-                      className={`w-full p-2 rounded text-sm sm:text-base transition z-20 ${
-                        isResettable
-                          ? "text-white bg-red-500 hover:bg-red-600 cursor-pointer"
-                          : "text-gray-400 bg-gray-300 cursor-not-allowed"
-                      }`}
-                    >
-                      <p>Reset</p>
-                    </button>
-                  </div>
-                </div>
+                )}
+              </div>
+            </div>
                 <div className="w-full overflow-x-auto">
                   <div>
                     <DataTable

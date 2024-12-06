@@ -192,42 +192,15 @@ export default function DataSiswa() {
 
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [selectedSiswa, setSelectedSiswa] = useState<string[]>([]); // Array untuk menyimpan id siswa yang dipilih
-  const [isAllSelected, setIsAllSelected] = useState(false);
-  // const handleSelectedSiswa = (id: string) => {
-  //   setSelectedSiswa((prev) =>
-  //     prev.includes(id)
-  //       ? prev.filter((siswaId) => siswaId !== id)
-  //       : [...prev, id]
-  //   );
-  // };
-
-  const handleSelectAll = () => {
-    if (isAllSelected) {
-      setSelectedSiswa([]);
-    } else {
-      setSelectedSiswa(formData.map((siswa) => siswa.id_siswa));
-    }
-    setIsAllSelected(!isAllSelected);
-  };
-
-  const handleSelectSiswa = (id_siswa: string) => {
-    if (selectedSiswa.includes(id_siswa)) {
-      // Jika siswa sudah ada di dalam array, hapus
-      setSelectedSiswa(selectedSiswa.filter(id => id !== id_siswa));
-    } else {
-      // Jika belum ada, tambahkan
-      setSelectedSiswa([...selectedSiswa, id_siswa]);
-    }
-  };
-
+  const [selectedSiswaIds, setSelectedSiswaIds] = useState<string[]>([]);
+  const [selectAll, setSelectAll] = useState(false);
   // Fungsi untuk menampilkan modal konfirmasi
   const showDeleteModal = () => {
     setIsDeleteModalOpen(true); // Menampilkan modal
   };
   
   const confirmDelete = async () => {
-    if (selectedSiswa.length === 0) {
+    if (selectedSiswaIds.length === 0) {
       toast.error('Pilih siswa yang ingin dihapus!');
       setIsDeleteModalOpen(false);
       return;
@@ -235,13 +208,13 @@ export default function DataSiswa() {
   
     try {
       // Panggil fungsi backend untuk menghapus siswa yang dipilih
-      await Promise.all(selectedSiswa.map(async (id_siswa) => {
+      await Promise.all(selectedSiswaIds.map(async (id_siswa) => {
         await deleteSiswa(id_siswa); // Pastikan deleteSiswa adalah fungsi yang memanggil API backend untuk menghapus data
       }));
   
       // Setelah sukses, update state di frontend
       setDataSiswa((prevSiswa) => {
-        const updatedSiswa = prevSiswa.filter((siswa) => !selectedSiswa.includes(siswa.id_siswa));
+        const updatedSiswa = prevSiswa.filter((siswa) => !selectedSiswaIds.includes(siswa.id_siswa));
   
         // Periksa apakah data di halaman saat ini masih cukup, jika tidak arahkan ke halaman sebelumnya
         const totalItems = updatedSiswa.length;
@@ -249,14 +222,14 @@ export default function DataSiswa() {
   
         // Jika currentPage melebihi total halaman baru, arahkan ke halaman sebelumnya
         if (currentPage > totalPages) {
-          setCurrentPage(totalPages);
+          setCurrentPage(totalPages > 0 ? totalPages : 1); // Pastikan tidak mengarahkan ke halaman 0
         }
   
         return updatedSiswa;
       });
   
       toast.success('Siswa yang dipilih berhasil dihapus');
-      setSelectedSiswa([]);
+      setSelectedSiswaIds([]);
       setIsDeleteModalOpen(false); // Reset selectedSiswa setelah penghapusan
     } catch (error) {
       console.error('Error deleting siswa:', error);
@@ -271,6 +244,22 @@ export default function DataSiswa() {
   };
   
   
+  const handleCheckboxChange = (id: string) => {
+    setSelectedSiswaIds((prevSelected) =>
+      prevSelected.includes(id)
+        ? prevSelected.filter((siswaId) => siswaId !== id)
+        : [...prevSelected, id]
+    );
+  };
+  const handleSelectAllChange = () => {
+    setSelectAll(!selectAll);
+    if (!selectAll) {
+      const allIds = dataSiswa.map((siswa) => siswa.id_siswa);
+      setSelectedSiswaIds(allIds);
+    } else {
+      setSelectedSiswaIds([]);
+    }
+  };
   
   
   // fields untuk DataTabel
@@ -339,22 +328,22 @@ export default function DataSiswa() {
       },
     },
     {
-      header: () => (
+      header: (
         <input
           type="checkbox"
-          checked={isAllSelected}
-          onChange={handleSelectAll}
+          checked={selectAll}
+          onChange={handleSelectAllChange}
         />
       ),
-      accessor: "select",
-      Cell: ({ row }: { row: any }) => (
+      accessor: 'select',
+      Cell: ({ row }: { row: Siswa }) => (
         <input
           type="checkbox"
-          checked={selectedSiswa.includes(row.id_siswa)}
-          onChange={() => handleSelectSiswa(row.id_siswa)}
+          checked={selectedSiswaIds.includes(row.id_siswa)}
+          onChange={() => handleCheckboxChange(row.id_siswa)}
         />
       ),
-    },
+    }
   ];
 
   useEffect(() => {
@@ -563,9 +552,20 @@ const handleEditSubmit = async (e) => {
         ...prevData,
         {
           ...formData, // Data siswa yang baru ditambahkan
-          id_siswa: response.data.id_siswa, // Gunakan id_siswa dari response jika diperlukan
         },
       ]);
+
+      // Fetch ulang data dari server (opsional)
+      const fetchSiswa = async () => {
+        try {
+          const res = await axios.get(`${baseUrl}/siswa/all-siswa`);
+          setDataSiswa(res.data);
+          console.log('fetch siswa berhasil', res);
+        } catch (error) {
+          console.error('Error fetching data:', error);
+        }
+      };
+      await fetchSiswa();
 
         // Kosongkan form setelah submit berhasil
         setFormData({
@@ -591,38 +591,18 @@ const handleEditSubmit = async (e) => {
       console.error('Error:', error);
       toast.error('Terjadi kesalahan saat menambahkan data siswa');
     }
-  };
-
-const handleDelete = async (deletedRow) => {
-  const confirmed = window.confirm(`Apakah Anda yakin ingin menghapus siswa ${deletedRow.nama_siswa}?`);
-  if (confirmed) {
-      try {
-          // Panggil fungsi deleteTahunAjaran untuk menghapus di backend
-          await deleteSiswa(deletedRow.id_siswa);
-
-          // Setelah sukses, update state di frontend
-          setDataSiswa((prevSiswa) =>
-              prevSiswa.filter((siswa) => siswa.id_siswa !== deletedRow.id_siswa)
-          );
-          
-          toast.success(' siswa berhasil dihapus');
-      } catch (error) {
-          console.error('Error deleting Siswa:', error);
-          // Anda bisa menambahkan notifikasi atau pesan error di sini
-      }
-  }
-};
-  
+  };  
 
   //tombol untuk filter, pindah halaman, search dan reset
-  const [itemsPerPage, setItemsPerPage] = useState(5); // Atur ke angka default
-  const [currentPage, setCurrentPage] = useState(1);
-  const [searchQuery, setSearchQuery] = useState(''); // State untuk menyimpan query pencarian
+  const [currentPage, setCurrentPage] = useState<number>(1); // Halaman saat ini
+  const [itemsPerPage,setItemsPerPage] = useState<number>(5); // Jumlah item per halaman
+  const [searchQuery, setSearchQuery] = useState<string>(''); // Query pencarian // State untuk menyimpan query pencarian
 
-  // Memfilter data berdasarkan searchTerm
-  const filteredData = dataSiswa.filter((siswa) => 
-    siswa.nama_siswa.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredData = Array.isArray(dataSiswa)
+  ? dataSiswa.filter((siswa) =>
+      siswa.nama_siswa?.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  : [];
 
   // Fungsi untuk mengurutkan data berdasarkan nama secara alfabetis
   const sortedData = [...filteredData].sort((a, b) => {
@@ -708,17 +688,17 @@ const handleDelete = async (deletedRow) => {
     const worksheet = XLSX.utils.json_to_sheet(data, { header: headers });
 
    // Menggabungkan nilai tahun menjadi satu string dengan format yang diinginkan
-const tahunText = `Isi dengan Format:\n${tahunPelajaran.map(tahun => tahun.tahun).join('\n')}`;
-// Menambahkan ke komentar worksheet sebagai satu entri
-worksheet["F1"].c = [{ t: tahunText }];
+    const tahunText = `Isi dengan Format:\n${tahunPelajaran.map(tahun => tahun.tahun).join('\n')}`;
+    // Menambahkan ke komentar worksheet sebagai satu entri
+    worksheet["F1"].c = [{ t: tahunText }];
 
-const kelasText =` Isi dengan Format:\n${kelas.map(kelas => kelas.kelas).join('\n')}`;
-// Menambahkan ke komentar worksheet sebagai satu entri
-worksheet["G1"].c = [{ t: kelasText }];
+    const kelasText =` Isi dengan Format:\n${kelas.map(kelas => kelas.kelas).join('\n')}`;
+    // Menambahkan ke komentar worksheet sebagai satu entri
+    worksheet["G1"].c = [{ t: kelasText }];
 
-const rombelText =` Isi dengan Format:\n${rombel.map(rombel => rombel.nama_rombel).join('\n')}`;
-// Menambahkan ke komentar worksheet sebagai satu entri
-worksheet["H1"].c = [{ t:rombelText}];
+    const rombelText =` Isi dengan Format:\n${rombel.map(rombel => rombel.nama_rombel).join('\n')}`;
+    // Menambahkan ke komentar worksheet sebagai satu entri
+    worksheet["H1"].c = [{ t:rombelText}];
 
   
     // Membuat workbook
@@ -924,14 +904,14 @@ worksheet["H1"].c = [{ t:rombelText}];
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Form Input Fields */}
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div>
+              <div className='hidden'>
                 <label className="block text-sm font-medium">ID Siswa</label>
                 <input
                   type="text"
                   name="id_siswa"
                   value={formData.id_siswa}
                   onChange={handleChange}
-                  className="mt-1 p-2 border rounded-md w-full"
+                  className="mt-1 p-2 border rounded-md w-full "
                   
                 />
               </div>
