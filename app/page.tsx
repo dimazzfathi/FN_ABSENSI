@@ -487,7 +487,7 @@ const Page = () => {
   // Fungsi untuk menangani tombol Enter
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Enter") {
-      handleSubmit();
+      handleSubmit1(event);
     }
   };
   useEffect(() => {
@@ -528,6 +528,61 @@ const Page = () => {
   const DigitalClock = dynamic(() => import("./components/DIgitalClock"), {
     ssr: false, // Matikan SSR
   });
+  const [idSiswa, setIdSiswa] = useState('');
+    const [message, setMessage] = useState('');
+
+    const getAbsensiStatus = () => {
+        const currentTime = new Date(); // Ambil waktu komputer
+        const hour = currentTime.getHours(); // Jam saat ini
+        const minute = currentTime.getMinutes(); // Menit saat ini
+
+        let keterangan = '';
+        let datang = '';
+        let pulang = '';
+
+        // Tentukan status berdasarkan waktu komputer
+        if (hour >= 6 && hour < 7) {
+            keterangan = 'Datang';
+            datang = `${hour}:${minute < 10 ? '0' + minute : minute}`;
+        } else if (hour >= 7 && hour < 9) {
+            keterangan = 'Terlambat';
+            datang = `${hour}:${minute < 10 ? '0' + minute : minute}`;
+        } else if (hour >= 9 && hour < 14) {
+            keterangan = 'Alpa';
+        } else if (hour >= 14 && hour < 16) {
+            keterangan = 'Pulang';
+            pulang = `${hour}:${minute < 10 ? '0' + minute : minute}`;
+        } else {
+            return 'Waktu absensi tidak valid';
+        }
+
+        return { keterangan, datang, pulang };
+    };
+
+    const handleSubmit1 = async (e) => {
+        e.preventDefault();
+
+        // Ambil status absensi berdasarkan waktu komputer
+        const { keterangan, datang, pulang } = getAbsensiStatus();
+
+        if (keterangan === '') {
+            setMessage('Waktu absensi tidak valid');
+            return;
+        }
+
+        try {
+            // Kirim data ke backend
+            const response = await axios.post(`${baseUrl}/absensi/siswa-abseni`, {
+                id_siswa: barcode,
+                datang,
+                pulang,
+                keterangan,
+            });
+            setMessage(response.data.message);
+        } catch (error) {
+            setMessage(error.response?.data?.message || 'Terjadi kesalahan');
+        }
+    };
   return (
     <>
       <div>
@@ -1054,7 +1109,7 @@ const Page = () => {
 
       {/* scan barcode */}
       <div className="p-4">
-        <input
+        {/* <input
           ref={barcodeInputRef}
           type="text"
           value={barcode}
@@ -1062,8 +1117,31 @@ const Page = () => {
           onKeyDown={handleKeyDown}
           placeholder="Scan Barcode"
           className="pointer-events-auto"
-        />        
+        />         */}
+        <input
+            ref={barcodeInputRef}
+            type="text"
+            value={barcode}
+            onChange={(e) => setBarcode(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Scan Barcode"
+            className="pointer-events-auto"
+          />
       </div>
+      {/* <div>
+            <h3>Absensi Siswa</h3>
+            <form onSubmit={handleSubmit1}>
+                <input
+                    type="text"
+                    placeholder="Masukkan ID Siswa"
+                    value={barcode}
+                    onChange={(e) => setBarcode(e.target.value)}
+                    required
+                />
+                <button type="submit">Absen</button>
+            </form>
+            <p>{message}</p>
+        </div> */}
     </>
   );
 };
