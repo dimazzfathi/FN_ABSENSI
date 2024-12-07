@@ -464,32 +464,36 @@ const Page = () => {
     event.stopPropagation();
   };
   // Fungsi untuk mengirim data ke endpoint
-  const handleSubmit = async () => {
-    if (!barcode) return;
+  // const handleSubmit = async () => {
+  //   if (!barcode) return;
 
-    try {
-      const response = await axios.post(`${baseUrl}/absensi/siswa-abseni`, {
-        id_siswa: barcode, // Sesuaikan payload dengan kebutuhan endpoint
-      });
-      console.log("Response:", response.data);
-      alert("Data berhasil dikirim");
-    } catch (error) {
-      console.error("Error:", error);
-      alert("Terjadi kesalahan saat mengirim data");
-    }
+  //   try {
+  //     const response = await axios.post(`${baseUrl}/absensi/siswa-abseni`, {
+  //       id_siswa: barcode, // Sesuaikan payload dengan kebutuhan endpoint
+  //     });
+  //     console.log("Response:", response.data);
+  //     alert("Data berhasil dikirim");
+  //   } catch (error) {
+  //     console.error("Error:", error);
+  //     alert("Terjadi kesalahan saat mengirim data");
+  //   }
 
-    // Bersihkan input setelah pengiriman
-    setBarcode("");
-    if (barcodeInputRef.current) {
-      barcodeInputRef.current.focus();
-    }
-  };
+  //   // Bersihkan input setelah pengiriman
+  //   setBarcode("");
+  //   if (barcodeInputRef.current) {
+  //     barcodeInputRef.current.focus();
+  //   }
+  // };
   // Fungsi untuk menangani tombol Enter
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Enter") {
       handleSubmit1(event);
     }
   };
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setBarcode(e.target.value); // Update state barcode saat input berubah
+};
+  
   useEffect(() => {
     const handleFocus = (event: MouseEvent) => {
       // Mengecek jika klik terjadi di luar input barcode dan input search
@@ -528,7 +532,6 @@ const Page = () => {
   const DigitalClock = dynamic(() => import("./components/DIgitalClock"), {
     ssr: false, // Matikan SSR
   });
-  const [idSiswa, setIdSiswa] = useState('');
     const [message, setMessage] = useState('');
 
     const getAbsensiStatus = () => {
@@ -560,29 +563,35 @@ const Page = () => {
     };
 
     const handleSubmit1 = async (e) => {
-        e.preventDefault();
-
-        // Ambil status absensi berdasarkan waktu komputer
-        const { keterangan, datang, pulang } = getAbsensiStatus();
-
-        if (keterangan === '') {
-            setMessage('Waktu absensi tidak valid');
-            return;
-        }
-
-        try {
-            // Kirim data ke backend
-            const response = await axios.post(`${baseUrl}/absensi/siswa-abseni`, {
-                id_siswa: barcode,
-                datang,
-                pulang,
-                keterangan,
-            });
-            setMessage(response.data.message);
-        } catch (error) {
-            setMessage(error.response?.data?.message || 'Terjadi kesalahan');
-        }
-    };
+      e.preventDefault();
+  
+      // Ambil status absensi berdasarkan waktu komputer
+      const { keterangan, datang, pulang, tanggal } = getAbsensiStatus();
+  
+      if (keterangan === '') {
+          setMessage('Waktu absensi tidak valid');
+          return;
+      }
+  
+      try {
+          // Kirim data ke backend
+          const response = await axios.post(`${baseUrl}/absensi/siswa-abseni`, {
+              id_siswa: barcode,
+              datang,
+              tanggal,
+              pulang,
+              keterangan,
+          });
+          setMessage(response.data.message);
+  
+          // Kosongkan input setelah 5 detik
+          setTimeout(() => {
+              setBarcode('');
+          }, 500);
+      } catch (error) {
+          setMessage(error.response?.data?.message || 'Terjadi kesalahan');
+      }
+  };
   return (
     <>
       <div>
@@ -1122,11 +1131,12 @@ const Page = () => {
             ref={barcodeInputRef}
             type="text"
             value={barcode}
-            onChange={(e) => setBarcode(e.target.value)}
+            onChange={handleChange}
             onKeyDown={handleKeyDown}
             placeholder="Scan Barcode"
             className="pointer-events-auto"
           />
+          {/* <p>{message}</p> */}
       </div>
       {/* <div>
             <h3>Absensi Siswa</h3>
