@@ -4,6 +4,8 @@ import Navbar from "./header";
 import DataTable from "./components/dataTabel";
 import axios from "axios";
 import Cookies from "js-cookie"; // Import js-cookie
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import {
   addSiswa,
   fetchSiswa,
@@ -491,7 +493,10 @@ const Page = () => {
     }
   };
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setBarcode(e.target.value); // Update state barcode saat input berubah
+    // Hapus tanda kurung dari input
+    const cleanValue = e.target.value.replace(/[()]/g, "");
+    // Perbarui state barcode dengan nilai yang sudah dibersihkan
+    setBarcode(cleanValue);
 };
   
   useEffect(() => {
@@ -567,9 +572,13 @@ const Page = () => {
   
       // Ambil status absensi berdasarkan waktu komputer
       const { keterangan, datang, pulang, tanggal } = getAbsensiStatus();
+
+      setTimeout(() => {
+        setBarcode('');
+    }, 500);
   
       if (keterangan === '') {
-          setMessage('Waktu absensi tidak valid');
+          toast.error('Waktu absensi tidak valid');
           return;
       }
   
@@ -582,21 +591,23 @@ const Page = () => {
               pulang,
               keterangan,
           });
-          setMessage(response.data.message);
+          toast.success(response.data.message);
   
-          // Kosongkan input setelah 5 detik
-          setTimeout(() => {
-              setBarcode('');
-          }, 500);
+          // // Kosongkan input setelah 5 detik
+          // setTimeout(() => {
+          //     setBarcode('');
+          // }, 500);
       } catch (error) {
-          setMessage(error.response?.data?.message || 'Terjadi kesalahan');
+          toast.error(error.response?.data?.message || 'Terjadi kesalahan');
       }
   };
   return (
     <>
       <div>
         <Navbar />
+        <ToastContainer className="mt-14" />
       </div>
+      
       <div
         className="text-center mt-14 text-7xl font-bold"
         style={{ fontFamily: "Poppins, sans-serif" }}
@@ -1117,7 +1128,7 @@ const Page = () => {
       </div>
 
       {/* scan barcode */}
-      <div className="p-4">
+      <div className="p-4 text-white">
         {/* <input
           ref={barcodeInputRef}
           type="text"
@@ -1133,10 +1144,9 @@ const Page = () => {
             value={barcode}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
-            placeholder="Scan Barcode"
+            placeholder=""
             className="pointer-events-auto"
           />
-          {/* <p>{message}</p> */}
       </div>
       {/* <div>
             <h3>Absensi Siswa</h3>
