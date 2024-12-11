@@ -497,8 +497,8 @@ const Page = () => {
     const cleanValue = e.target.value.replace(/[()]/g, "");
     // Perbarui state barcode dengan nilai yang sudah dibersihkan
     setBarcode(cleanValue);
-};
-  
+  };
+
   useEffect(() => {
     const handleFocus = (event: MouseEvent) => {
       // Mengecek jika klik terjadi di luar input barcode dan input search
@@ -537,69 +537,69 @@ const Page = () => {
   const DigitalClock = dynamic(() => import("./components/DIgitalClock"), {
     ssr: false, // Matikan SSR
   });
-    const [message, setMessage] = useState('');
+  const [message, setMessage] = useState("");
 
-    const getAbsensiStatus = () => {
-        const currentTime = new Date(); // Ambil waktu komputer
-        const hour = currentTime.getHours(); // Jam saat ini
-        const minute = currentTime.getMinutes(); // Menit saat ini
+  const getAbsensiStatus = () => {
+    const currentTime = new Date(); // Ambil waktu komputer
+    const hour = currentTime.getHours(); // Jam saat ini
+    const minute = currentTime.getMinutes(); // Menit saat ini
 
-        let keterangan = '';
-        let datang = '';
-        let pulang = '';
+    let keterangan = "";
+    let datang = "";
+    let pulang = "";
 
-        // Tentukan status berdasarkan waktu komputer
-        if (hour >= 6 && hour < 7) {
-            keterangan = 'Datang';
-            datang = `${hour}:${minute < 10 ? '0' + minute : minute}`;
-        } else if (hour >= 7 && hour < 9) {
-            keterangan = 'Terlambat';
-            datang = `${hour}:${minute < 10 ? '0' + minute : minute}`;
-        } else if (hour >= 9 && hour < 14) {
-            keterangan = 'Alpa';
-        } else if (hour >= 14 && hour < 16) {
-            keterangan = 'Pulang';
-            pulang = `${hour}:${minute < 10 ? '0' + minute : minute}`;
-        } else {
-            return 'Waktu absensi tidak valid';
-        }
+    // Tentukan status berdasarkan waktu komputer
+    if (hour >= 6 && hour < 7) {
+      keterangan = "Datang";
+      datang = `${hour}:${minute < 10 ? "0" + minute : minute}`;
+    } else if (hour >= 7 && hour < 9) {
+      keterangan = "Terlambat";
+      datang = `${hour}:${minute < 10 ? "0" + minute : minute}`;
+    } else if (hour >= 9 && hour < 14) {
+      keterangan = "Alpa";
+    } else if (hour >= 14 && hour < 16) {
+      keterangan = "Pulang";
+      pulang = `${hour}:${minute < 10 ? "0" + minute : minute}`;
+    } else {
+      return "Waktu absensi tidak valid";
+    }
 
-        return { keterangan, datang, pulang };
-    };
+    return { keterangan, datang, pulang };
+  };
 
-    const handleSubmit1 = async (e) => {
-      e.preventDefault();
-  
-      // Ambil status absensi berdasarkan waktu komputer
-      const { keterangan, datang, pulang, tanggal } = getAbsensiStatus();
+  const handleSubmit1 = async (e) => {
+    e.preventDefault();
 
-      setTimeout(() => {
-        setBarcode('');
+    // Ambil status absensi berdasarkan waktu komputer
+    // const { keterangan, datang, pulang, tanggal } = getAbsensiStatus();
+
+    setTimeout(() => {
+      setBarcode("");
     }, 500);
-  
-      if (keterangan === '') {
-          toast.error('Waktu absensi tidak valid');
-          return;
-      }
-  
-      try {
-          // Kirim data ke backend
-          const response = await axios.post(`${baseUrl}/absensi/siswa-abseni`, {
-              id_siswa: barcode,
-              datang,
-              tanggal,
-              pulang,
-              keterangan,
-          });
-          toast.success(response.data.message);
-  
-          // // Kosongkan input setelah 5 detik
-          // setTimeout(() => {
-          //     setBarcode('');
-          // }, 500);
-      } catch (error) {
-          toast.error(error.response?.data?.message || 'Terjadi kesalahan');
-      }
+
+    // if (keterangan === '') {
+    //     toast.error('Waktu absensi tidak valid');
+    //     return;
+    // }
+
+    try {
+      // Kirim data ke backend
+      const response = await axios.post(`${baseUrl}/absensi/siswa-abseni`, {
+        id_siswa: barcode,
+        // datang,
+        // tanggal,
+        // pulang,
+        // keterangan,
+      });
+      toast.success(response.data.message);
+
+      // // Kosongkan input setelah 5 detik
+      // setTimeout(() => {
+      //     setBarcode('');
+      // }, 500);
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Terjadi kesalahan");
+    }
   };
   return (
     <>
@@ -607,7 +607,7 @@ const Page = () => {
         <Navbar />
         <ToastContainer className="mt-14" />
       </div>
-      
+
       <div
         className="text-center mt-14 text-7xl font-bold"
         style={{ fontFamily: "Poppins, sans-serif" }}
@@ -1139,14 +1139,14 @@ const Page = () => {
           className="pointer-events-auto"
         />         */}
         <input
-            ref={barcodeInputRef}
-            type="text"
-            value={barcode}
-            onChange={handleChange}
-            onKeyDown={handleKeyDown}
-            placeholder=""
-            className="pointer-events-auto"
-          />
+          ref={barcodeInputRef}
+          type="text"
+          value={barcode}
+          onChange={handleChange}
+          onKeyDown={handleKeyDown}
+          placeholder=""
+          className="pointer-events-auto"
+        />
       </div>
       {/* <div>
             <h3>Absensi Siswa</h3>
