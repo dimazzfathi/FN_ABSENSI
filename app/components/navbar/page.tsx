@@ -24,14 +24,11 @@ import { faSignOutAlt } from "@fortawesome/free-solid-svg-icons";
 import useUserInfo from "../useUserInfo"; // Pastikan path file sesuai
 
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-
-const Navbar = ({
-  toggleSidebar,
-  isOpen,
-}: {
+interface NavbarProps {
   toggleSidebar: () => void;
-  isOpen: false;
-}) => {
+  isOpen: boolean;
+}
+const Navbar = ({ toggleSidebar, isOpen }: NavbarProps) => {
   const [isToggleSidebar, setToggleSidebar] = useState(false);
   // const [isOpen, setIsOpen] = useState(false);
   const [isClick, setisClick] = useState(false);

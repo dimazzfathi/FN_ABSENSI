@@ -638,7 +638,7 @@ export default function DataGuru() {
       if (response?.data?.results?.some((result) => result.exists)) {
         toast.error("Data sudah ada!");
       } else {
-        toast.success("Tahun Guru berhasil ditambahkan!"); // Menampilkan pesan sukses
+        toast.success(" Guru berhasil ditambahkan!"); // Menampilkan pesan sukses
         // Update GuruList dengan data baru tanpa refresh
         setGuru((prevGuruList) => [
           ...prevGuruList,
@@ -686,11 +686,11 @@ export default function DataGuru() {
       if (error.response) {
         // Anda bisa menambahkan logika khusus di sini berdasarkan error dari API
         toast.error(
-          "Terjadi kesalahan saat menambah kelas: " +
+          "Terjadi kesalahan saat menambah guru: " +
             error.response.data.message
         );
       } else {
-        toast.error("Terjadi kesalahan saat menambah kelas");
+        toast.error("Terjadi kesalahan saat menambah guru");
       }
     }
   };

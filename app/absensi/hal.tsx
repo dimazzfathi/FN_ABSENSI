@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import '@fortawesome/fontawesome-free/css/all.min.css';
-
+import axios from "axios";
+const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 const Filters = () => {
   const [selectedMonthYear, setSelectedMonthYear] = useState('');
   const [selectedKelas, setSelectedKelas] = useState('');
@@ -152,6 +153,7 @@ const Filters = () => {
     // Logika untuk ekspor JPG
   };
 
+  
 
   return (
     <div className="rounded-lg max-w-full p-3 bg-slate-100">
@@ -228,7 +230,7 @@ const Filters = () => {
                 <thead>
                   <tr style={{ fontSize: '12px' }}>
                     <th className="p-2 sm:p-3 rounded-l-lg bg-slate-500 text-white text-left ">No</th>
-                    <th className="p-2 sm:p-3 bg-slate-500 text-white text-left ">Nama</th>
+                    <th className="p-2 sm:p-3 bg-slate-500 text-white text-left "></th>
                     {tableHeaders.headers && tableHeaders.headers.length > 0 ? (
                       tableHeaders.headers.map((day, index) => {
                         // Calculate tomorrow's date
@@ -259,7 +261,7 @@ const Filters = () => {
                   </tr>
                 </thead>
                 <tbody>
-                    {students.map((student, index) => (
+                    {/* {students.map((student, index) => (
                       <tr key={student.id} style={{ fontSize: '12px' }}>
                         <td className="border-b text-white text-xs sm:text-xs p-2">{index + 1}</td>
                           <td className="border-b text-white text-xs sm:text-xs p-2">{student.name}</td>
@@ -292,11 +294,11 @@ const Filters = () => {
                         <td className="border-b text-white p-2 text-xs sm:text-xs text-center">{Object.values(student.attendance).filter(status => status === 'T').length}</td>
                         <td className="border-b text-white text-xs sm:text-xs p-2 text-center">
                         <a href={`https://wa.me/${student.phoneNumber}`} target="_blank" rel="noopener noreferrer">   
-                          <i className="fab fa-whatsapp fa-lg"></i> {/* Ikon WhatsApp */}
+                          <i className="fab fa-whatsapp fa-lg"></i> {/* Ikon WhatsApp 
                         </a>
                         </td>
                       </tr>
-                    ))}
+                    ))} */}
               </tbody>
               </table>
             </div>

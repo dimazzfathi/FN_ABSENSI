@@ -267,6 +267,7 @@ export default function DataSiswa() {
     
     { header: 'Foto', accessor: 'foto' as keyof Siswa },
     { header: 'Nis', accessor: 'nis' as keyof Siswa },
+    { header: 'Id ', accessor: 'id_siswa' as keyof Siswa },
     { header: 'Nama', accessor: 'nama_siswa' as keyof Siswa },
     { header: 'JK', accessor: 'jenis_kelamin' as keyof Siswa },
     { header: 'Tahun Ajaran', accessor: 'tahun' as keyof Siswa },
@@ -600,9 +601,17 @@ const handleEditSubmit = async (e) => {
 
   const filteredData = Array.isArray(dataSiswa)
   ? dataSiswa.filter((siswa) =>
-      siswa.nama_siswa?.toLowerCase().includes(searchQuery.toLowerCase())
+      siswa.nama_siswa?.toLowerCase().includes(searchQuery.toLowerCase())||
+      siswa.id_siswa?.toLowerCase().includes(searchQuery.toLowerCase())
     )
   : [];
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Hapus tanda kurung dari input
+    const cleanValue = e.target.value.replace(/[()]/g, "");
+    
+    // Perbarui state barcode dengan nilai yang sudah dibersihkan
+    setSearchQuery(cleanValue);
+};
 
   // Fungsi untuk mengurutkan data berdasarkan nama secara alfabetis
   const sortedData = [...filteredData].sort((a, b) => {
@@ -904,7 +913,7 @@ const handleEditSubmit = async (e) => {
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Form Input Fields */}
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div className='hidden'>
+              <div className=''>
                 <label className="block text-sm font-medium">ID Siswa</label>
                 <input
                   type="text"
@@ -1151,7 +1160,7 @@ const handleEditSubmit = async (e) => {
                       type="text"
                       placeholder="Search by Name"
                       value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)} // Update search query
+                      onChange={handleSearch}
                       className="p-2 border ml-3 border-gray-300 rounded text-sm sm:text-base w-36"
                     />
                   </div>

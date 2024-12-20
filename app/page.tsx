@@ -68,7 +68,7 @@ const Page = () => {
   const tableColumns = [
     { header: "Kelas", accessor: "kelas" },
     { header: "Jumlah Siswa", accessor: "total_siswa" },
-    { header: "H", accessor: "h" },
+    { header: "H", accessor: "total_hadir_perkelas" },
     { header: "S", accessor: "s" },
     { header: "I", accessor: "i" },
     { header: "A", accessor: "a" },
@@ -191,13 +191,29 @@ const Page = () => {
   // );
 
   //Handle untuk ngirim sakit
-  const handleSakitSubmit = () => {
-    setKelas((prevData) =>
-      prevData.map((data) =>
-        data.kelas === row.kelas ? { ...data, s: data.s + 1 } : data
-      )
-    );
-  };
+  const handleSakitSubmit = async () => {
+    try {
+        const data = {
+            id_siswa: id_siswa, // Ganti dengan state atau variabel yang memuat ID siswa
+            keterangan: 'Sakit',
+        };
+
+        const response = await post(`${baseUrl}/siswa-absensi-sakit`, data);
+        console.log('sakit bisa', response);
+        if (!response.ok) {
+            alert(`Error: ${response.message}`);
+            return;
+        }
+
+        alert('Absensi sakit berhasil dicatat!');
+        console.log(response.data);
+
+    } catch (error) {
+        console.error('Terjadi kesalahan:', error);
+        toast('Gagal mencatat absensi sakit. Coba lagi nanti.');
+    }
+};
+
 
   // Fungsi untuk menambahkan siswa yang dipilih ke selectedSakit
   const handleSakitSelect = (item) => {
@@ -495,6 +511,7 @@ const Page = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     // Hapus tanda kurung dari input
     const cleanValue = e.target.value.replace(/[()]/g, "");
+    
     // Perbarui state barcode dengan nilai yang sudah dibersihkan
     setBarcode(cleanValue);
 };
@@ -566,16 +583,19 @@ const Page = () => {
 
         return { keterangan, datang, pulang };
     };
+    const [absensi, setAbsensi] = useState([]);
 
     const handleSubmit1 = async (e) => {
       e.preventDefault();
   
       // Ambil status absensi berdasarkan waktu komputer
       const { keterangan, datang, pulang, tanggal } = getAbsensiStatus();
-
+      const formattedBarcode = barcode.trim(); // Menghapus spasi
+  
+      // Kosongkan barcode setelah beberapa detik
       setTimeout(() => {
-        setBarcode('');
-    }, 500);
+          setBarcode('');
+      }, 500);
   
       if (keterangan === '') {
           toast.error('Waktu absensi tidak valid');
@@ -583,24 +603,54 @@ const Page = () => {
       }
   
       try {
-          // Kirim data ke backend
+          // Cek apakah ID siswa ada
+          const checkResponse = await axios.get(`${baseUrl}/siswa/all-siswa`);
+  
+          // Pastikan ID siswa ada dalam respons
+          const siswaList = checkResponse.data?.data || [];
+          const isSiswaValid = siswaList.some((siswa) => siswa.id_siswa === formattedBarcode);
+  
+          if (!isSiswaValid) {
+              toast.error('ID siswa tidak ditemukan');
+              return;
+          }
+  
+          // Kirim data absensi ke backend
           const response = await axios.post(`${baseUrl}/absensi/siswa-abseni`, {
-              id_siswa: barcode,
+              id_siswa: formattedBarcode,
               datang,
               tanggal,
               pulang,
               keterangan,
           });
-          toast.success(response.data.message);
+
+          // Perbarui state absensi di frontend
+          setAbsensi((prev) =>
+            prev.map((item) =>
+              item.id_siswa === formattedBarcode && item.absensi[tanggal]
+                ? {
+                    ...item,
+                    absensi: {
+                      ...item.absensi,
+                      [`${tanggal}_pulang`]: pulang, // Tambahkan waktu pulang
+                    },
+                  }
+                : item
+            )
+          );
+          // Jika absensi tidak tercatat atau tidak ada waktu datang
+          if (response.data.keterangan === 'Alpa') {
+              toast.success(`${response.data.message} (Alpa)`);
+          } else {
+              toast.success(response.data.message);
+          }
   
-          // // Kosongkan input setelah 5 detik
-          // setTimeout(() => {
-          //     setBarcode('');
-          // }, 500);
       } catch (error) {
+          console.error('Error saat memeriksa siswa:', error);
           toast.error(error.response?.data?.message || 'Terjadi kesalahan');
       }
   };
+  
   return (
     <>
       <div>

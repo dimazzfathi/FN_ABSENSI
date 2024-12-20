@@ -82,17 +82,25 @@ const AdminPage = () => {
   }, []);
 
   const [kelas, setKelas] = useState([]);
+  const [totalSemuaSiswa, setTotalSemuaSiswa] = useState(0);
+  const [totalSemuaRombel, setTotalSemuaRombel] = useState(0);
+  const [totalSemuaGuru, setTotalSemuaGuru] = useState(0);
   const fetchKelasSiswaTotal = async () => {
     try {
-      const response = await axios.get(
-        `${baseUrl}/joinNonMaster/total-kelas-siswa`
-      );
-      setKelas(response.data.data); // Menyimpan data ke state kelas
-      console.log("total siswa", response.data);
+      const response = await axios.get(`${baseUrl}/joinNonMaster/total-kelas-siswa`);
+      
+      // Menyimpan data ke state
+      setKelas(response.data.data); 
+      setTotalSemuaSiswa(response.data.totalSemuaSiswa); // Simpan totalSemuaSiswa
+      setTotalSemuaRombel(response.data.totalSemuaRombel);
+      setTotalSemuaGuru(response.data.totalSemuaGuru);
+  
+      console.log("total siswa", response.data); // Debugging
     } catch (error) {
       console.error("Fetch error:", error); // Menangani kesalahan
     }
   };
+  
   useEffect(() => {
     fetchKelasSiswaTotal(); // Panggil fungsi fetch saat komponen di-mount
   }, []);
@@ -103,7 +111,7 @@ const AdminPage = () => {
   const tableColumns = [
     { header: "Kelas", accessor: "kelas" },
     { header: "Jumlah Siswa", accessor: "total_siswa" },
-    { header: "H", accessor: "h" },
+    { header: "H", accessor: "total_hadir_perkelas" },
     { header: "S", accessor: "s" },
     { header: "I", accessor: "i" },
     { header: "A", accessor: "a" },
@@ -124,13 +132,8 @@ const AdminPage = () => {
             <h1>Total Siswa: </h1>
             </div>
 
-            <span className="flex items-center gap-1 text-sm font-medium text-meta-3 undefined ">
-            {kelas.map((item, index) => (
-            <tr key={index}>
-              <td>{item.total_siswa}</td>
-            </tr>
-          ))}
-
+            <span className="flex items-center gap-1 text-sm font-medium text-meta-3">
+               {totalSemuaSiswa}
             </span>
           </div>
         </div>
@@ -142,8 +145,8 @@ const AdminPage = () => {
             <div>
               <span className="text-sm font-medium">Total Rombel</span>
             </div>
-            <span className="flex items-center gap-1 text-sm font-medium text-meta-3 undefined ">
-              1
+            <span className="flex items-center gap-1 text-sm font-medium text-meta-3">
+               {totalSemuaRombel}
             </span>
           </div>
         </div>
@@ -156,7 +159,7 @@ const AdminPage = () => {
               <span className="text-sm font-medium">Total Staff</span>
             </div>
             <span className="flex items-center gap-1 text-sm font-medium text-meta-3 undefined ">
-              2
+              {totalSemuaGuru}
             </span>
           </div>
         </div>
