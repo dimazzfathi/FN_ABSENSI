@@ -12,7 +12,14 @@ import { jsPDF } from "jspdf";
 import "jspdf-autotable"; // Pastikan ini diimpor
 
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-
+// Definisikan tipe untuk item yang sesuai dengan struktur data Anda
+type SiswaItem = {
+  nama_siswa: string;
+  absensi: {
+    [date: string]: "H" | "A" | "S" | "I" | "T" | "-"; // Jenis nilai untuk absensi
+  }; // absensi adalah objek dengan string sebagai key dan value
+  nomor_wali: string;
+};
 const Filters = () => {
   // const [selectedMonthYear, setSelectedMonthYear] = useState("");
   const [selectedKelas, setSelectedKelas] = useState("");
@@ -78,7 +85,7 @@ const Filters = () => {
   //   generateTableHeaders(monthIndex, parseInt(selectedYear));
   // };
 
-  const handleKelasChange = (e) => {
+  const handleKelasChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedKelas(e.target.value);
   };
 
@@ -101,11 +108,11 @@ const Filters = () => {
     setIsPulangPagiOpen(false);
   };
 
-  const handleStartTimeChange = (e) => {
+  const handleStartTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setStartTime(e.target.value);
   };
 
-  const handleEndTimeChange = (e) => {
+  const handleEndTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEndTime(e.target.value);
   };
 
@@ -132,22 +139,22 @@ const Filters = () => {
 
   
 
-  const getStatusClass = (status) => {
-    switch (status) {
-      case "H":
-        return "bg-green-500 text-white";
-      case "I":
-        return "bg-orange-500 text-white";
-      case "A":
-        return "bg-red-500 text-white";
-      case "S":
-        return "bg-sky-500 text-white";
-      case "T":
-        return "bg-gray-500 text-white";
-      default:
-        return "";
-    }
-  };
+  // const getStatusClass = (status) => {
+  //   switch (status) {
+  //     case "H":
+  //       return "bg-green-500 text-white";
+  //     case "I":
+  //       return "bg-orange-500 text-white";
+  //     case "A":
+  //       return "bg-red-500 text-white";
+  //     case "S":
+  //       return "bg-sky-500 text-white";
+  //     case "T":
+  //       return "bg-gray-500 text-white";
+  //     default:
+  //       return "";
+  //   }
+  // };
 
   // const getAttendanceStatus = (student, day) => {
   //   return student.attendance[day] || "-";
@@ -178,7 +185,7 @@ const Filters = () => {
     const tableRows = filteredSiswaData.map((item, index) => {
       const rowData = [
         index + 1, // Nomor urut
-        item.nama_siswa, // Nama siswa
+        (item as { nama_siswa: string }).nama_siswa, // Nama siswa
         ...datesArray1.map((date) => {
           return item.absensi && item.absensi[date]
             ? item.absensi[date] === "H"
@@ -368,7 +375,7 @@ const Filters = () => {
           console.error("Error fetching absensi data:", error);
         });
     }, []);
-    const [absensiData, setAbsensiData] = useState([]);
+    const [absensiData, setAbsensiData] = useState<SiswaItem[]>([]);
     const [todayDate, setTodayDate] = useState(null);
     const [datesArray1, setDatesArray1] = useState([]);
     const [monthYearOptions, setMonthYearOptions] = useState([]);

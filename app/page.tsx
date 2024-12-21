@@ -580,10 +580,8 @@ const Page = () => {
     } else {
       return "Waktu absensi tidak valid";
     }
-
-<<<<<<< HEAD
         return { keterangan, datang, pulang };
-    };
+  };
     const [absensi, setAbsensi] = useState([]);
 
     const handleSubmit1 = async (e) => {
@@ -650,44 +648,6 @@ const Page = () => {
           console.error('Error saat memeriksa siswa:', error);
           toast.error(error.response?.data?.message || 'Terjadi kesalahan');
       }
-=======
-    return { keterangan, datang, pulang };
-  };
-
-  const handleSubmit1 = async (e) => {
-    e.preventDefault();
-
-    // Ambil status absensi berdasarkan waktu komputer
-    // const { keterangan, datang, pulang, tanggal } = getAbsensiStatus();
-
-    setTimeout(() => {
-      setBarcode("");
-    }, 500);
-
-    // if (keterangan === '') {
-    //     toast.error('Waktu absensi tidak valid');
-    //     return;
-    // }
-
-    try {
-      // Kirim data ke backend
-      const response = await axios.post(`${baseUrl}/absensi/siswa-abseni`, {
-        id_siswa: barcode,
-        // datang,
-        // tanggal,
-        // pulang,
-        // keterangan,
-      });
-      toast.success(response.data.message);
-
-      // // Kosongkan input setelah 5 detik
-      // setTimeout(() => {
-      //     setBarcode('');
-      // }, 500);
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Terjadi kesalahan");
-    }
->>>>>>> c0c9d3dd2c6146b47a2ba307c8d1af84b4b9f5f8
   };
   
   return (
