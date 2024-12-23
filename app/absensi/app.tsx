@@ -13,12 +13,34 @@ import "jspdf-autotable"; // Pastikan ini diimpor
 
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 // Definisikan tipe untuk item yang sesuai dengan struktur data Anda
-type SiswaItem = {
+type Keterangan = "H" | "A" | "S" | "I" | "T" | "-" | "Datang" | "Alpa" | "Terlambat" | "Sakit" | "Izin"; // Menambahkan "Datang" ke dalam tipe
+interface SiswaItem {
+  id_siswa: number;
   nama_siswa: string;
-  absensi: {
-    [date: string]: "H" | "A" | "S" | "I" | "T" | "-"; // Jenis nilai untuk absensi
-  }; // absensi adalah objek dengan string sebagai key dan value
+  kelas: string;
+  total_hadir: number;
+  total_terlambat: number;
+  total_alpa: number;
+  total_sakit: number;
+  total_izin: number;
+  absensi: { [key: string]: Keterangan};
+  keterangan: Keterangan;
   nomor_wali: string;
+  tanggal?: string;
+}
+type MappedData = {
+  [id_siswa: string]: {
+    [tanggal: number]: any;
+  };
+};
+type AbsensiData = {
+  id_siswa: string;
+  tanggal: string; // Atau Date jika sudah diproses
+  [key: string]: any; // Tambahkan properti lain jika diperlukan
+};
+type Option = {
+  value: string;
+  label: string;
 };
 const Filters = () => {
   // const [selectedMonthYear, setSelectedMonthYear] = useState("");
@@ -85,7 +107,7 @@ const Filters = () => {
   //   generateTableHeaders(monthIndex, parseInt(selectedYear));
   // };
 
-  const handleKelasChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleKelasChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedKelas(e.target.value);
   };
 
@@ -163,74 +185,74 @@ const Filters = () => {
   const handlePrint = () => {
     window.print();
   };
-  const handleExportPDF = () => {
-    const doc = new jsPDF();
+  // const handleExportPDF = () => {
+  //   const doc = new jsPDF();
 
-    // Menambahkan judul pada PDF
-    doc.text("Laporan Absensi Siswa", 14, 10);
+  //   // Menambahkan judul pada PDF
+  //   doc.text("Laporan Absensi Siswa", 14, 10);
 
-    // Menyiapkan data tabel
-    const tableColumn = [
-      "No",
-      "Nama Siswa",
-      ...datesArray1.map((date) => `${date}`),
-      "Hadir",
-      "Alpha",
-      "Sakit",
-      "Izin",
-      "Terlambat",
-      "Nomor Wali",
-    ];
+  //   // Menyiapkan data tabel
+  //   const tableColumn = [
+  //     "No",
+  //     "Nama Siswa",
+  //     ...datesArray1.map((date) => `${date}`),
+  //     "Hadir",
+  //     "Alpha",
+  //     "Sakit",
+  //     "Izin",
+  //     "Terlambat",
+  //     "Nomor Wali",
+  //   ];
 
-    const tableRows = filteredSiswaData.map((item, index) => {
-      const rowData = [
-        index + 1, // Nomor urut
-        (item as { nama_siswa: string }).nama_siswa, // Nama siswa
-        ...datesArray1.map((date) => {
-          return item.absensi && item.absensi[date]
-            ? item.absensi[date] === "H"
-              ? "Hadir"
-              : item.absensi[date] === "A"
-              ? "Alpha"
-              : item.absensi[date] === "S"
-              ? "Sakit"
-              : item.absensi[date] === "I"
-              ? "Izin"
-              : item.absensi[date] === "T"
-              ? "Terlambat"
-              : "-"
-            : "-";
-        }),
-        item.absensi && item.absensi["H"] ? item.absensi["H"] : "-",
-        item.absensi && item.absensi["A"] ? item.absensi["A"] : "-",
-        item.absensi && item.absensi["S"] ? item.absensi["S"] : "-",
-        item.absensi && item.absensi["I"] ? item.absensi["I"] : "-",
-        item.absensi && item.absensi["T"] ? item.absensi["T"] : "-",
-        item.nomor_wali, // Nomor Wali
-      ];
-      return rowData;
-    });
+  //   const tableRows = filteredSiswaData.map((item, index) => {
+  //     const rowData = [
+  //       index + 1, // Nomor urut
+  //       (item as { nama_siswa: string }).nama_siswa, // Nama siswa
+  //       ...datesArray1.map((date) => {
+  //         return item.absensi && item.absensi[date]
+  //           ? item.absensi[date] === "H"
+  //             ? "Hadir"
+  //             : item.absensi[date] === "A"
+  //             ? "Alpha"
+  //             : item.absensi[date] === "S"
+  //             ? "Sakit"
+  //             : item.absensi[date] === "I"
+  //             ? "Izin"
+  //             : item.absensi[date] === "T"
+  //             ? "Terlambat"
+  //             : "-"
+  //           : "-";
+  //       }),
+  //       item.absensi && item.absensi["H"] ? item.absensi["H"] : "-",
+  //       item.absensi && item.absensi["A"] ? item.absensi["A"] : "-",
+  //       item.absensi && item.absensi["S"] ? item.absensi["S"] : "-",
+  //       item.absensi && item.absensi["I"] ? item.absensi["I"] : "-",
+  //       item.absensi && item.absensi["T"] ? item.absensi["T"] : "-",
+  //       item.nomor_wali, // Nomor Wali
+  //     ];
+  //     return rowData;
+  //   });
 
-    // Menambahkan tabel ke dalam PDF
-    doc.autoTable({
-      head: [tableColumn],
-      body: tableRows,
-      startY: 20, // Menyesuaikan posisi vertikal awal tabel
-      theme: "grid",
-      headStyles: { fillColor: [41, 128, 185], textColor: [255, 255, 255] }, // Gaya header tabel
-      styles: { cellPadding: 3, fontSize: 10 }, // Gaya sel tabel
-    });
+  //   // Menambahkan tabel ke dalam PDF
+  //   doc.autoTable({
+  //     head: [tableColumn],
+  //     body: tableRows,
+  //     startY: 20, // Menyesuaikan posisi vertikal awal tabel
+  //     theme: "grid",
+  //     headStyles: { fillColor: [41, 128, 185], textColor: [255, 255, 255] }, // Gaya header tabel
+  //     styles: { cellPadding: 3, fontSize: 10 }, // Gaya sel tabel
+  //   });
 
-    // Mengekspor file PDF
-    doc.save("Absensi_Siswa.pdf");
-  };
+  //   // Mengekspor file PDF
+  //   doc.save("Absensi_Siswa.pdf");
+  // };
   const handleExportExcel = () => {
     // Membuat worksheet dari data siswa
     const wsData = filteredSiswaData.map((item, index) => {
       const rowData = [
         index + 1, // Nomor urut
         item.nama_siswa, // Nama Siswa
-        ...datesArray.map((date) => {
+        ...datesArray1.map((date) => {
           return item.absensi && item.absensi[date]
             ? item.absensi[date] === "H"
               ? "Hadir"
@@ -260,7 +282,7 @@ const Filters = () => {
       [
         "No", // Header kolom pertama
         "Nama Siswa", // Header kolom kedua
-        ...datesArray.map((date) => `${date}`), // Header untuk tanggal
+        ...datesArray1.map((date) => `${date}`), // Header untuk tanggal
         "Hadir", // Jumlah hadir
         "Alpha", // Jumlah alpha
         "Sakit", // Jumlah sakit
@@ -357,14 +379,15 @@ const Filters = () => {
       axios.get(`${baseUrl}/absensi/all-absensi`)
         .then((response) => {
           const data = response.data.data;  // Data absensi yang didapatkan dari API
-          
+          const typedData = data as AbsensiData[];
+
           // Mapping data absensi berdasarkan id_siswa dan tanggal
-          const mapped = data.reduce((acc, item) => {
+          const mapped = typedData.reduce<MappedData>((acc, item: AbsensiData) => {
             const dateKey = new Date(item.tanggal).getDate(); // Mendapatkan tanggal dari '2024-12-10' menjadi 10
             if (!acc[item.id_siswa]) {
               acc[item.id_siswa] = {};
             }
-            acc[item.id_siswa][dateKey] = item.keterangan; // Menyimpan keterangan berdasarkan tanggal
+            acc[item.id_siswa][dateKey] = item;
             return acc;
           }, {});
           
@@ -377,11 +400,11 @@ const Filters = () => {
     }, []);
     const [absensiData, setAbsensiData] = useState<SiswaItem[]>([]);
     const [todayDate, setTodayDate] = useState(null);
-    const [datesArray1, setDatesArray1] = useState([]);
-    const [monthYearOptions, setMonthYearOptions] = useState([]);
+    const [datesArray1, setDatesArray1] = useState<string[]>([]);
+    const [monthYearOptions, setMonthYearOptions] = useState<Option[]>([]);
     const currentDate = new Date();
-    const currentYear = currentDate.getFullYear();
-    const currentMonth = String(currentDate.getMonth() + 1).padStart(2, '0');
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth();
     const initialSelectedMonthYear = `${currentYear}-${currentMonth}`;
     const [selectedMonthYear, setSelectedMonthYear] = useState(initialSelectedMonthYear);
     const [isCurrentMonth, setIsCurrentMonth] = useState(false);
@@ -418,7 +441,7 @@ const Filters = () => {
     useEffect(() => {
       const generateDatesArray1 = () => {
         if (!selectedMonthYear) return;
-        const [year, month] = selectedMonthYear.split('-');
+        const [year, month] = selectedMonthYear.split('-').map((value) => parseInt(value));
         const dates = [];
         const firstDay = new Date(year, month - 1, 1);
         const today = new Date();
@@ -434,12 +457,12 @@ const Filters = () => {
       generateDatesArray1();
     }, [selectedMonthYear]);
   
-    const getMonthName = (month) => {
+    const getMonthName = (month: number): string => {
       const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
       return monthNames[month - 1];
     };
   
-    const formatDate = (date) => {
+    const formatDate = (date: Date): string => {
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, '0');
       const day = String(date.getDate()).padStart(2, '0');
@@ -510,7 +533,7 @@ const Filters = () => {
     : absensiData;
 
     // Contoh data siswa dengan absensi
-    const groupedData = filteredSiswaData.reduce((acc, item) => {
+    const groupedData = filteredSiswaData.reduce<SiswaItem[]>((acc, item) => {
       // Cari siswa berdasarkan id_siswa
       let existingStudent = acc.find((siswa) => siswa.id_siswa === item.id_siswa);
       
@@ -525,16 +548,15 @@ const Filters = () => {
           total_alpa: 0,
           total_sakit: 0,
           total_izin: 0,
-          absensi: {}, // Object untuk menyimpan absensi berdasarkan tanggal
+          absensi: {},
+          keterangan: "-", // Nilai default untuk keterangan
           nomor_wali: item.nomor_wali,
         };
-        acc.push(existingStudent);
       }
-      
+      const mappedKeterangan = item.keterangan === "Datang" ? "H" : item.keterangan ?? "-"; // Memetakan "Datang" menjadi "H"
       // Isi data absensi berdasarkan tanggal
       if (item.tanggal && item.tanggal.startsWith(selectedMonthYear)) {
-        existingStudent.absensi[item.tanggal] = item.keterangan;
-        
+        existingStudent.absensi[item.tanggal] = mappedKeterangan;
         // Hitung total berdasarkan keterangan
         if (item.keterangan === "Datang") {
           existingStudent.total_hadir++;
@@ -615,13 +637,11 @@ const [kelas, setKelas] = useState([]);
                 >
                   <option value="">Pilih Kelas</option>
                   {Array.isArray(absensiData) &&
-                    [...new Set(absensiData.map((siswa) => siswa.kelas))].map(
-                      (kelasOption) => (
-                        <option key={kelasOption} value={kelasOption}>
-                          {kelasOption}
-                        </option>
-                      )
-                    )}
+                    Array.from(new Set(absensiData.map((siswa) => siswa.kelas))).map((kelas) => (
+                      <option key={kelas} value={kelas}>
+                        {kelas}
+                      </option>
+                    ))}
                 </select>
               </div>
 
@@ -643,14 +663,14 @@ const [kelas, setKelas] = useState([]);
                 </button>
               </div>
 
-              <div className="w-full md:w-auto flex items-center">
+              {/* <div className="w-full md:w-auto flex items-center">
                 <button
                   onClick={handleExportPDF}
                   className="w-full p-2 border bg-rose-500 rounded text-xs text-white sm:text-sm"
                 >
                   PDF
                 </button>
-              </div>
+              </div> */}
 
               <div className="w-full md:w-auto flex items-center">
                 <button

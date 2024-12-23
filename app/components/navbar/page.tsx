@@ -30,7 +30,7 @@ interface NavbarProps {
 }
 
 interface PageProps {
-  [key: string]: any;  // Longgarkan indeks tipe untuk menerima properti apa saja
+  [key: string]: string;  // Longgarkan indeks tipe untuk menerima properti apa saja
 }
 
 // Menggunakan Omit untuk menghapus toggleSidebar
