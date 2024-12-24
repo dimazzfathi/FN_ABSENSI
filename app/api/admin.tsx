@@ -9,10 +9,11 @@ export type Admin = {
   jenis_kelamin:string;
   no_telp:string;
   email: string;
-  username:string;
-  pass:string;
-  foto:string;
-  status:string;
+  username?:string;
+  pass?:string;
+  foto?:File | null;
+  status?:string;
+  exists?: boolean;
   // Tambahkan properti lain yang sesuai dengan struktur data di tabel 'admin'
 };
 

@@ -17,17 +17,26 @@ import DataTable from "../../components/dataTabel";
 import useUserInfo from "@/app/components/useUserInfo";
 import Swal from "sweetalert2";
 
+interface Kelas {
+  id: number;
+  nama: string;
+  deskripsi?: string;
+}
+
+
+
 export default function DataSiswa() {
+  // const bcrypt = require("bcryptjs");
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [fotoPreview, setFotoPreview] = useState<string | null>(null);
   const [itemsPerPage, setItemsPerPage] = useState(5); // Default value is 5
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
-  const [editData, setEditData] = useState<Kelas | null>(null);
-  const [openDropdownId, setOpenDropdownId] = useState<number | null>(null); // Menyimpan ID baris yang dropdown-nya terbuka
+  const [editData, setEditData] = useState<Admin | null>(null);
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);  // Menyesuaikan tipe state menjadi string
   const [isAdminsValid, setIsAdminsValid] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false); // State untuk mengontrol modal
-  const [selectedRow, setSelectedRow] = useState(null);
+  const [selectedRow, setSelectedRow] = useState<Admin | null>(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const togglePasswordVisibility = () => {
     setPasswordVisible((prev) => !prev); // Toggle state
@@ -49,13 +58,18 @@ export default function DataSiswa() {
 
   useEffect(() => {
     const loadAdmins = async () => {
-      const response = await fetchAdmins();
+      const response = await fetchAdmins(); // response sekarang sudah berupa array Admin[]
       console.log("API response:", response); // Debugging tambahan
-      const data = response.data;
-      setAdmins(data);
+      setAdmins(response); // Set langsung ke admins karena response sudah berupa Admin[]
     };
     loadAdmins();
   }, []);
+  
+  type AdminColumn = {
+    header: string;
+    accessor?: keyof Admin;
+    Cell?: ({ row }: { row: Admin }) => JSX.Element;
+  };
 
   const adminColumns = [
     { header: "Id_admin", accessor: "id_admin" as keyof Admin },
@@ -109,7 +123,8 @@ export default function DataSiswa() {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [password, setPassword] = useState("");
   const [isDetailPopupOpen, setIsDetailPopupOpen] = useState(false); // Kontrol pop-up detail
-  const [matchedAdmin, setMatchedAdmin] = useState(null); // Simpan admin yang cocok
+  const [matchedAdmin, setMatchedAdmin] = useState<Admin | null>(null);// Simpan admin yang cocok
+ 
   const handleDetailClick = (row: Admin) => {
     setIsPopupOpen(true); // Buka pop-up
     setOpenDropdownId(null); // Tutup dropdown setelah melihat detail
@@ -122,7 +137,8 @@ export default function DataSiswa() {
 
     // Loop untuk mencari admin dengan password yang sesuai
     for (const admin of admins) {
-      const isMatch = await bcrypt.compare(enteredPassword, admin.pass);
+      
+      const isMatch = await bcrypt.compare(enteredPassword, admin.pass ?? "");
       if (isMatch) {
         foundAdmin = admin;
         break; // Hentikan pencarian jika ditemukan
@@ -208,7 +224,7 @@ export default function DataSiswa() {
       } else {
         toast.success("Admin berhasil ditambahkan!");
         // Menambahkan admin yang baru ke dalam state admins agar langsung muncul di tabel
-        setAdmins((prevAdmins) => [...prevAdmins, response.data]);
+        setAdmins((prevAdmins) => [...prevAdmins, response]);
 
         // Reset form setelah berhasil
         setFormData({
@@ -253,10 +269,20 @@ export default function DataSiswa() {
   };
   // Handle perubahan input pada form edit
   const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEditData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    const fieldName = e.target.name as keyof Admin; // Pastikan fieldName valid
+    setEditData((prev) => {
+      if (!prev) return null; // Jika prev null, tidak melakukan apa-apa
+      return {
+        ...prev,
+        [fieldName]: e.target.value, // Perbarui properti dengan validasi tipe
+      };
+    });
   };
+  
+  
+  
   // Handle update data setelah form edit disubmit
-  const handleEditSubmit = async (e) => {
+  const handleEditSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (editData) {
       // Validasi sebelum mengupdate
@@ -295,11 +321,15 @@ export default function DataSiswa() {
     }
   };
 
-  const handleDeleteClickk = (row) => {
+  const handleDeleteClickk = (row: Admin) => {
     setSelectedRow(row); // Simpan data yang ingin dihapus
     setIsConfirmOpen(true); // Buka modal
   };
   const handleConfirmDelete = async () => {
+    if (!selectedRow) {
+      console.error("Tidak ada baris yang dipilih untuk dihapus");
+      return;
+    }
     try {
       // Panggil fungsi delete Admin untuk menghapus di backend
       await deleteAdmins(selectedRow.id_admin);
@@ -324,7 +354,7 @@ export default function DataSiswa() {
   };
 
   //tombol untuk filter, pindah halaman, search dan reset
-  const handleItemsPerPageChange = (e) => {
+  const handleItemsPerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setItemsPerPage(Number(e.target.value));
     setCurrentPage(1); //  Reset ke halaman pertama saat jumlah item per halaman berubah
   };
@@ -350,7 +380,7 @@ export default function DataSiswa() {
   ); // Data yang akan ditampilkan
   const totalPages = Math.ceil(totalData / itemsPerPage); // Total halaman
 
-  const handlePageChange = (newPage) => {
+  const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
   };
 

@@ -1,14 +1,10 @@
 "use client";
-
-
-import Absensi from './app';
-// import Absensi from './hal';
-
 import React, { useState } from 'react'
+import Absensi from './app';
 import Navbar from "../components/navbar/page"
 import Footer from "../components/footer/page"
 
-  const Page = () => {
+  const Page: React.FC = (props) => {
     const [isOpen, setIsOpen] = useState(false);
 
     const toggleSidebar = () => {
@@ -19,7 +15,7 @@ import Footer from "../components/footer/page"
   return (
     <>
     <div>
-    <Navbar isOpen={isOpen} toggleSidebar={toggleSidebar} />
+    <Navbar  />
     
     {/* Main Content */}
     <main className={`px-30 transition-transform relative duration-300 z-10 ${
