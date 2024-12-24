@@ -44,9 +44,9 @@ type NavbarProps = NavbarBaseProps | NavbarWithSidebarProps;
 const Navbar: React.FC<NavbarProps> = (props) => {
   const [isOpen, setIsOpen] = useState(false);
     // Fungsi untuk toggle status sidebar
-    // const toggleSidebar = () => {
-    //   setIsOpen((prev) => !prev); // Toggle nilai isOpen antara true/false
-    // };
+    const toggleSidebar = () => {
+      setIsOpen((prev) => !prev); // Toggle nilai isOpen antara true/false
+    };
 
   const [isToggleSidebar, setToggleSidebar] = useState(false);
   // const [isOpen, setIsOpen] = useState(false);

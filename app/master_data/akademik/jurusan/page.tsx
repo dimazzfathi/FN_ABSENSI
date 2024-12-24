@@ -19,8 +19,8 @@ import Jurusan from '../jurusan/hal';
   return (
     <>
     <div>
-    <Navbar isOpen={isOpen} toggleSidebar={toggleSidebar} />
-    
+    <Navbar  />
+    {/* isOpen={isOpen} toggleSidebar={toggleSidebar} */}
     {/* Main Content */}
     <main className={`px-30 transition-transform relative duration-300 z-10 ${
     isOpen ? 'ml-0 md:ml-64' : 'ml-0'

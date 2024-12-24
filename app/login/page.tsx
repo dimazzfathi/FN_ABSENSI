@@ -11,7 +11,7 @@ const LoginForm = () => {
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
       const response = await axios.post(`${baseUrl}/api/login`, {
@@ -32,21 +32,38 @@ const LoginForm = () => {
         Cookies.set('id_admin', response.data.data.id_admin, { expires: expireDate });
         window.location.href = '../dash';
       }
-    } catch (error) {
-        if (error.response) {
-          console.error('Respons error:', error.response);
-          if (error.response.status === 401) {
+    } catch (error: unknown) {
+      if (error instanceof Error && 'response' in error) {
+        // Pastikan error adalah instance Error dan memiliki properti `response`
+        const axiosError = error as { response: { status: number } }; // Casting dengan lebih aman
+        if (axiosError.response) {
+          console.error('Respons error:', axiosError.response);
+          if (axiosError.response.status === 401) {
             setErrorMessage('Username atau password salah.');
           } else {
             setErrorMessage('Terjadi kesalahan pada server.');
           }
-        } else {
-          console.error('Kesalahan tanpa respons:', error);
-          setErrorMessage('Tidak dapat menghubungi server.');
         }
+      } else {
+        // Tangani error yang bukan dari Axios (misalnya, error biasa atau jaringan)
+        console.error('Kesalahan tanpa respons:', error);
+        setErrorMessage('Tidak dapat menghubungi server.');
       }
-  };
-
+    // catch (error) {
+    //     if (error.response) {
+    //       console.error('Respons error:', error.response);
+    //       if (error.response.status === 401) {
+    //         setErrorMessage('Username atau password salah.');
+    //       } else {
+    //         setErrorMessage('Terjadi kesalahan pada server.');
+    //       }
+    //     } else {
+    //       console.error('Kesalahan tanpa respons:', error);
+    //       setErrorMessage('Tidak dapat menghubungi server.');
+    //     }
+    //   }
+    }
+  }
   return (
     <main className="bg-pageBg bg-cover bg-center bg-no-repeat min-h-screen">
       <div className="flex justify-center items-center w-full min-h-screen bg-black bg-opacity-15">
