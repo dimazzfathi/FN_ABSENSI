@@ -65,13 +65,7 @@ export default function DataSiswa() {
     loadAdmins();
   }, []);
   
-  type AdminColumn = {
-    header: string;
-    accessor?: keyof Admin;
-    Cell?: ({ row }: { row: Admin }) => JSX.Element;
-  };
-
-  const adminColumns = [
+  const adminColumns = [] = [
     { header: "Id_admin", accessor: "id_admin" as keyof Admin },
     { header: "Nama", accessor: "nama_admin" as keyof Admin },
     { header: "Alamat", accessor: "alamat" as keyof Admin },
@@ -638,7 +632,7 @@ export default function DataSiswa() {
                 </div>
                 <div className="overflow-x-auto">
                   <DataTable
-                    columns={adminColumns}
+                    columns={adminColumns as { header: string; accessor: keyof Admin; Cell?: ({ row }: { row: Admin }) => JSX.Element; }[]}
                     data={paginatedData}
                     // onEdit={handleEdit} // Fungsi ini dipassing ke komponen DataTable
                     // onDelete={handleDelete}
