@@ -24,37 +24,25 @@ import { faSignOutAlt } from "@fortawesome/free-solid-svg-icons";
 import useUserInfo from "../useUserInfo"; // Pastikan path file sesuai
 
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-<<<<<<< HEAD
-interface NavbarProps {
-  toggleSidebar: () => void;  // Tipe yang benar untuk toggleSidebar
-  isOpen: boolean;  // Tambahkan properti isOpen sesuai dengan kebutuhan
-  // Properti lainnya
-}
+
 
 interface PageProps {
   [key: string]: any;  // Longgarkan indeks tipe untuk menerima properti apa saja
-  
-=======
+} 
 interface NavbarBaseProps {
   
 }
 
 interface NavbarWithSidebarProps extends NavbarBaseProps {
   // toggleSidebar: () => void; // Fungsi toggleSidebar hanya ada pada tipe ini
->>>>>>> 0d16426b28b86ba63ddb937a3496fdf2db7e3be4
 }
 
 type NavbarProps = NavbarBaseProps | NavbarWithSidebarProps;
 
 
-// Menggunakan properti NavbarProps tanpa toggleSidebar
-<<<<<<< HEAD
-const Navbar: React.FC<NavbarProps> = ({ isOpen, toggleSidebar }) => {
-  // const [isOpen, setIsOpen] = useState(false);
-=======
+
 const Navbar: React.FC<NavbarProps> = (props) => {
   const [isOpen, setIsOpen] = useState(false);
->>>>>>> 0d16426b28b86ba63ddb937a3496fdf2db7e3be4
     // Fungsi untuk toggle status sidebar
     // const toggleSidebar = () => {
     //   setIsOpen((prev) => !prev); // Toggle nilai isOpen antara true/false
