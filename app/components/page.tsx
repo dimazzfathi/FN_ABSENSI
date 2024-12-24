@@ -3,7 +3,7 @@ import DataTable from './dataTabel';
 const AdminPage = () => {
   return (
     <div>
-      <DataTable />
+      {/* <DataTable /> */}
     </div>
   );
 };

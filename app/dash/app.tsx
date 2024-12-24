@@ -12,6 +12,10 @@ import DataTable from "../components/dataTabel";
 
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
+type DataItem = {
+  total_siswa: number;
+};
+
 type Admin = {
   id_admin: number;
   nama_admin: string;
@@ -37,7 +41,7 @@ const AdminPage = () => {
         // Memeriksa apakah response berhasil
         if (result.Status === 200) {
           // Menghitung total siswa dari response.data
-          const total = result.data.reduce((sum, item) => sum + item.total_siswa, 0);
+          const total = result.data.reduce((sum: number, item: DataItem) => sum + item.total_siswa, 0);
 
           // Menyimpan total siswa ke dalam state
           setTotalSiswa(total);

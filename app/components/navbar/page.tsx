@@ -26,23 +26,25 @@ import useUserInfo from "../useUserInfo"; // Pastikan path file sesuai
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 interface NavbarProps {
   toggleSidebar: () => void;  // Tipe yang benar untuk toggleSidebar
+  isOpen: boolean;  // Tambahkan properti isOpen sesuai dengan kebutuhan
   // Properti lainnya
 }
 
 interface PageProps {
-  [key: string]: string;  // Longgarkan indeks tipe untuk menerima properti apa saja
+  [key: string]: any;  // Longgarkan indeks tipe untuk menerima properti apa saja
+  
 }
 
 // Menggunakan Omit untuk menghapus toggleSidebar
 type NavbarPropsWithoutSidebar = Omit<NavbarProps, "toggleSidebar">;
 
 // Menggunakan properti NavbarProps tanpa toggleSidebar
-const Navbar: React.FC<NavbarPropsWithoutSidebar> = (props) => {
-  const [isOpen, setIsOpen] = useState(false);
+const Navbar: React.FC<NavbarProps> = ({ isOpen, toggleSidebar }) => {
+  // const [isOpen, setIsOpen] = useState(false);
     // Fungsi untuk toggle status sidebar
-    const toggleSidebar = () => {
-      setIsOpen((prev) => !prev); // Toggle nilai isOpen antara true/false
-    };
+    // const toggleSidebar = () => {
+    //   setIsOpen((prev) => !prev); // Toggle nilai isOpen antara true/false
+    // };
 
   const [isToggleSidebar, setToggleSidebar] = useState(false);
   // const [isOpen, setIsOpen] = useState(false);
