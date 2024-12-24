@@ -262,7 +262,7 @@ export default function DataSiswa() {
     setIsModalOpen(true); // Buka modal saat tombol edit diklik
   };
   // Handle perubahan input pada form edit
-  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const fieldName = e.target.name as keyof Admin; // Pastikan fieldName valid
     setEditData((prev) => {
       if (!prev) return null; // Jika prev null, tidak melakukan apa-apa

@@ -17,7 +17,6 @@ import {
   UserCircleIcon,
   ChevronUpIcon,
   ChevronDownIcon,
-  LogoutIcon,
 } from "@heroicons/react/24/outline";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSignOutAlt } from "@fortawesome/free-solid-svg-icons";
@@ -44,8 +43,16 @@ type NavbarProps = NavbarBaseProps | NavbarWithSidebarProps;
 const Navbar: React.FC<NavbarProps> = (props) => {
   const [isOpen, setIsOpen] = useState(false);
     // Fungsi untuk toggle status sidebar
+<<<<<<< HEAD
     const toggleSidebar = () => {
       setIsOpen((prev) => !prev); // Toggle nilai isOpen antara true/false
+=======
+    // const toggleSidebar = () => {
+    //   setIsOpen((prev) => !prev); // Toggle nilai isOpen antara true/false
+    // };
+    const toggleSidebar = () => {
+      setIsOpen(!isOpen);
+>>>>>>> 05417ccd02a963df3ed592ba2ced337d265c62a2
     };
 
   const [isToggleSidebar, setToggleSidebar] = useState(false);
@@ -99,7 +106,7 @@ const Navbar: React.FC<NavbarProps> = (props) => {
     setGuruOpen(false);
   };
 
-  const handleMenuClick = (menu) => {
+  const handleMenuClick = (menu: string) => {
     setActiveMenu(menu);
     // Remove or modify any logic that changes `isOpen` to false
     // Example:
@@ -283,17 +290,16 @@ const Navbar: React.FC<NavbarProps> = (props) => {
               >
                 <div
                   onClick={() => handleMenuClick("master_data")}
-                  className={`w-full text-left px-4 py-2 hover:bg-teal-200 rounded focus:outline-none ${
-                    activeMenu === "master_data" ? "bg-teal-500" : ""
+                  className={`w-full text-left py-2 hover:bg-teal-200 flex items-center focus:outline-none ${
+                    activeMenu === "master_data" ? "bg-teal-400" : ""
                   }`}
-                  className="hover:bg-teal-200 rounded flex items-center cursor-pointer"
                 >
                   <ChartBarIcon className="h-6 w-6 mr-2" />
-                  <p className="pe-7">Master Data</p>
+                  <p className="">Master Data</p>
                   {isMasterDataOpen ? (
-                    <ChevronUpIcon className="h-5 w-5" />
+                    <ChevronUpIcon className="h-5 w-5 " />
                   ) : (
-                    <ChevronDownIcon className="h-5 w-5" />
+                    <ChevronDownIcon className="h-5 w-5 " />
                   )}
                 </div>
               </button>
@@ -437,13 +443,12 @@ const Navbar: React.FC<NavbarProps> = (props) => {
               >
                 <div
                   onClick={() => handleMenuClick("master_data")}
-                  className={`w-full text-left flex items-center px-4 py-2 hover:bg-teal-200 rounded focus:outline-none ${
+                  className={`w-full text-left py-2 hover:bg-teal-200 flex items-center focus:outline-none ${
                     activeMenu === "master_data" ? "bg-teal-500" : ""
                   }`}
-                  className="hover:bg-teal-200 rounded flex items-center cursor-pointer"
                 >
                   <UserGroupIcon className="h-6 w-6 mr-2" />
-                  <p className="pe-4">Administrator</p>
+                  <p className="">Administrator</p>
                   {isAdminOpen ? (
                     <ChevronUpIcon className="h-5 w-5" />
                   ) : (

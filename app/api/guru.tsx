@@ -37,7 +37,8 @@ export const addGuru = async (guruData: Guru): Promise<Guru> => {
       console.log(response);
       return response.data as Guru;
     } catch (error) {
-      console.error('Error saat menambah guru:', error.response?.data || error.message);
+      const axiosError = error as { response?: { data: string }; message?: string };
+      console.error('Error saat menambah guru:', axiosError.response?.data || axiosError.message);
       throw error;
     }
   };
