@@ -24,20 +24,19 @@ import { faSignOutAlt } from "@fortawesome/free-solid-svg-icons";
 import useUserInfo from "../useUserInfo"; // Pastikan path file sesuai
 
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-interface NavbarProps {
-  toggleSidebar: () => void;  // Tipe yang benar untuk toggleSidebar
-  // Properti lainnya
+interface NavbarBaseProps {
+  
 }
 
-interface PageProps {
-  [key: string]: string;  // Longgarkan indeks tipe untuk menerima properti apa saja
+interface NavbarWithSidebarProps extends NavbarBaseProps {
+  // toggleSidebar: () => void; // Fungsi toggleSidebar hanya ada pada tipe ini
 }
 
-// Menggunakan Omit untuk menghapus toggleSidebar
-type NavbarPropsWithoutSidebar = Omit<NavbarProps, "toggleSidebar">;
+type NavbarProps = NavbarBaseProps | NavbarWithSidebarProps;
+
 
 // Menggunakan properti NavbarProps tanpa toggleSidebar
-const Navbar: React.FC<NavbarPropsWithoutSidebar> = (props) => {
+const Navbar: React.FC<NavbarProps> = (props) => {
   const [isOpen, setIsOpen] = useState(false);
     // Fungsi untuk toggle status sidebar
     const toggleSidebar = () => {
