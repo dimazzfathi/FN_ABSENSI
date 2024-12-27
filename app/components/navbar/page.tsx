@@ -157,7 +157,7 @@ const Navbar: React.FC<NavbarProps> = (props) => {
   }, []);
   return (
     <>
-      <nav className="bg-teal-500 z-30 relative sticky top-0 shadow-lg">
+      <nav className="bg-teal-500 z-30 sticky top-0 shadow-lg">
         <div className="max-w mx-auto px-4 sm:px-6 lg:px-8 ">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">

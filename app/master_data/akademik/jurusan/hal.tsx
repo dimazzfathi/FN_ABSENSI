@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import DataTable from "../../../components/dataTabel";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import axios from "axios";
+import axios, { AxiosResponse } from "axios";
 import Cookies from "js-cookie"; // Import js-cookie
 import { useRouter } from "next/navigation";
 import {
@@ -18,6 +18,12 @@ import Swal from "sweetalert2";
 
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
+type Column<T> = {
+  header: string;
+  accessor: keyof T; // Harus sesuai dengan properti yang ada pada tipe data T
+  Cell?: (props: { row: T }) => React.ReactNode; // Opsional
+};
+
 export default function _Rombel() {
   // State untuk menyimpan nilai input
   const [isRombelValid, setIsRombelValid] = useState(true);
@@ -25,7 +31,7 @@ export default function _Rombel() {
   const [dataRombel, setDataRombel] = useState<Rombel[]>([]);
   const [rombel, setRombel] = useState<Rombel[]>([]);
   const [editData, setEditData] = useState<Rombel | null>(null);
-  const [openDropdownId, setOpenDropdownId] = useState<string  | null>(null); // Menyimpan ID baris yang dropdown-nya terbuka
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null); // Menyimpan ID baris yang dropdown-nya terbuka
   const [isModalOpen, setIsModalOpen] = useState(false); // State untuk mengontrol modal
   const [selectedRow, setSelectedRow] = useState<Rombel | null>(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -34,17 +40,22 @@ export default function _Rombel() {
     { id_admin: string; nama_admin: string }[]
   >([]);
   const [formData, setFormData] = useState({
+    id_rombel: "",
     nama_rombel: "",
     id_admin: idAdmin || "",
   });
-
+  // Fungsi untuk mendapatkan data
+  const fetchRombel = async (): Promise<AxiosResponse<{ data: Rombel[] }>> => {
+    const response = await axios.get(`${baseUrl}/rombel/all-rombel`);
+    return response; // respons ini memiliki properti data
+  };
   useEffect(() => {
     const loadRombel = async () => {
       try {
         const response = await fetchRombel();
         console.log("API Rombel:", response);
         const data = response.data;
-        setDataRombel(data);
+        setDataRombel(data.data);
       } catch (error) {
         console.error("Error fetching rombel:", error);
       }
@@ -70,9 +81,9 @@ export default function _Rombel() {
     try {
       // Panggil fungsi backend untuk menghapus siswa yang dipilih
       await Promise.all(
-        selectedRombelIds.map(async (id_rombel: string) => {
+        selectedRombelIds.map(async (id_rombel: String) => {
           // Mengonversi id_rombel dari string ke number sebelum memanggil deleteRombel
-          const id_rombel_number = Number(id_rombel); // atau gunakan parseInt(id_rombel, 10)
+          const id_rombel_number = String(id_rombel); // atau gunakan parseInt(id_rombel, 10)
 
           await deleteRombel(id_rombel_number); // Mengirimkan id_rombel sebagai number
         })
@@ -134,7 +145,7 @@ export default function _Rombel() {
     }
   };
 
-  const rombelColumns = [
+  const rombelColumns = [] = [
     { header: "Nama Rombel", accessor: "nama_rombel" as keyof Rombel },
     {
       header: "Aksi",
@@ -164,7 +175,7 @@ export default function _Rombel() {
                 </button>
                 <button
                   onClick={() => handleDetailClick(row)}
-                  className="block px-4 py-2"
+                  className="block w-full px-4 py-2 text-left text-sm text-green-700 hover:bg-gray-200"
                 >
                   Detail
                 </button>
@@ -214,7 +225,9 @@ export default function _Rombel() {
   }, [idAdmin]);
 
   const handleDetailClick = (row: Rombel) => {
-    const admin = admins.find((admin) => admin.id_admin === String(row.id_admin)); // Cari admin berdasarkan id_admin
+    const admin = admins.find(
+      (admin) => admin.id_admin === String(row.id_admin)
+    ); // Cari admin berdasarkan id_admin
     console.log("id admin", admin);
     const namaAdmin = admin ? admin.nama_admin : "Tidak ada"; // Jika ditemukan, ambil nama_admin
     console.log("iki admin", namaAdmin);
@@ -246,13 +259,14 @@ export default function _Rombel() {
 
   const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEditData((prev) => {
-      if (prev) { // Pastikan prev tidak null
+      if (prev) {
+        // Pastikan prev tidak null
         return { ...prev, [e.target.name]: e.target.value };
       }
       return prev; // Kembalikan prev jika null
     });
   };
-  
+
   // Handle update data setelah form edit disubmit
   const handleEditSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -264,7 +278,8 @@ export default function _Rombel() {
       }
 
       try {
-        await updateRombel(editData.id_rombel, editData);
+        console.log(editData.id_rombel); // Cek nilai id_rombel
+        await updateRombel(String(editData.id_rombel), editData);
         setDataRombel((prev) =>
           prev.map((rombel) =>
             rombel.id_rombel === editData.id_rombel
@@ -290,15 +305,21 @@ export default function _Rombel() {
   const handleConfirmDelete = async () => {
     try {
       // Panggil fungsi delete kelas untuk menghapus di backend
-      await deleteRombel(selectedRow.id_rombel);
+      if (selectedRow) {
+        await deleteRombel(selectedRow.id_rombel);
+      } else {
+        console.error("No row is selected");
+      }
 
       // Setelah sukses, update state di frontend
       if (selectedRow !== null) {
         setDataRombel((prevRombel) =>
-          prevRombel.filter((rombel) => rombel.id_rombel !== selectedRow.id_rombel)
+          prevRombel.filter(
+            (rombel) => rombel.id_rombel !== selectedRow.id_rombel
+          )
         );
       }
-      
+
       toast.success(`Rombel ${selectedRow?.nama_rombel} berhasil dihapus`);
       setIsConfirmOpen(false); // Tutup modal
       setSelectedRow(null); // Reset selectedRow
@@ -313,7 +334,7 @@ export default function _Rombel() {
     setSelectedRow(null); // Reset selectedRow
   };
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
@@ -321,7 +342,7 @@ export default function _Rombel() {
     });
   };
 
-  const handleRombelSubmit = async (e) => {
+  const handleRombelSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!formData.nama_rombel) {
       toast.error("Nama rombel tidak boleh kosong");
@@ -336,6 +357,7 @@ export default function _Rombel() {
       // Update state dengan data baru
       setDataRombel((prevRombel) => [...prevRombel, response.data]);
       setFormData({
+        id_rombel: "",
         nama_rombel: "",
         id_admin: idAdmin,
       });
@@ -345,55 +367,62 @@ export default function _Rombel() {
     }
   };
 
-  const handleEdit = async (updatedRow: Rombel) => {
-    try {
-      if (!updatedRow.id_rombel || !updatedRow.nama_rombel) {
-        throw new Error("ID Rombel atau Nama Rombel tidak ditemukan");
-      }
+  // const handleEdit = async (updatedRow: Rombel) => {
+  //   try {
+  //     if (!updatedRow.id_rombel || !updatedRow.nama_rombel) {
+  //       throw new Error("ID Rombel atau Nama Rombel tidak ditemukan");
+  //     }
 
-      setDataRombel((prevRombel) =>
-        prevRombel.map((rombel) =>
-          rombel.id_rombel === updatedRow.id_rombel ? updatedRow : rombel
-        )
-      );
+  //     setDataRombel((prevRombel) =>
+  //       prevRombel.map((rombel) =>
+  //         rombel.id_rombel === updatedRow.id_rombel ? updatedRow : rombel
+  //       )
+  //     );
 
-      await updateRombel(updatedRow.id_rombel, updatedRow);
-      toast.success("Data rombel berhasil diperbarui!");
-    } catch (error) {
-      console.error("Gagal memperbarui data:", error);
-      toast.error("Gagal memperbarui data");
-    }
-  };
+  //     await updateRombel(updatedRow.id_rombel, updatedRow);
+  //     toast.success("Data rombel berhasil diperbarui!");
+  //   } catch (error) {
+  //     console.error("Gagal memperbarui data:", error);
+  //     toast.error("Gagal memperbarui data");
+  //   }
+  // };
 
-  const handleDelete = async (deletedRow: Rombel) => {
-    const confirmed = window.confirm(
-      `Apakah Anda yakin ingin menghapus rombel ${deletedRow.nama_rombel}?`
-    );
-    if (confirmed) {
-      try {
-        await deleteRombel(deletedRow.id_rombel);
+  // const handleDelete = async (deletedRow: Rombel) => {
+  //   const confirmed = window.confirm(
+  //     `Apakah Anda yakin ingin menghapus rombel ${deletedRow.nama_rombel}?`
+  //   );
+  //   if (confirmed) {
+  //     try {
+  //       await deleteRombel(deletedRow.id_rombel);
 
-        setDataRombel((prevRombel) =>
-          prevRombel.filter(
-            (rombel) => rombel.id_rombel !== deletedRow.id_rombel
-          )
-        );
+  //       setDataRombel((prevRombel) =>
+  //         prevRombel.filter(
+  //           (rombel) => rombel.id_rombel !== deletedRow.id_rombel
+  //         )
+  //       );
 
-        toast.success("Rombel berhasil dihapus");
-      } catch (error) {
-        console.error("Error deleting Rombel:", error);
-        toast.error("Terjadi kesalahan saat menghapus data");
-      }
-    }
-  };
+  //       toast.success("Rombel berhasil dihapus");
+  //     } catch (error) {
+  //       console.error("Error deleting Rombel:", error);
+  //       toast.error("Terjadi kesalahan saat menghapus data");
+  //     }
+  //   }
+  // };
 
   //tombol untuk filter, pindah halaman, search dan reset
   const [itemsPerPage, setItemsPerPage] = useState(5); // Default value is 5
   const [currentPage, setCurrentPage] = useState(1);
 
-  const handleItemsPerPageChange = (e) => {
-    setItemsPerPage(Number(e.target.value));
-    setCurrentPage(1); //  Reset ke halaman pertama saat jumlah item per halaman berubah
+  const handleItemsPerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;  // Pastikan e.target ada dan value terdefinisi
+    const numericValue = Number(value);  // Mengonversi ke angka
+
+    if (!isNaN(numericValue)) {
+      setItemsPerPage(numericValue);  // Mengubah state itemsPerPage
+      setCurrentPage(1);  // Reset ke halaman pertama
+    } else {
+      console.error("Input tidak valid");
+    }
   };
 
   // Memfilter data berdasarkan searchTerm
@@ -415,7 +444,7 @@ export default function _Rombel() {
   const paginatedData = sortedData.slice(startIndex, startIndex + itemsPerPage); // Data yang akan ditampilkan
   const totalPages = Math.ceil(totalData / itemsPerPage); // Total halaman
 
-  const handlePageChange = (newPage) => {
+  const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
   };
 
@@ -479,14 +508,13 @@ export default function _Rombel() {
               onSubmit={handleRombelSubmit}
               className="bg-white rounded-lg shadow-md p-4 lg:p-6 border"
             >
-              <label
+              <input
+                type="text"
                 name="id_admin"
                 value={formData.id_admin}
                 onChange={handleChange}
-                hidden="none"
-              >
-                id_admin
-              </label>
+                className="hidden"
+              />
               <h2 className="text-sm mb-2 sm:text-sm font-bold"> Rombel</h2>
               <input
                 type="text"
@@ -527,7 +555,7 @@ export default function _Rombel() {
                     <select
                       id="items-per-page"
                       value={itemsPerPage}
-                      onChange={(e) => handleItemsPerPageChange(e.target.value)}
+                      onChange={handleItemsPerPageChange}
                       className="p-2 border border-gray-300 rounded text-sm sm:text-base"
                     >
                       <option value={1}>1</option>
@@ -605,10 +633,10 @@ export default function _Rombel() {
 
                 <div className="overflow-x-auto">
                   <DataTable
-                    columns={rombelColumns}
+                    columns={rombelColumns as { header: string; accessor: keyof Rombel; Cell?: ({ row }: { row: Rombel }) => JSX.Element; }[]}
                     data={paginatedData}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
+                    // onEdit={handleEdit}
+                    // onDelete={handleDelete}
                   />
                   {isModalOpen && (
                     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
@@ -671,7 +699,7 @@ export default function _Rombel() {
                 </div>
                 {/* Pagination */}
                 <div className="mt-4 flex justify-between items-center pb-4">
-                  <div className="text-sm text-gray-700 text-white">
+                  <div className="text-sm text-white">
                     Halaman {currentPage} dari {totalPages}
                   </div>
                   <div className="flex overflow-hidden m-4 space-x-2">

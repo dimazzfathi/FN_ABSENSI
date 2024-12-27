@@ -1,7 +1,6 @@
 
 "use client";
 import React, { useState } from 'react'
-import Layout from "../../../layout/page"
 import Navbar from "../../../components/navbar/page"
 import Footer from "../../../components/footer/page"
 import Jurusan from '../jurusan/hal';

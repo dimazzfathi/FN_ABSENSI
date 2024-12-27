@@ -1,50 +1,64 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { updateTahunAjaran, deleteTahunAjaran } from "../../../api/tahunAjaran";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 import {
+  updateTahunAjaran,
+  deleteTahunAjaran,
   addTahunAjaran,
   fetchTahunAjaran,
   TahunAjaran,
 } from "../../../api/tahunAjaran";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import DataTable from "../../../components/dataTabel";
-import axios from "axios";
+import axios, { AxiosResponse, AxiosError } from "axios";
 import Cookies from "js-cookie"; // Import js-cookie
 import Swal from "sweetalert2";
 import useUserInfo from "@/app/components/useUserInfo";
+
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
 export default function Tahun_Ajaran() {
   const [statusValue, setStatusValue] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [tahunAjaran, setTahunAjaran] = useState<TahunAjaran[]>([]);
   const [isTahunAjaranValid, setIsTahunAjaranValid] = useState(true);
   const [editData, setEditData] = useState<TahunAjaran | null>(null);
-  const [openDropdownId, setOpenDropdownId] = useState<number | null>(null); // Menyimpan ID baris yang dropdown-nya terbuka
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null); // Menyimpan ID baris yang dropdown-nya terbuka
   const [isModalOpen, setIsModalOpen] = useState(false); // State untuk mengontrol modal
-  const [selectedRow, setSelectedRow] = useState(null);
+  const [selectedRow, setSelectedRow] = useState<TahunAjaran | null>(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const { namaAdmin, status, idAdmin } = useUserInfo();
-  const [admins, setAdmins] = useState<{ id_admin: string; nama_admin: string }[]>([]);
+  const [admins, setAdmins] = useState<
+    { id_admin: string; nama_admin: string }[]
+  >([]);
 
   useEffect(() => {
     const fetchAdmin = async () => {
-    try{
-      const response = await axios.get(`${baseUrl}/admin/all-Admin`); // Ganti dengan endpoint Anda
-      console.log("admin", response);
-      setAdmins(response.data.data); // Simpan semua admin ke dalam state
-    } catch (error) {
-      console.error("Error fetching admins:", error);
-    }
+      try {
+        const response = await axios.get(`${baseUrl}/admin/all-Admin`); // Ganti dengan endpoint Anda
+        console.log("admin", response);
+        setAdmins(response.data.data); // Simpan semua admin ke dalam state
+      } catch (error) {
+        console.error("Error fetching admins:", error);
+      }
     };
     fetchAdmin();
   }, []);
+  // Fungsi untuk mendapatkan data
+  const fetchTahunAjaran = async (): Promise<
+    AxiosResponse<{ data: TahunAjaran[] }>
+  > => {
+    const response = await axios.get(
+      `${baseUrl}/tahun-pelajaran/all-tahun-pelajaran`
+    );
+    return response; // respons ini memiliki properti data
+  };
   useEffect(() => {
     const loadTahunAjaran = async () => {
       const response = await fetchTahunAjaran();
       console.log("Tahun ajaran:", response); // Debugging tambahan
       const data = response.data;
-      setTahunAjaran(data);
+      setTahunAjaran(data.data);
     };
     loadTahunAjaran();
   }, []);
@@ -56,53 +70,56 @@ export default function Tahun_Ajaran() {
   const showDeleteModal = () => {
     setIsDeleteModalOpen(true); // Menampilkan modal
   };
-  
+
   const confirmDelete = async () => {
     if (selectedTahunIds.length === 0) {
-      toast.error('Pilih tahun yang ingin dihapus!');
+      toast.error("Pilih tahun yang ingin dihapus!");
       setIsDeleteModalOpen(false);
       return;
     }
-  
+
     try {
       // Panggil fungsi backend untuk menghapus siswa yang dipilih
-      await Promise.all(selectedTahunIds.map(async (id_tahun_pelajaran) => {
-        await deleteTahunAjaran(id_tahun_pelajaran); // Pastikan deleteSiswa adalah fungsi yang memanggil API backend untuk menghapus data
-      }));
-  
+      await Promise.all(
+        selectedTahunIds.map(async (id_tahun_pelajaran) => {
+          await deleteTahunAjaran(id_tahun_pelajaran); // Pastikan deleteSiswa adalah fungsi yang memanggil API backend untuk menghapus data
+        })
+      );
+
       // Setelah sukses, update state di frontend
       setTahunAjaran((prevRombel) => {
-        const updatedTahun = prevRombel.filter((tahunAjaran) => !selectedTahunIds.includes(tahunAjaran.id_tahun_pelajaran));
-  
+        const updatedTahun = prevRombel.filter(
+          (tahunAjaran) =>
+            !selectedTahunIds.includes(tahunAjaran.id_tahun_pelajaran)
+        );
+
         // Periksa apakah data di halaman saat ini masih cukup, jika tidak arahkan ke halaman sebelumnya
         const totalItems = updatedTahun.length;
         const totalPages = Math.ceil(totalItems / itemsPerPage);
-  
+
         // Jika currentPage melebihi total halaman baru, arahkan ke halaman sebelumnya
         if (currentPage > totalPages) {
           setCurrentPage(totalPages > 0 ? totalPages : 1); // Pastikan tidak mengarahkan ke halaman 0
         }
-        
+
         return updatedTahun;
       });
-  
-      toast.success('Tahun yang dipilih berhasil dihapus');
+
+      toast.success("Tahun yang dipilih berhasil dihapus");
       setSelectedTahunIds([]);
       setSelectAll(false); // Reset checkbox "Select All"
       setIsDeleteModalOpen(false); // Reset selectedSiswa setelah penghapusan
     } catch (error) {
-      console.error('Error deleting tahun:', error);
-      toast.error('Gagal menghapus tahun');
+      console.error("Error deleting tahun:", error);
+      toast.error("Gagal menghapus tahun");
     }
   };
 
-
-   // Fungsi untuk membatalkan penghapusan
-   const cancelDelete = () => {
+  // Fungsi untuk membatalkan penghapusan
+  const cancelDelete = () => {
     setIsDeleteModalOpen(false); // Tutup modal tanpa melakukan apa-apa
   };
-  
-  
+
   const handleCheckboxChange = (id: string) => {
     setSelectedTahunIds((prevSelected) =>
       prevSelected.includes(id)
@@ -113,7 +130,9 @@ export default function Tahun_Ajaran() {
   const handleSelectAllChange = () => {
     setSelectAll(!selectAll);
     if (!selectAll) {
-      const allIds = tahunAjaran.map((tahunAjaran) => tahunAjaran.id_tahun_pelajaran);
+      const allIds = tahunAjaran.map(
+        (tahunAjaran) => tahunAjaran.id_tahun_pelajaran
+      );
       setSelectedTahunIds(allIds);
     } else {
       setSelectedTahunIds([]);
@@ -152,7 +171,7 @@ export default function Tahun_Ajaran() {
                 </button>
                 <button
                   onClick={() => handleDetailClick(row)}
-                  className="block w-full px-4 py-2 text-left text-sm text-black-700 hover:bg-gray-200"
+                  className="block w-full px-4 py-2 text-left text-sm text-green-700 hover:bg-gray-200"
                 >
                   Detail
                 </button>
@@ -170,21 +189,21 @@ export default function Tahun_Ajaran() {
           onChange={handleSelectAllChange}
         />
       ),
-      accessor: 'select',
-      Cell: ({ row }: { row: Rombel }) => (
+      accessor: "select",
+      Cell: ({ row }: { row: TahunAjaran }) => (
         <input
           type="checkbox"
           checked={selectedTahunIds.includes(row.id_tahun_pelajaran)}
           onChange={() => handleCheckboxChange(row.id_tahun_pelajaran)}
         />
       ),
-    }
+    },
   ];
   const handleDetailClick = (row: TahunAjaran) => {
-    const admin = admins.find(admin => admin.id_admin === row.id_admin); // Cari admin berdasarkan id_admin
-    console.log("id admin", admin)
+    const admin = admins.find((admin) => admin.id_admin === row.id_admin); // Cari admin berdasarkan id_admin
+    console.log("id admin", admin);
     const namaAdmin = admin ? admin.nama_admin : "Tidak ada"; // Jika ditemukan, ambil nama_admin
-    console.log("iki admin", namaAdmin)
+    console.log("iki admin", namaAdmin);
     Swal.fire({
       html: `
         <div style="text-align: center;">
@@ -214,13 +233,27 @@ export default function Tahun_Ajaran() {
     aktif: "",
   });
   // Handle perubahan input
-  const handleChange = (e) => {
+  const handleChange1 = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
       [name]: value,
     });
   };
+  const handleChange = (e: React.ChangeEvent<HTMLElement>) => {
+    if (e.target instanceof HTMLInputElement) {
+      const { name, value } = e.target;
+      setFormData({
+        ...formData,
+        [name]: value,
+      });
+      console.log(e.target.value);
+    } else if (e.target instanceof HTMLSelectElement) {
+      // Logika untuk select
+      console.log(e.target.value);
+    }
+  };
+
   useEffect(() => {
     if (idAdmin) {
       setFormData((prevData) => ({
@@ -268,35 +301,47 @@ export default function Tahun_Ajaran() {
       console.error("Error adding kelas:", error);
 
       // Cek apakah error berasal dari response API
-      if (error.response) {
-        // Anda bisa menambahkan logika khusus di sini berdasarkan error dari API
-        toast.error(
-          "Terjadi kesalahan saat menambah kelas: " +
-            error.response.data.message
-        );
+      if (error instanceof AxiosError) {
+        // Memeriksa apakah error adalah AxiosError
+        if (error.response) {
+          // Mengakses error.response jika ada
+          toast.error(
+            "Terjadi kesalahan saat menambah kelas: " +
+              error.response.data.message
+          );
+        } else {
+          toast.error("Terjadi kesalahan pada server");
+        }
       } else {
+        // Jika error bukan AxiosError, tangani error umum lainnya
         toast.error("Terjadi kesalahan saat menambah kelas");
       }
     }
   };
   //handle hapus
-  const handleDeleteClick = (row) => {
+  const handleDeleteClick = (row: TahunAjaran) => {
     setSelectedRow(row); // Simpan data yang ingin dihapus
     setIsConfirmOpen(true); // Buka modal
   };
   const handleConfirmDelete = async () => {
     try {
       // Panggil fungsi delete tahun ajaran untuk menghapus di backend
-      await deleteTahunAjaran(selectedRow.id_tahun_pelajaran);
+      if (selectedRow) {
+        await deleteTahunAjaran(selectedRow.id_tahun_pelajaran);
+      } else {
+        console.error("No row is selected");
+      }
 
       // Setelah sukses, update state di frontend
-      setTahunAjaran((prevTahunAjaran) =>
-        prevTahunAjaran.filter(
-          (tahunAjaran) =>
-            tahunAjaran.id_tahun_pelajaran !== selectedRow.id_tahun_pelajaran
-        )
-      );
-      toast.success(`Tahun ajaran ${selectedRow.tahun} berhasil dihapus`);
+      if (selectedRow !== null) {
+        setTahunAjaran((prevTahunAjaran) =>
+          prevTahunAjaran.filter(
+            (rombel) =>
+              rombel.id_tahun_pelajaran !== selectedRow.id_tahun_pelajaran
+          )
+        );
+      }
+      toast.success(`Tahun ajaran ${selectedRow?.tahun} berhasil dihapus`);
       setIsConfirmOpen(false); // Tutup modal
       setSelectedRow(null); // Reset selectedRow
     } catch (error) {
@@ -314,11 +359,19 @@ export default function Tahun_Ajaran() {
     setIsModalOpen(true); // Buka modal saat tombol edit diklik
   };
   // Handle perubahan input pada form edit
-  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEditData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  const handleEditChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    setEditData((prev) => {
+      if (prev) {
+        // Pastikan prev tidak null
+        return { ...prev, [e.target.name]: e.target.value };
+      }
+      return prev; // Kembalikan prev jika null
+    });
   };
   // Handle update data setelah form edit disubmit
-  const handleEditSubmit = async (e) => {
+  const handleEditSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (editData) {
       // Validasi sebelum mengupdate
@@ -328,7 +381,9 @@ export default function Tahun_Ajaran() {
       }
 
       // Cek apakah ada perubahan
-      const existingTahun = tahunAjaran.find(tahun => tahun.id_tahun_pelajaran === editData.id_tahun_pelajaran);
+      const existingTahun = tahunAjaran.find(
+        (tahun) => tahun.id_tahun_pelajaran === editData.id_tahun_pelajaran
+      );
       if (existingTahun && existingTahun.aktif === editData.aktif) {
         toast.error("Tidak ada perubahan data yang dilakukan.");
         return;
@@ -354,7 +409,9 @@ export default function Tahun_Ajaran() {
   //tombol untuk filter, pindah halaman, search dan reset
   const [itemsPerPage, setItemsPerPage] = useState(5); // Default value is 5
   const [currentPage, setCurrentPage] = useState(1);
-  const handleItemsPerPageChange = (e) => {
+  const handleItemsPerPageChange = (
+    e: React.ChangeEvent<HTMLSelectElement>
+  ) => {
     setItemsPerPage(Number(e.target.value));
     setCurrentPage(1); // Reset to first page when items per page changes
   };
@@ -373,17 +430,13 @@ export default function Tahun_Ajaran() {
     return 0;
   });
 
-
   // Menghitung pagination
   const totalData = sortedData.length; // Total item setelah difilter
   const startIndex = (currentPage - 1) * itemsPerPage; // Indeks awal untuk pagination
-  const paginatedData = sortedData.slice(
-    startIndex,
-    startIndex + itemsPerPage
-  ); // Data yang akan ditampilkan
+  const paginatedData = sortedData.slice(startIndex, startIndex + itemsPerPage); // Data yang akan ditampilkan
   const totalPages = Math.ceil(totalData / itemsPerPage); // Total halaman
 
-  const handlePageChange = (newPage) => {
+  const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
   };
   // Fungsi untuk mengatur ulang pencarian
@@ -445,22 +498,18 @@ export default function Tahun_Ajaran() {
               onSubmit={handleSubmit}
               className="bg-white rounded-lg shadow-md p-4 lg:p-6 border"
             >
-              <label
+              <input
                 name="id_tahun_pelajaran"
                 value={formData.id_tahun_pelajaran}
                 onChange={handleChange}
-                hidden="none"
-              >
-                id_tahun_pelajaran
-              </label>
-              <label
+                className="hidden"
+              />
+              <input
                 name="id_admin"
                 value={formData.id_admin}
                 onChange={handleChange}
-                hidden="none"
-              >
-                id_admin
-              </label>
+                className="hidden"
+              />
               <label
                 htmlFor="id_tahun_pelajaran"
                 className="block text-sm mb-2 sm:text-sm font-bold"
@@ -476,9 +525,7 @@ export default function Tahun_Ajaran() {
                 className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
                 placeholder="Tahun ajaran..."
               />
-              <label
-                className="block text-sm pt-3 mb-2 sm:text-sm font-bold"
-              >
+              <label className="block text-sm pt-3 mb-2 sm:text-sm font-bold">
                 Status
               </label>
               <select
@@ -519,85 +566,96 @@ export default function Tahun_Ajaran() {
                 </div>
                 {/* Filter Dropdown */}
                 <div className="flex flex-wrap justify-start items-center w-full mt-4">
-              {/* Dropdown Items per Page */}
-              <div className="flex items-center">
-                <select
-                  id="items-per-page"
-                  value={itemsPerPage}
-                  onChange={(e) => handleItemsPerPageChange(e.target.value)}
-                  className="p-2 border border-gray-300 rounded text-sm sm:text-base"
-                >
-                  <option value={1}>1</option>
-                  <option value={5}>5</option>
-                  <option value={10}>10</option>
-                  <option value={20}>20</option>
-                </select>
-              </div>
-
-              {/* Input Search */}
-              <div className="flex items-center ml-3">
-              <input
-                                    type="text"
-                                    placeholder="Cari..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base"
-                                  />
-              </div>
-
-              {/* Tombol Reset */}
-              <div className="flex items-center mt-3 lg:mt-0 md:mt-0 lg:mb-0 space-x-2 lg:order-1 w-full lg:w-auto md:w-auto">
-                <button
-                  onClick={handleResetClick}
-                  disabled={!isResettable}
-                  className={`w-full p-2 lg:ml-3 md:ml-3 rounded text-sm sm:text-base transition ${
-                    isResettable
-                      ? "text-white bg-red-500 hover:bg-red-600 cursor-pointer"
-                      : "text-gray-400 bg-gray-300 cursor-not-allowed"
-                  }`}
-                >
-                  Reset
-                </button>
-              </div>
-
-              {/* Tombol Hapus Siswa Terpilih */}
-              <div className="ml-3">
-                <button
-                  onClick={showDeleteModal}
-                  className="px-4 py-2 bg-red-600 text-white rounded text-base"
-                >
-                  Hapus Siswa Terpilih
-                </button>
-
-                {/* Modal Konfirmasi Penghapusan */}
-                {isDeleteModalOpen && (
-                  <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50">
-                    <div className="bg-white p-6 rounded-md shadow-lg w-96">
-                      <h3 className="text-lg font-semibold mb-4">Konfirmasi Penghapusan</h3>
-                      <p className="mb-4">Apakah Anda yakin ingin menghapus siswa yang dipilih?</p>
-                      <div className="flex justify-between">
-                        <button
-                          onClick={cancelDelete}
-                          className="px-4 py-2 bg-gray-300 text-gray-700 rounded"
-                        >
-                          Batal
-                        </button>
-                        <button
-                          onClick={confirmDelete}
-                          className="px-4 py-2 bg-red-600 text-white rounded"
-                        >
-                          Hapus
-                        </button>
-                      </div>
-                    </div>
+                  {/* Dropdown Items per Page */}
+                  <div className="flex items-center">
+                    <select
+                      id="items-per-page"
+                      value={itemsPerPage}
+                      onChange={handleItemsPerPageChange}
+                      className="p-2 border border-gray-300 rounded text-sm sm:text-base"
+                    >
+                      <option value={1}>1</option>
+                      <option value={5}>5</option>
+                      <option value={10}>10</option>
+                      <option value={20}>20</option>
+                    </select>
                   </div>
-                )}
-              </div>
-            </div>
+
+                  {/* Input Search */}
+                  <div className="flex items-center ml-3">
+                    <input
+                      type="text"
+                      placeholder="Cari..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base"
+                    />
+                  </div>
+
+                  {/* Tombol Reset */}
+                  <div className="flex items-center mt-3 lg:mt-0 md:mt-0 lg:mb-0 space-x-2 lg:order-1 w-full lg:w-auto md:w-auto">
+                    <button
+                      onClick={handleResetClick}
+                      disabled={!isResettable}
+                      className={`w-full p-2 lg:ml-3 md:ml-3 rounded text-sm sm:text-base transition ${
+                        isResettable
+                          ? "text-white bg-red-500 hover:bg-red-600 cursor-pointer"
+                          : "text-gray-400 bg-gray-300 cursor-not-allowed"
+                      }`}
+                    >
+                      Reset
+                    </button>
+                  </div>
+
+                  {/* Tombol Hapus Siswa Terpilih */}
+                  <div className="ml-3">
+                    <button
+                      onClick={showDeleteModal}
+                      className="px-4 py-2 bg-red-600 text-white rounded text-base"
+                    >
+                      Hapus Siswa Terpilih
+                    </button>
+
+                    {/* Modal Konfirmasi Penghapusan */}
+                    {isDeleteModalOpen && (
+                      <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50">
+                        <div className="bg-white p-6 rounded-md shadow-lg w-96">
+                          <h3 className="text-lg font-semibold mb-4">
+                            Konfirmasi Penghapusan
+                          </h3>
+                          <p className="mb-4">
+                            Apakah Anda yakin ingin menghapus siswa yang
+                            dipilih?
+                          </p>
+                          <div className="flex justify-between">
+                            <button
+                              onClick={cancelDelete}
+                              className="px-4 py-2 bg-gray-300 text-gray-700 rounded"
+                            >
+                              Batal
+                            </button>
+                            <button
+                              onClick={confirmDelete}
+                              className="px-4 py-2 bg-red-600 text-white rounded"
+                            >
+                              Hapus
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
 
                 <div className="overflow-x-auto">
                   <DataTable
-                    columns={tahunAjaranColumns}
+                    columns={
+                      tahunAjaranColumns as {
+                        header: string;
+                        accessor: keyof TahunAjaran;
+                        Cell?: ({ row }: { row: TahunAjaran }) => JSX.Element;
+                      }[]
+                    }
                     data={paginatedData}
                     // onEdit={handleEdit}
                     // onDelete={handleDelete}
@@ -656,30 +714,30 @@ export default function Tahun_Ajaran() {
                     </div>
                   )}
                   {isConfirmOpen && (
-                      <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-50">
-                        <div className="bg-white p-6 rounded shadow-md">
-                          <p>Apakah kamu yakin ingin menghapus item ini?</p>
-                          <div className="mt-4 flex justify-end">
-                            <button
-                              onClick={handleCancel}
-                              className="px-4 py-2 mr-2 bg-gray-300 rounded hover:bg-gray-400"
-                            >
-                              Batal
-                            </button>
-                            <button
-                              onClick={handleConfirmDelete}
-                              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-                            >
-                              Hapus
-                            </button>
-                          </div>
+                    <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-50">
+                      <div className="bg-white p-6 rounded shadow-md">
+                        <p>Apakah kamu yakin ingin menghapus item ini?</p>
+                        <div className="mt-4 flex justify-end">
+                          <button
+                            onClick={handleCancel}
+                            className="px-4 py-2 mr-2 bg-gray-300 rounded hover:bg-gray-400"
+                          >
+                            Batal
+                          </button>
+                          <button
+                            onClick={handleConfirmDelete}
+                            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                          >
+                            Hapus
+                          </button>
                         </div>
                       </div>
-                    )}
+                    </div>
+                  )}
                 </div>
                 {/* Pagination */}
                 <div className="mt-4 flex justify-between items-center pb-4">
-                  <div className="text-sm text-gray-700 text-white">
+                  <div className="text-sm text-white">
                     Halaman {currentPage} dari {totalPages}
                   </div>
                   <div className="flex space-x-2">
@@ -713,68 +771,6 @@ export default function Tahun_Ajaran() {
             </div>
           </div>
         </div>
-        {/* Modal untuk konfirmasi penghapusan */}
-        {/* {confirmDelete.visible && (
-          <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
-            <div className="bg-white p-4 rounded-lg shadow-lg">
-              <p>Apakah Anda yakin ingin menghapus item ini?</p>
-              <div className="flex justify-end mt-4">
-                <button
-                  onClick={handleCancelDelete}
-                  className="px-3 py-2 sm:px-4 sm:py-2 bg-gray-300 text-black rounded text-sm sm:text-base mr-2"
-                >
-                  Batal
-                </button>
-                <button
-                  onClick={handleConfirmDelete}
-                  className="px-3 py-2 sm:px-4 sm:py-2 bg-red-500 text-white rounded text-sm sm:text-base"
-                >
-                  Hapus
-                </button>
-              </div>
-            </div>
-          </div>
-        )} */}
-        {/* {showEditModal && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-            <div className="bg-white p-6 rounded-lg shadow-lg">
-              <h2 className="text-xl font-bold mb-4">Edit Data</h2>
-              <input
-                type="text"
-                value={editThnValue}
-                onChange={(e) => setEditThnValue(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-2"
-                placeholder="Tahun Ajaran..."
-              />
-              <select
-                value={editStatusValue}
-                onChange={(e) => setEditStatusValue(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base mb-4"
-              >
-                <option value="">Pilih Status...</option>
-                {statusOptions.map((option, index) => (
-                  <option key={index} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-              <div className="flex justify-end mt-4">
-                <button
-                  onClick={() => setShowEditModal(false)}
-                  className="px-3 py-2 sm:px-4 sm:py-2 bg-gray-300 text-black rounded text-sm sm:text-base mr-2"
-                >
-                  Batal
-                </button>
-                <button
-                  onClick={handleSaveEdit}
-                  className="px-3 py-2 sm:px-4 sm:py-2 bg-teal-400 text-white rounded text-sm sm:text-base"
-                >
-                  Simpan
-                </button>
-              </div>
-            </div>
-          </div>
-        )} */}
       </div>
     </>
   );

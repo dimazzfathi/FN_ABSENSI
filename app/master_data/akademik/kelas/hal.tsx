@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import DataTable from "../../../components/dataTabel";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import axios from "axios";
+import axios, { AxiosError, AxiosResponse } from "axios";
 import Cookies from "js-cookie"; // Import js-cookie
 import { useRouter } from "next/navigation";
 import {
@@ -23,17 +23,24 @@ export default function _Kelas() {
   const [filterJurusan, setFilterJurusan] = useState("");
   const [isJurusanValid, setIsJurusanValid] = useState(true);
   const router = useRouter();
-  const [admins, setAdmins] = useState<{ id_admin: string; nama_admin: string }[]>([]);
+  const [admins, setAdmins] = useState<
+    { id_admin: string; nama_admin: string }[]
+  >([]);
   const [isKelasValid, setIsKelasValid] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [kelas, setKelas] = useState<Kelas[]>([]);
   const [editData, setEditData] = useState<Kelas | null>(null);
-  const [openDropdownId, setOpenDropdownId] = useState<number | null>(null); // Menyimpan ID baris yang dropdown-nya terbuka
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null); // Menyimpan ID baris yang dropdown-nya terbuka
   const [isModalOpen, setIsModalOpen] = useState(false); // State untuk mengontrol modal
-  const [selectedRow, setSelectedRow] = useState(null);
+  const [selectedRow, setSelectedRow] = useState<Kelas | null>(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const { namaAdmin, status, idAdmin } = useUserInfo();
-  
+
+  // Fungsi untuk mendapatkan data
+  const fetchKelas = async (): Promise<AxiosResponse<{ data: Kelas[] }>> => {
+    const response = await axios.get(`${baseUrl}/kelas/all-kelas`);
+    return response; // respons ini memiliki properti data
+  };
   useEffect(() => {
     //   const token = Cookies.get('token');
     //   console.log(token)
@@ -47,7 +54,7 @@ export default function _Kelas() {
       const response = await fetchKelas();
       console.log("API Kelas:", response); // Debugging tambahan
       const data = response.data;
-      setKelas(data);
+      setKelas(data.data);
     };
     loadKelas();
   }, []);
@@ -73,13 +80,13 @@ export default function _Kelas() {
   // Mengambil data admins dari API
   useEffect(() => {
     const fetchAdmin = async () => {
-    try{
-      const response = await axios.get(`${baseUrl}/admin/all-Admin`); // Ganti dengan endpoint Anda
-      console.log("admin", response);
-      setAdmins(response.data.data); // Simpan semua admin ke dalam state
-    } catch (error) {
-      console.error("Error fetching admins:", error);
-    }
+      try {
+        const response = await axios.get(`${baseUrl}/admin/all-Admin`); // Ganti dengan endpoint Anda
+        console.log("admin", response);
+        setAdmins(response.data.data); // Simpan semua admin ke dalam state
+      } catch (error) {
+        console.error("Error fetching admins:", error);
+      }
     };
     fetchAdmin();
   }, []);
@@ -93,15 +100,15 @@ export default function _Kelas() {
   }, [idAdmin]);
 
   const handleDetailClick = (row: Kelas) => {
-    const admin = admins.find(admin => admin.id_admin === row.id_admin); // Cari admin berdasarkan id_admin
-    console.log("id admin", admin)
+    const admin = admins.find((admin) => admin.id_admin === row.id_admin); // Cari admin berdasarkan id_admin
+    console.log("id admin", admin);
     const namaAdmin = admin ? admin.nama_admin : "Tidak ada"; // Jika ditemukan, ambil nama_admin
-    console.log("iki admin", namaAdmin)
+    console.log("iki admin", namaAdmin);
     Swal.fire({
       html: `
         <div style="text-align: center;">
           <p>Kelas: ${JSON.stringify(row.kelas) || "Tidak ada"}</p>
-          <p>Ditambah oleh: ${namaAdmin  || "Tidak ada"}</p>
+          <p>Ditambah oleh: ${namaAdmin || "Tidak ada"}</p>
         </div>
       `,
       icon: "info",
@@ -123,7 +130,7 @@ export default function _Kelas() {
     kelas: "",
   });
 
-  const handleKelasChange = (e) => {
+  const handleKelasChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setKelasData({
       ...kelasData,
@@ -131,7 +138,7 @@ export default function _Kelas() {
     });
   };
   //handle menambah data
-  const handleKelasSubmit = async (e) => {
+  const handleKelasSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     // Validasi: Pastikan semua field tidak kosong
@@ -164,18 +171,24 @@ export default function _Kelas() {
       console.error("Error adding kelas:", error);
 
       // Cek apakah error berasal dari response API
-      if (error.response) {
-        // Anda bisa menambahkan logika khusus di sini berdasarkan error dari API
-        toast.error(
-          "Terjadi kesalahan saat menambah kelas: " +
-            error.response.data.message
-        );
+      if (error instanceof AxiosError) {
+        // Memeriksa apakah error adalah AxiosError
+        if (error.response) {
+          // Mengakses error.response jika ada
+          toast.error(
+            "Terjadi kesalahan saat menambah kelas: " +
+              error.response.data.message
+          );
+        } else {
+          toast.error("Terjadi kesalahan pada server");
+        }
       } else {
+        // Jika error bukan AxiosError, tangani error umum lainnya
         toast.error("Terjadi kesalahan saat menambah kelas");
       }
     }
   };
-  const handleDeleteClickk = (row) => {
+  const handleDeleteClickk = (row: Kelas) => {
     setSelectedRow(row); // Simpan data yang ingin dihapus
     setIsConfirmOpen(true); // Buka modal
   };
@@ -183,13 +196,21 @@ export default function _Kelas() {
   const handleConfirmDelete = async () => {
     try {
       // Panggil fungsi delete kelas untuk menghapus di backend
-      await deleteKelas(selectedRow.id_kelas);
+      if (selectedRow) {
+        await deleteKelas(selectedRow.id_kelas);
+      } else {
+        console.error("No row is selected");
+      }
 
       // Setelah sukses, update state di frontend
-      setKelas((prevKelas) =>
-        prevKelas.filter((kelas) => kelas.id_kelas !== selectedRow.id_kelas)
-      );
-      toast.success(`Kelas ${selectedRow.kelas} berhasil dihapus`);
+      if (selectedRow !== null) {
+        setKelas((prevKelas) =>
+          prevKelas.filter(
+            (rombel) => rombel.id_kelas !== selectedRow.id_kelas
+          )
+        );
+      }
+      toast.success(`Kelas ${selectedRow?.kelas} berhasil dihapus`);
       setIsConfirmOpen(false); // Tutup modal
       setSelectedRow(null); // Reset selectedRow
     } catch (error) {
@@ -208,10 +229,16 @@ export default function _Kelas() {
   };
   // Handle perubahan input pada form edit
   const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEditData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    setEditData((prev) => {
+      if (prev) {
+        // Pastikan prev tidak null
+        return { ...prev, [e.target.name]: e.target.value };
+      }
+      return prev; // Kembalikan prev jika null
+    });
   };
   // Handle update data setelah form edit disubmit
-  const handleEditSubmit = async (e) => {
+  const handleEditSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (editData) {
       // Validasi sebelum mengupdate
@@ -221,8 +248,13 @@ export default function _Kelas() {
       }
 
       // Cek apakah ada perubahan
-      const existingKelas = kelas.find(kelas => kelas.id_kelas === editData.id_kelas);
-      if (existingKelas && JSON.stringify(existingKelas) === JSON.stringify(editData)) {
+      const existingKelas = kelas.find(
+        (kelas) => kelas.id_kelas === editData.id_kelas
+      );
+      if (
+        existingKelas &&
+        JSON.stringify(existingKelas) === JSON.stringify(editData)
+      ) {
         toast.error("Tidak ada perubahan data yang dilakukan.");
         return;
       }
@@ -252,53 +284,55 @@ export default function _Kelas() {
   const showDeleteModal = () => {
     setIsDeleteModalOpen(true); // Menampilkan modal
   };
-  
+
   const confirmDelete = async () => {
     if (selectedKelasIds.length === 0) {
-      toast.error('Pilih kelas yang ingin dihapus!');
+      toast.error("Pilih kelas yang ingin dihapus!");
       setIsDeleteModalOpen(false);
       return;
     }
-  
+
     try {
       // Panggil fungsi backend untuk menghapus siswa yang dipilih
-      await Promise.all(selectedKelasIds.map(async (id_kelas) => {
-        await deleteKelas(id_kelas); // Pastikan deleteSiswa adalah fungsi yang memanggil API backend untuk menghapus data
-      }));
-  
+      await Promise.all(
+        selectedKelasIds.map(async (id_kelas) => {
+          await deleteKelas(id_kelas); // Pastikan deleteSiswa adalah fungsi yang memanggil API backend untuk menghapus data
+        })
+      );
+
       // Setelah sukses, update state di frontend
       setKelas((prevKelas) => {
-        const updatedKelas = prevKelas.filter((kelas) => !selectedKelasIds.includes(kelas.id_kelas));
-  
+        const updatedKelas = prevKelas.filter(
+          (kelas) => !selectedKelasIds.includes(kelas.id_kelas)
+        );
+
         // Periksa apakah data di halaman saat ini masih cukup, jika tidak arahkan ke halaman sebelumnya
         const totalItems = updatedKelas.length;
         const totalPages = Math.ceil(totalItems / itemsPerPage);
-  
+
         // Jika currentPage melebihi total halaman baru, arahkan ke halaman sebelumnya
         if (currentPage > totalPages) {
           setCurrentPage(totalPages > 0 ? totalPages : 1); // Pastikan tidak mengarahkan ke halaman 0
         }
-        
+
         return updatedKelas;
       });
-  
-      toast.success('Kelas yang dipilih berhasil dihapus');
+
+      toast.success("Kelas yang dipilih berhasil dihapus");
       setSelectedKelasIds([]);
       setSelectAll(false); // Reset checkbox "Select All"
       setIsDeleteModalOpen(false); // Reset selectedSiswa setelah penghapusan
     } catch (error) {
-      console.error('Error deleting kelas:', error);
-      toast.error('Gagal menghapus kelas');
+      console.error("Error deleting kelas:", error);
+      toast.error("Gagal menghapus kelas");
     }
   };
 
-
-   // Fungsi untuk membatalkan penghapusan
-   const cancelDelete = () => {
+  // Fungsi untuk membatalkan penghapusan
+  const cancelDelete = () => {
     setIsDeleteModalOpen(false); // Tutup modal tanpa melakukan apa-apa
   };
-  
-  
+
   const handleCheckboxChange = (id: string) => {
     setSelectedKelasIds((prevSelected) =>
       prevSelected.includes(id)
@@ -315,8 +349,6 @@ export default function _Kelas() {
       setSelectedKelasIds([]);
     }
   };
-
-  
 
   const kelasColumns = [
     //adalah istilah yang digunakan dalam konteks tabel, terutama saat menggunakan pustaka seperti React Table, untuk menunjukkan kunci atau nama properti dalam data yang akan diambil dan ditampilkan di kolom tabel tertentu
@@ -350,7 +382,7 @@ export default function _Kelas() {
                 </button>
                 <button
                   onClick={() => handleDetailClick(row)}
-                  className="block w-full px-4 py-2 text-left text-sm text-black-700 hover:bg-gray-200"
+                  className="block w-full px-4 py-2 text-left text-sm text-green-700 hover:bg-gray-200"
                 >
                   Detail
                 </button>
@@ -368,7 +400,7 @@ export default function _Kelas() {
           onChange={handleSelectAllChange}
         />
       ),
-      accessor: 'select',
+      accessor: "select",
       Cell: ({ row }: { row: Kelas }) => (
         <input
           type="checkbox"
@@ -376,17 +408,22 @@ export default function _Kelas() {
           onChange={() => handleCheckboxChange(row.id_kelas)}
         />
       ),
-    }
+    },
   ];
 
   //tombol untuk filter, pindah halaman, search dan reset
   const [itemsPerPage, setItemsPerPage] = useState(5); // Default value is 5
   const [currentPage, setCurrentPage] = useState(1);
 
-  const handleItemsPerPageChange = (e) => {
-    setItemsPerPage(Number(e.target.value));
-    setCurrentPage(1); //  Reset ke halaman pertama saat jumlah item per halaman berubah
+  const handleItemsPerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    if (e.target && e.target.value) {
+      setItemsPerPage(Number(e.target.value));
+      setCurrentPage(1); // Reset ke halaman pertama saat jumlah item per halaman berubah
+    } else {
+      console.error('e.target atau e.target.value tidak tersedia');
+    }
   };
+  
 
   // Memfilter data berdasarkan searchTerm
   const filteredData = kelas.filter((item) => {
@@ -404,13 +441,10 @@ export default function _Kelas() {
   // Menghitung pagination
   const totalData = sortedData.length; // Total item setelah difilter
   const startIndex = (currentPage - 1) * itemsPerPage; // Indeks awal untuk pagination
-  const paginatedData = sortedData.slice(
-    startIndex,
-    startIndex + itemsPerPage
-  ); // Data yang akan ditampilkan
+  const paginatedData = sortedData.slice(startIndex, startIndex + itemsPerPage); // Data yang akan ditampilkan
   const totalPages = Math.ceil(totalData / itemsPerPage); // Total halaman
 
-  const handlePageChange = (newPage) => {
+  const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
   };
 
@@ -474,23 +508,19 @@ export default function _Kelas() {
               onSubmit={handleKelasSubmit}
               className="bg-white rounded-lg shadow-md p-4 lg:p-6 border"
             >
-              <label
+              <input
                 name="id_kelas"
                 value={kelasData.id_kelas}
                 onChange={handleKelasChange}
-                hidden="none"
-              >
-                id_kelas
-              </label>
+                className="hidden"
+              />
               <h2 className="text-sm mb-2 sm:text-sm font-bold"></h2>
-              <label
+              <input
                 name="id_admin"
                 value={kelasData.id_admin}
                 onChange={handleKelasChange}
-                hidden="none"
-              >
-                id_admin
-              </label>
+                className="hidden"
+              />
               <h2 className="text-sm mb-2 sm:text-sm font-bold"> Kelas</h2>
               <input
                 type="text"
@@ -527,85 +557,90 @@ export default function _Kelas() {
                 </div>
                 {/* Filter Dropdown */}
                 <div className="flex flex-wrap justify-start items-center w-full mt-4">
-              {/* Dropdown Items per Page */}
-              <div className="flex items-center">
-                <select
-                  id="items-per-page"
-                  value={itemsPerPage}
-                  onChange={(e) => handleItemsPerPageChange(e.target.value)}
-                  className="p-2 border border-gray-300 rounded text-sm sm:text-base"
-                >
-                  <option value={1}>1</option>
-                  <option value={5}>5</option>
-                  <option value={10}>10</option>
-                  <option value={20}>20</option>
-                </select>
-              </div>
-
-              {/* Input Search */}
-              <div className="flex items-center ml-3">
-              <input
-                                    type="text"
-                                    placeholder="Cari..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base"
-                                  />
-              </div>
-
-              {/* Tombol Reset */}
-              <div className="flex items-center mt-3 lg:mt-0 md:mt-0 lg:mb-0 space-x-2 lg:order-1 w-full lg:w-auto md:w-auto">
-                <button
-                  onClick={handleResetClick}
-                  disabled={!isResettable}
-                  className={`w-full p-2 lg:ml-3 md:ml-3 rounded text-sm sm:text-base transition ${
-                    isResettable
-                      ? "text-white bg-red-500 hover:bg-red-600 cursor-pointer"
-                      : "text-gray-400 bg-gray-300 cursor-not-allowed"
-                  }`}
-                >
-                  Reset
-                </button>
-              </div>
-
-              {/* Tombol Hapus Siswa Terpilih */}
-              <div className="ml-3">
-                <button
-                  onClick={showDeleteModal}
-                  className="px-4 py-2 bg-red-600 text-white rounded text-base"
-                >
-                  Hapus Siswa Terpilih
-                </button>
-
-                {/* Modal Konfirmasi Penghapusan */}
-                {isDeleteModalOpen && (
-                  <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50">
-                    <div className="bg-white p-6 rounded-md shadow-lg w-96">
-                      <h3 className="text-lg font-semibold mb-4">Konfirmasi Penghapusan</h3>
-                      <p className="mb-4">Apakah Anda yakin ingin menghapus siswa yang dipilih?</p>
-                      <div className="flex justify-between">
-                        <button
-                          onClick={cancelDelete}
-                          className="px-4 py-2 bg-gray-300 text-gray-700 rounded"
-                        >
-                          Batal
-                        </button>
-                        <button
-                          onClick={confirmDelete}
-                          className="px-4 py-2 bg-red-600 text-white rounded"
-                        >
-                          Hapus
-                        </button>
-                      </div>
-                    </div>
+                  {/* Dropdown Items per Page */}
+                  <div className="flex items-center">
+                    <select
+                      id="items-per-page"
+                      value={itemsPerPage}
+                      onChange={handleItemsPerPageChange}
+                      className="p-2 border border-gray-300 rounded text-sm sm:text-base"
+                    >
+                      <option value={1}>1</option>
+                      <option value={5}>5</option>
+                      <option value={10}>10</option>
+                      <option value={20}>20</option>
+                    </select>
                   </div>
-                )}
-              </div>
-            </div>
+
+                  {/* Input Search */}
+                  <div className="flex items-center ml-3">
+                    <input
+                      type="text"
+                      placeholder="Cari..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full p-2 border border-gray-300 rounded text-sm sm:text-base"
+                    />
+                  </div>
+
+                  {/* Tombol Reset */}
+                  <div className="flex items-center mt-3 lg:mt-0 md:mt-0 lg:mb-0 space-x-2 lg:order-1 w-full lg:w-auto md:w-auto">
+                    <button
+                      onClick={handleResetClick}
+                      disabled={!isResettable}
+                      className={`w-full p-2 lg:ml-3 md:ml-3 rounded text-sm sm:text-base transition ${
+                        isResettable
+                          ? "text-white bg-red-500 hover:bg-red-600 cursor-pointer"
+                          : "text-gray-400 bg-gray-300 cursor-not-allowed"
+                      }`}
+                    >
+                      Reset
+                    </button>
+                  </div>
+
+                  {/* Tombol Hapus Siswa Terpilih */}
+                  <div className="ml-3">
+                    <button
+                      onClick={showDeleteModal}
+                      className="px-4 py-2 bg-red-600 text-white rounded text-base"
+                    >
+                      Hapus Siswa Terpilih
+                    </button>
+
+                    {/* Modal Konfirmasi Penghapusan */}
+                    {isDeleteModalOpen && (
+                      <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50">
+                        <div className="bg-white p-6 rounded-md shadow-lg w-96">
+                          <h3 className="text-lg font-semibold mb-4">
+                            Konfirmasi Penghapusan
+                          </h3>
+                          <p className="mb-4">
+                            Apakah Anda yakin ingin menghapus siswa yang
+                            dipilih?
+                          </p>
+                          <div className="flex justify-between">
+                            <button
+                              onClick={cancelDelete}
+                              className="px-4 py-2 bg-gray-300 text-gray-700 rounded"
+                            >
+                              Batal
+                            </button>
+                            <button
+                              onClick={confirmDelete}
+                              className="px-4 py-2 bg-red-600 text-white rounded"
+                            >
+                              Hapus
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
                 <div className="w-full overflow-x-auto">
                   <div>
                     <DataTable
-                      columns={kelasColumns}
+                      columns={kelasColumns as { header: string; accessor: keyof Kelas; Cell?: ({ row }: { row: Kelas }) => JSX.Element; }[]}
                       data={paginatedData}
                       // onEdit={handleEditClick}
                       // onDelete={handleDeleteClickk}
@@ -671,7 +706,7 @@ export default function _Kelas() {
                   </div>
                 </div>
                 <div className="mt-4 flex justify-between items-center">
-                  <div className="text-sm text-gray-700 text-white">
+                  <div className="text-sm text-white">
                     Halaman {currentPage} dari {totalPages}
                   </div>
                   <div className="flex overflow-hidden m-4 space-x-2">

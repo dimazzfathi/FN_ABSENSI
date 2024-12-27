@@ -34,7 +34,7 @@ export const addTahunAjaran = async (tahunAjaranData: TahunAjaran) => {
 };
 
 // Fungsi untuk mengedit tahun ajaran baru
-export const updateTahunAjaran = async (id: number, updatedData: Partial<TahunAjaran>): Promise<TahunAjaran> => {
+export const updateTahunAjaran = async (id: string, updatedData: Partial<TahunAjaran>): Promise<TahunAjaran> => {
   try {
     console.log(`Updating data at: ${baseUrl}/tahun-pelajaran/edit-tahun-pelajaran/${id}`);
     console.log('Data to be updated:', updatedData);
@@ -46,7 +46,7 @@ export const updateTahunAjaran = async (id: number, updatedData: Partial<TahunAj
   }
 };
 
-export const deleteTahunAjaran = async (id: number): Promise<void> => {
+export const deleteTahunAjaran = async (id: string): Promise<void> => {
   try {
     console.log(`Deleting data at: ${baseUrl}/tahun-pelajaran/hapus-tahun-pelajaran/${id}`);
     await axios.delete(`${baseUrl}/tahun-pelajaran/hapus-tahun-pelajaran/${id}`);
