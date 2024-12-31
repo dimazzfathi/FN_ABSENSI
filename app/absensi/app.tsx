@@ -351,33 +351,38 @@ const Filters = () => {
 
     useEffect(() => {
       const generateMonthYearOptions = () => {
-        const options = [...monthYearOptions]; // Salin opsi yang sudah ada
+        const options = [];
         const currentDate = new Date();
         const currentYear = currentDate.getFullYear();
         const currentMonth = currentDate.getMonth() + 1;
   
-        // Cari tahun terendah dalam opsi yang ada
-        const minYear = options.length
-          ? Math.min(...options.map((opt) => parseInt(opt.value.split("-")[0], 10)))
-          : currentYear;
+        // // Tambahkan bulan dari tahun-tahun sebelumnya yang sudah ada
+        // const minYear = monthYearOptions.length
+        //   ? parseInt(monthYearOptions[0].value.split("-")[0], 10)
+        //   : currentYear;
+
+        const minYear = currentYear - 3;
   
-        // Tambahkan bulan dari tahun sebelumnya hingga tahun saat ini
         for (let year = minYear; year <= currentYear; year++) {
           const maxMonth = year === currentYear ? currentMonth : 12;
           for (let month = 1; month <= maxMonth; month++) {
             const optionValue = `${year}-${String(month).padStart(2, "0")}`;
-  
-            // Hanya tambahkan jika belum ada di opsi
-            if (!options.find((opt) => opt.value === optionValue)) {
-              options.push({
-                value: optionValue,
-                label: `${getMonthName(month)} ${year}`,
-              });
-            }
+            options.push({
+              value: optionValue,
+              label: `${getMonthName(month)} ${year}`,
+            });
           }
         }
-        // Sortir opsi berdasarkan tanggal
-        options.sort((a, b) => new Date(a.value) - new Date(b.value));
+  
+        // Sortir opsi berdasarkan tahun dan bulan
+        options.sort((a, b) => {
+          const dateA = typeof a.value === "string" ? new Date(a.value).getTime() : a.value;
+          const dateB = typeof b.value === "string" ? new Date(b.value).getTime() : b.value;
+        
+          return dateA - dateB;
+        });
+        
+  
         setMonthYearOptions(options);
       };
   
