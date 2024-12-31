@@ -1,13 +1,19 @@
 import React, { useState, useEffect, useRef } from "react";
 import { fetchGuru, Guru } from "@/app/api/guru";
-import { fetchMapel } from "@/app/api/mapel";
+// import { fetchMapel } from "@/app/api/mapel";
 import axios from "axios";
 import Cookies from "js-cookie"; // Import js-cookie
-
+import {
+  addMapel,
+  fetchMapel,
+  editMapel,
+  deleteMapel,
+  Mapel,
+} from "../../../api/mapel";
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 function mengampu() {
-  const handleSubmit = async (e) => {};
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {};
 
   const [guru, setGuru] = useState([]); // State untuk menyimpan data nama_guru
 
@@ -33,8 +39,8 @@ function mengampu() {
   //   loadGuru();
   // }, []);
 
-  const [mapel, setMapel] = useState([]); // Hanya menyimpan nama_mapel
-  const [selectedMapel, setSelectedMapel] = useState<number | null>(null); // Menyimpan id_mapel yang dipilih
+  const [mapel, setMapel] = useState<Mapel[]>([]); // Hanya menyimpan nama_mapel
+  const [selectedMapel, setSelectedMapel] = useState<string | null>(null); // Menyimpan id_mapel yang dipilih
 
   useEffect(() => {
     const loadMapel = async () => {
@@ -42,7 +48,7 @@ function mengampu() {
         const response = await fetchMapel();
         console.log("Data mapel yang diterima:", response);
 
-        const mapelData = Array.isArray(response) ? response : response.data;
+        const mapelData = Array.isArray(response.data) ? response.data : [];
         setMapel(mapelData); // Simpan data mapel ke state
       } catch (error) {
         console.error("Error fetching mapel:", error);
@@ -91,34 +97,37 @@ function mengampu() {
   //   // Kirim id_kelas ke backend atau lakukan operasi lainnya
   // };
   const [dropdowns, setDropdowns] = useState([{}]);
-  const handleChangeTambah = (e, index) => {
-    // Tangani perubahan nilai dropdown jika perlu
+  const handleChangeTambah = (e: React.ChangeEvent<HTMLSelectElement>, index: number) => {
+    const selectedValue = e.target.value;
+    console.log(`Selected value: ${selectedValue} at index ${index}`);
+    // Handle the change logic here
   };
 
   const addDropdown = () => {
     setDropdowns([...dropdowns, {}]); // Menambahkan dropdown baru
   };
 
-  const removeDropdown = (index) => {
+  const removeDropdown = (index: number): void => {
     const newDropdowns = [...dropdowns];
     newDropdowns.splice(index, 1); // Menghapus dropdown yang dipilih
     setDropdowns(newDropdowns);
   };
+  
 
   const [dropdownsMapel, setDropdownsMapel] = useState([{}]);
-  const handleChangeTambahMapel = (e, index) => {
-    // Tangani perubahan nilai dropdown jika perlu
-  };
+  // const handleChangeTambahMapel = (e, index) => {
+  //   // Tangani perubahan nilai dropdown jika perlu
+  // };
 
-  const addDropdownMapel = () => {
-    setDropdownsMapel([...dropdownsMapel, {}]); // Menambahkan dropdown baru
-  };
+  // const addDropdownMapel = () => {
+  //   setDropdownsMapel([...dropdownsMapel, {}]); // Menambahkan dropdown baru
+  // };
 
-  const removeDropdownMapel = (index) => {
-    const newDropdowns = [...dropdownsMapel];
-    newDropdowns.splice(index, 1); // Menghapus dropdown yang dipilih
-    setDropdownsMapel(newDropdowns);
-  };
+  // const removeDropdownMapel = (index) => {
+  //   const newDropdowns = [...dropdownsMapel];
+  //   newDropdowns.splice(index, 1); // Menghapus dropdown yang dipilih
+  //   setDropdownsMapel(newDropdowns);
+  // };
   return (
     <>
       <div className="rounded-lg max-w-full bg-slate-100">
@@ -226,7 +235,7 @@ function mengampu() {
                       >
                         <option value="">Pilih mata pelajaran...</option>
                         {mapel.map((item) => (
-                          <option key={item.id_mapel} value={item.id_mapel}>
+                          <option key={item.id_mapel} value={item.id_mapel ?? ''}>
                             {item.nama_mapel}
                           </option>
                         ))}

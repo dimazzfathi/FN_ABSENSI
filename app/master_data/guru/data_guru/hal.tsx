@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import DataTable from "@/app/components/dataTabel";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import axios from "axios";
+import axios, { AxiosError, AxiosResponse } from "axios";
 import Cookies from "js-cookie"; // Import js-cookie
 import { useRouter } from "next/navigation";
 import {
@@ -11,7 +11,7 @@ import {
   fetchGuru,
   deleteGuru,
   updateGuru,
-  Guru,
+  // Guru,
 } from "@/app/api/guru";
 import useUserInfo from "@/app/components/useUserInfo";
 import Swal from "sweetalert2";
@@ -21,11 +21,47 @@ import { json } from "stream/consumers";
 
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
+interface GuruRow {
+  id_guru: string;
+  id_admin: string;
+  nip: string | number;
+  nama_guru: string;
+  jenis_kelamin: string;
+  no_telp: string | number;
+  email: string;
+  pas: string;
+  walas: string;
+  staf: string;
+  barcode:string;
+  foto: string| File | null;
+  // Tambahkan properti lain sesuai dengan struktur data yang Anda miliki
+}
+interface Kelas {
+  id_siswa: string;
+  id_kelas: string;
+  kelas: string;
+}
+
+interface Guru {
+  id_guru: string;
+  foto: string| File | null;
+  id_admin: string;
+  nama_guru: string;
+  nip: string;
+  jenis_kelamin: string;
+  email: string;
+  walas: string;
+  staf: string;
+  barcode: string;
+  no_telp: string;
+  pas: string;
+}
+
 export default function DataGuru() {
   const [kelas, setKelas] = useState([]);
   const [rombel, setRombel] = useState([]);
   const [mapel, setMapel] = useState([]);
-  const [kelas1, setKelas1] = useState([]);
+  const [kelas1, setKelas1] = useState<Kelas[]>([]);
   useEffect(() => {
     const fetchKelas = async () => {
       try {
@@ -158,24 +194,29 @@ export default function DataGuru() {
       fileInputRef.current.click(); // Trigger input file secara manual
     }
   };
-  const handleFileUploadChange = (event) => {
-    const file = event.target.files[0];
+  const handleFileUploadChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
 
       reader.onload = async (e) => {
+        if (!e.target) {
+          console.error("e.target is null");
+          return;
+        }
         try {
-          const data = new Uint8Array(e.target.result);
+          const data = new Uint8Array(e.target.result as ArrayBuffer); // Pastikan tipe adalah ArrayBuffer
           const workbook = XLSX.read(data, { type: "array" });
           const sheetName = workbook.SheetNames[0];
           const sheet = workbook.Sheets[sheetName];
-          const jsonData = XLSX.utils.sheet_to_json(sheet).map((row) => ({
+          const jsonData = XLSX.utils.sheet_to_json(sheet) as GuruRow[]; // Memberikan tipe array dengan objek SiswaRow
+          const formattedData = jsonData.map((row) => ({
             id_guru: row.id_guru || "-",
             id_admin: row.id_admin || "-",
-            nip: row.nip || "-",
+            nip: String(row.nip), // Pastikan nip dikonversi menjadi string
             nama_guru: row.nama_guru || "-",
             jenis_kelamin: row.jenis_kelamin || "-",
-            no_telp: row.no_telp || "-",
+            no_telp: String(row.no_telp), // Pastikan no_telp juga dikonversi jika perlu
             email: row.email || "-",
             pas: row.pas || "-",
             walas: row.walas || "-",
@@ -185,7 +226,7 @@ export default function DataGuru() {
           }));
 
           console.log("Data dari Excel:", jsonData); // Log data dari Excel
-          setDataGuru(jsonData); // Simpan data ke state
+          setDataGuru(formattedData); // Simpan data ke state
 
           // Lakukan pengiriman data ke server setelah file diproses
           const response = await fetch(`${baseUrl}/guru/add-guru`, {
@@ -193,7 +234,7 @@ export default function DataGuru() {
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify(jsonData),
+            body: JSON.stringify(formattedData),
           });
 
           const result = await response.json();
@@ -218,10 +259,10 @@ export default function DataGuru() {
   const [guru, setGuru] = useState<Guru[]>([]);
   const [editData, setEditData] = useState<Guru | null>(null);
   const [isModalEdit, setIsModalEdit] = useState(false); // State untuk mengontrol modal
-  const [selectedRow, setSelectedRow] = useState(null);
+  const [selectedRow, setSelectedRow] = useState<Guru | null>(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const fileInputRef = useRef(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [isGuruValid, setIsGuruValid] = useState(true);
   const [dataGuru, setDataGuru] = useState<Guru[]>([]);
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null); // Menyimpan ID baris yang dropdown-nya terbuka
@@ -260,10 +301,13 @@ export default function DataGuru() {
 
       // Jika toggle dimatikan (isWalasEnabled false), kosongkan nilai walas
       if (!newState) {
-        setEditData((prevData) => ({
-          ...prevData,
-          walas: "", // Kosongkan input walas
-        }));
+        setEditData((prevData) => {
+          if (!prevData) return null; // Mengembalikan null jika prevData null
+          return {
+            ...prevData,
+            walas: newState ? prevData?.walas || "" : "",
+          };
+        });
       }
 
       return newState;
@@ -290,41 +334,59 @@ export default function DataGuru() {
 
       // Jika toggle dimatikan (isWalasEnabled false), kosongkan nilai walas
       if (!newState) {
-        setEditData((prevData) => ({
-          ...prevData,
-          staf: "", // Kosongkan input walas
-        }));
+        setEditData((prevData) => {
+          if (!prevData) return null; // Mengembalikan null jika prevData null
+          return {
+            ...prevData,
+            staf: newState ? prevData?.staf || "" : "",
+          };
+        });
       }
 
       return newState;
     });
   }
+  const fetchGuru = async (): Promise<AxiosResponse<{ data: Guru[] }>> => {
+    const response = await axios.get(`${baseUrl}/guru/all-guru`);
+    return response; // respons ini memiliki properti data
+  };
+  
   useEffect(() => {
-    //   const token = Cookies.get('token');
-    //   console.log(token)
-    // if (!token) {
-    //   router.push('../../../login');
-    //   return;
-    // }
-
-    // axios.defaults.headers.common['Authorization'] = token;
     const loadGuru = async () => {
-      try {
-        const response = await fetchGuru();
-        console.log("Data guru yang diterima:", response); // Lihat data yang diterima
-
-        // Pastikan data adalah array, jika bukan maka jadikan array
-        const guruData = Array.isArray(response.data)
-          ? response.data
-          : [response.data];
-
-        setGuru(guruData); // Menggunakan data dalam bentuk array
-      } catch (error) {
-        console.error("Error fetching guru data:", error);
-      }
+      const response = await fetchGuru();
+      const data = response.data; // Mengakses data di dalam response
+      setGuru(data.data); // Menyimpan data yang diperoleh ke dalam state
     };
     loadGuru();
   }, []);
+  
+  
+  // useEffect(() => {
+  //   //   const token = Cookies.get('token');
+  //   //   console.log(token)
+  //   // if (!token) {
+  //   //   router.push('../../../login');
+  //   //   return;
+  //   // }
+
+  //   // axios.defaults.headers.common['Authorization'] = token;
+  //   const loadGuru = async () => {
+  //     try {
+  //       const response = await fetchGuru();
+  //       console.log("Data guru yang diterima:", response); // Lihat data yang diterima
+
+  //       // Pastikan data adalah array, jika bukan maka jadikan array
+  //       const guruData = Array.isArray(response.data)
+  //         ? response.data
+  //         : [response.data];
+
+  //       setGuru(guruData); // Menggunakan data dalam bentuk array
+  //     } catch (error) {
+  //       console.error("Error fetching guru data:", error);
+  //     }
+  //   };
+  //   loadGuru();
+  // }, []);
   // Ambil data rombel dari backend saat komponen dimuat
   useEffect(() => {
     const fetchRombel = async () => {
@@ -418,12 +480,8 @@ export default function DataGuru() {
     });
     setOpenDropdownId(null); // Tutup dropdown setelah melihat detail
   };
+  
   const guruColumns = [
-    //adalah istilah yang digunakan dalam konteks tabel, terutama saat menggunakan pustaka seperti React Table, untuk menunjukkan kunci atau nama properti dalam data yang akan diambil dan ditampilkan di kolom tabel tertentu
-    // { header: "No", accessor: (_: any, index: number) => index + 1 },
-    // { header: "Guru", accessor: "id_guru" as keyof Guru },
-
-    { header: "Foto", accessor: "foto" as keyof Guru },
     {
       header: "Admin",
       accessor: "id_admin" as keyof Guru,
@@ -436,11 +494,11 @@ export default function DataGuru() {
     { header: "Nip", accessor: "nip" as keyof Guru },
     { header: "Jk", accessor: "jenis_kelamin" as keyof Guru },
     { header: "Email", accessor: "email" as keyof Guru },
-    // { header: "Pass", accessor: "pass" as keyof Guru },
     { header: "Walas", accessor: "walas" as keyof Guru },
     { header: "Staff", accessor: "staf" as keyof Guru },
     { header: "Barcode", accessor: "barcode" as keyof Guru },
     { header: "No", accessor: "no_telp" as keyof Guru },
+    // Kolom Aksi tidak membutuhkan accessor
     {
       header: "Aksi",
       Cell: ({ row }: { row: Guru }) => {
@@ -452,7 +510,7 @@ export default function DataGuru() {
             >
               &#8942; {/* Simbol menu */}
             </button>
-            {openDropdownId === row.id_guru && ( // Hanya tampilkan dropdown jika id_guru sesuai
+            {openDropdownId === row.id_guru && (
               <div
                 className="absolute mt-2 bg-white border rounded shadow-md lg:-ml-2"
                 style={{ marginLeft: "-450px" }}
@@ -464,7 +522,7 @@ export default function DataGuru() {
                   Edit
                 </button>
                 <button
-                  onClick={() => handleDeleteClickk(row)}
+                  onClick={() => handleDeleteClick(row)}
                   className="block w-full px-4 py-2 text-left text-sm text-red-700 hover:bg-gray-200"
                 >
                   Hapus
@@ -482,7 +540,9 @@ export default function DataGuru() {
       },
     },
   ];
-  const [guruData, setGuruData] = useState({
+  
+  
+  const [guruData, setGuruData] = useState<Guru>({
     id_guru: "",
     id_admin: idAdmin || "",
     nip: "",
@@ -497,148 +557,167 @@ export default function DataGuru() {
     barcode: "",
   });
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setGuruData({
       ...guruData,
       [name]: value,
     });
   };
-  const handleCheckboxChange = (e) => {
-    const { value, checked } = e.target;
-    setGuruData((prevData) => {
-      if (checked) {
-        // Tambahkan mapel yang dipilih
-        return {
-          ...prevData,
-          id_kelas: [...prevData.id_kelas, value],
-        };
-      } else {
-        // Hapus id_kelas yang tidak dipilih
-        return {
-          ...prevData,
-          id_kelas: prevData.id_kelas.filter((kelas) => kelas !== value),
-        };
-      }
-    });
-  };
-  const handleJurusanChange = (e) => {
-    const { value, checked } = e.target;
-    setGuruData((prevData) => {
-      if (checked) {
-        // Tambahkan rombel yang dipilih
-        return {
-          ...prevData,
-          id_rombel: [...prevData.id_rombel, value],
-        };
-      } else {
-        // Hapus rombel yang tidak dipilih
-        return {
-          ...prevData,
-          id_rombel: prevData.id_rombel.filter((rombel) => rombel !== value),
-        };
-      }
-    });
-  };
-  // Fungsi untuk menangani perubahan checkbox
-  const handleMapelChange = (e) => {
-    const { value, checked } = e.target;
-    setGuruData((prevData) => {
-      if (checked) {
-        // Tambahkan mapel yang dipilih
-        return {
-          ...prevData,
-          id_mapel: [...prevData.id_mapel, value],
-        };
-      } else {
-        // Hapus id_mapel yang tidak dipilih
-        return {
-          ...prevData,
-          id_mapel: prevData.id_mapel.filter((mapel) => mapel !== value),
-        };
-      }
-    });
-  };
-  const handleEditRombel = (e) => {
-    const { value, checked } = e.target;
-    setEditData((prevData) => {
-      // Pastikan prevData.id_kelas adalah array
-      const currentRombel = Array.isArray(prevData.id_rombel)
-        ? prevData.id_rombel
-        : [];
-      const updatedRombel = checked
-        ? [...currentRombel, value] // Tambahkan kelas jika checked
-        : currentRombel.filter((rombel) => rombel !== value); // Hapus kelas jika unchecked
-      return {
-        ...prevData,
-        id_rombel: updatedRombel,
-      };
-    });
-  };
-  const handleEditCheckboxChange = (e) => {
-    const { value, checked } = e.target;
-    setEditData((prevData) => {
-      // Pastikan prevData.id_kelas adalah array
-      const currentKelas = Array.isArray(prevData.id_kelas)
-        ? prevData.id_kelas
-        : [];
-      const updatedKelas = checked
-        ? [...currentKelas, value] // Tambahkan kelas jika checked
-        : currentKelas.filter((kelas) => kelas !== value); // Hapus kelas jika unchecked
-      return {
-        ...prevData,
-        id_kelas: updatedKelas,
-      };
-    });
-  };
-  const handleMapelCheckboxChange = (e) => {
-    const { value, checked } = e.target;
-    setEditData((prevData) => {
-      // Pastikan prevData.id_kelas adalah array
-      const currentMapel = Array.isArray(prevData.id_mapel)
-        ? prevData.id_mapel
-        : [];
-      const updatedMapel = checked
-        ? [...currentMapel, value] // Tambahkan kelas jika checked
-        : currentMapel.filter((mapel) => mapel !== value); // Hapus kelas jika unchecked
-      return {
-        ...prevData,
-        id_mapel: updatedMapel,
-      };
-    });
-  };
-  const handleFileChange = (e) => {
-    const file = e.target.files[0]; // Ambil file pertama yang dipilih
+  // const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const { value, checked } = e.target;
+  //   setGuruData((prevData) => {
+  //     if (checked) {
+  //       // Tambahkan mapel yang dipilih
+  //       return {
+  //         ...prevData,
+  //         id_kelas: [...prevData.id_kelas, value],
+  //       };
+  //     } else {
+  //       // Hapus id_kelas yang tidak dipilih
+  //       return {
+  //         ...prevData,
+  //         id_kelas: prevData.id_kelas.filter((kelas) => kelas !== value),
+  //       };
+  //     }
+  //   });
+  // };
+  // const handleJurusanChange = (e) => {
+  //   const { value, checked } = e.target;
+  //   setGuruData((prevData) => {
+  //     if (checked) {
+  //       // Tambahkan rombel yang dipilih
+  //       return {
+  //         ...prevData,
+  //         id_rombel: [...prevData.id_rombel, value],
+  //       };
+  //     } else {
+  //       // Hapus rombel yang tidak dipilih
+  //       return {
+  //         ...prevData,
+  //         id_rombel: prevData.id_rombel.filter((rombel) => rombel !== value),
+  //       };
+  //     }
+  //   });
+  // };
+  // // Fungsi untuk menangani perubahan checkbox
+  // const handleMapelChange = (e) => {
+  //   const { value, checked } = e.target;
+  //   setGuruData((prevData) => {
+  //     if (checked) {
+  //       // Tambahkan mapel yang dipilih
+  //       return {
+  //         ...prevData,
+  //         id_mapel: [...prevData.id_mapel, value],
+  //       };
+  //     } else {
+  //       // Hapus id_mapel yang tidak dipilih
+  //       return {
+  //         ...prevData,
+  //         id_mapel: prevData.id_mapel.filter((mapel) => mapel !== value),
+  //       };
+  //     }
+  //   });
+  // };
+  // const handleEditRombel = (e) => {
+  //   const { value, checked } = e.target;
+  //   setEditData((prevData) => {
+  //     // Pastikan prevData.id_kelas adalah array
+  //     const currentRombel = Array.isArray(prevData.id_rombel)
+  //       ? prevData.id_rombel
+  //       : [];
+  //     const updatedRombel = checked
+  //       ? [...currentRombel, value] // Tambahkan kelas jika checked
+  //       : currentRombel.filter((rombel) => rombel !== value); // Hapus kelas jika unchecked
+  //     return {
+  //       ...prevData,
+  //       id_rombel: updatedRombel,
+  //     };
+  //   });
+  // };
+  // const handleEditCheckboxChange = (e) => {
+  //   const { value, checked } = e.target;
+  //   setEditData((prevData) => {
+  //     // Pastikan prevData.id_kelas adalah array
+  //     const currentKelas = Array.isArray(prevData.id_kelas)
+  //       ? prevData.id_kelas
+  //       : [];
+  //     const updatedKelas = checked
+  //       ? [...currentKelas, value] // Tambahkan kelas jika checked
+  //       : currentKelas.filter((kelas) => kelas !== value); // Hapus kelas jika unchecked
+  //     return {
+  //       ...prevData,
+  //       id_kelas: updatedKelas,
+  //     };
+  //   });
+  // };
+  // const handleMapelCheckboxChange = (e) => {
+  //   const { value, checked } = e.target;
+  //   setEditData((prevData) => {
+  //     // Pastikan prevData.id_kelas adalah array
+  //     const currentMapel = Array.isArray(prevData.id_mapel)
+  //       ? prevData.id_mapel
+  //       : [];
+  //     const updatedMapel = checked
+  //       ? [...currentMapel, value] // Tambahkan kelas jika checked
+  //       : currentMapel.filter((mapel) => mapel !== value); // Hapus kelas jika unchecked
+  //     return {
+  //       ...prevData,
+  //       id_mapel: updatedMapel,
+  //     };
+  //   });
+  // };
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files ? e.target.files[0] : null; // Ambil file pertama yang dipilih
 
     // Perbarui `editData` dengan file tersebut
-    setEditData((prevData) => ({
-      ...prevData,
-      foto: file, // Simpan file ke dalam `foto`
-    }));
+    setEditData((prevData) => {
+      if (!prevData) {
+        // Jika prevData null, kembalikan objek dengan semua properti default
+        return {
+          id_guru: "", // atau nilai default lainnya yang sesuai
+          id_admin: "",
+          nip: "",
+          nama_guru: "",
+          jenis_kelamin: "",
+          email: "",
+          pas: "",
+          walas: "",
+          staf: "",
+          barcode: "",
+          no_telp: "",
+          foto: file, // Menambahkan foto yang diunggah
+        };
+      }
+      // Jika prevData ada, hanya update foto
+      return {
+        ...prevData,
+        foto: file, // Update hanya foto
+      };
+    });
+    
   };
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+  
     // Validasi: Pastikan semua field tidak kosong
     if (!guruData.nama_guru) {
       toast.error("Data guru tidak boleh kosong");
       return;
     }
-
+  
     try {
-      // const updatedGuruData = {
-      //   ...guruData,
-      //   id_mapel: guruData.id_mapel.length ? guruData.id_mapel : [],
-      //   id_kelas: guruData.id_kelas.length ? guruData.id_kelas : [],
-      //   id_rombel: guruData.id_rombel.length ? guruData.id_rombel : [],
-      // };
-      const response = await addGuru([guruData]);
+      const response = await addGuru([guruData]); // Menggunakan addGuru yang mengembalikan AddGuruResponse
       console.log("API response:", response);
       console.log("Data yang dikirim ke backend:", [guruData]);
+      
       // Cek status respon
-      if (response?.data?.results?.some((result) => result.exists)) {
+      if (response?.results?.some((result) => result.status === "Gagal")) {
         toast.error("Data sudah ada!");
+        return;
       } else {
-        toast.success(" Guru berhasil ditambahkan!"); // Menampilkan pesan sukses
+        toast.success("Guru berhasil ditambahkan!");
+  
         // Update GuruList dengan data baru tanpa refresh
         setGuru((prevGuruList) => [
           ...prevGuruList,
@@ -657,7 +736,7 @@ export default function DataGuru() {
             barcode: guruData.barcode || "-",
           },
         ]);
-
+  
         // Reset form
         setGuruData({
           id_guru: "",
@@ -675,42 +754,39 @@ export default function DataGuru() {
         });
       }
     } catch (error) {
-      // Tangani kesalahan di sini
-      console.error(
-        "Error adding Guru:",
-        error.response?.data || error.message
-      );
-      console.log("Data yang dikirim ke backend:", [guruData]);
-
-      // Cek apakah error berasal dari response API
-      if (error.response) {
-        // Anda bisa menambahkan logika khusus di sini berdasarkan error dari API
-        toast.error(
-          "Terjadi kesalahan saat menambah guru: " +
-            error.response.data.message
-        );
+      if (axios.isAxiosError(error)) {
+        console.error("Axios error:", error.response?.data || error.message);
+        toast.error("Terjadi kesalahan saat menambah guru: " + error.response?.data.message);
       } else {
+        console.error("Unknown error:", error);
         toast.error("Terjadi kesalahan saat menambah guru");
       }
     }
   };
+  
+  
   // Fungsi untuk handle klik edit
-  const handleEditClick = (row: guru) => {
+  const handleEditClick = (row: Guru) => {
     setEditData(row); // Set data yang dipilih ke form edit
     setIsModalEdit(true); // Buka modal saat tombol edit diklik
   };
   // Handle perubahan input pada form edit
-  const handleEditChange = (e) => {
+  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
 
     // Update hanya field yang diedit dalam `editData`
-    setEditData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
+    setEditData((prevData) => {
+      if (prevData) {
+        return {
+          ...prevData,
+          [name]: value || "", // Jika value kosong, set ke string kosong
+        };
+      }
+      return prevData;
+    });
   };
 
-  const handleEditSubmit = async (e) => {
+  const handleEditSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (editData) {
@@ -721,7 +797,7 @@ export default function DataGuru() {
       formData.append("nama_guru", editData.nama_guru);
       formData.append("jenis_kelamin", editData.jenis_kelamin);
       formData.append("email", editData.email);
-      formData.append("pass", editData.pass);
+      formData.append("pas", editData.pas);
       formData.append("walas", editData.walas);
       formData.append("barcode", editData.barcode);
       formData.append("no_telp", editData.no_telp);
@@ -760,27 +836,34 @@ export default function DataGuru() {
     }
   };
   //handle hapus
-  const handleDeleteClickk = (row) => {
+  const handleDeleteClick = (row: Guru) => {
     setSelectedRow(row); // Simpan data yang ingin dihapus
     setIsConfirmOpen(true); // Buka modal
   };
   const handleConfirmDelete = async () => {
     try {
-      // Panggil fungsi delete kelas untuk menghapus di backend
-      await deleteGuru(selectedRow.id_guru);
-
-      // Setelah sukses, update state di frontend
-      setGuru((prevGuru) =>
-        prevGuru.filter((guru) => guru.id_guru !== selectedRow.id_guru)
-      );
-      toast.success(`guru ${selectedRow.nama_guru} berhasil dihapus`);
-      setIsConfirmOpen(false); // Tutup modal
-      setSelectedRow(null); // Reset selectedRow
+      if (selectedRow) {
+        // Panggil fungsi delete kelas untuk menghapus di backend
+        await deleteGuru(selectedRow.id_guru);
+  
+        // Setelah berhasil menghapus, langsung perbarui state di frontend
+        setGuru((prevGuru) =>
+          prevGuru.filter((guru) => guru.id_guru !== selectedRow.id_guru)
+        );
+  
+        toast.success(`Guru ${selectedRow.nama_guru} berhasil dihapus`);
+        setIsConfirmOpen(false); // Tutup modal
+        setSelectedRow(null); // Reset selectedRow
+      } else {
+        toast.error("Tidak ada data yang dipilih");
+      }
     } catch (error) {
       console.error("Error deleting guru:", error);
       toast.error("Gagal menghapus guru");
     }
   };
+  
+  
   const handleCancel = () => {
     setIsConfirmOpen(false); // Tutup modal tanpa hapus
     setSelectedRow(null); // Reset selectedRow
@@ -789,7 +872,7 @@ export default function DataGuru() {
   const [itemsPerPage, setItemsPerPage] = useState(5); // Default value is 5
   const [currentPage, setCurrentPage] = useState(1);
 
-  const handleItemsPerPageChange = (e) => {
+  const handleItemsPerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setItemsPerPage(Number(e.target.value));
     setCurrentPage(1); //  Reset ke halaman pertama saat jumlah item per halaman berubah
   };
@@ -816,7 +899,7 @@ export default function DataGuru() {
   ); // Data yang akan ditampilkan
   const totalPages = Math.ceil(totalData / itemsPerPage); // Total halaman
 
-  const handlePageChange = (newPage) => {
+  const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
   };
 
@@ -843,39 +926,39 @@ export default function DataGuru() {
     { id: Date.now(), value: "1" }, // Contoh nilai awal
   ]);
   // Fungsi untuk menambah dropdown baru
-  const addDropdown = () => {
-    setDropdowns([...dropdowns, { id: Date.now(), value: "" }]); // Tambahkan dropdown baru dengan ID unik
-  };
-  // Fungsi untuk menghapus dropdown berdasarkan indeks
-  const removeDropdown = (index) => {
-    setDropdowns(dropdowns.filter((_, i) => i !== index));
-  };
-  // Fungsi untuk mengubah nilai dropdown
-  const handleDropdownChange = (index, value) => {
-    const updatedDropdowns = dropdowns.map((dropdown, i) =>
-      i === index ? { ...dropdown, value } : dropdown
-    );
-    setDropdowns(updatedDropdowns);
-  };
+  // const addDropdown = () => {
+  //   setDropdowns([...dropdowns, { id: Date.now(), value: "" }]); // Tambahkan dropdown baru dengan ID unik
+  // };
+  // // Fungsi untuk menghapus dropdown berdasarkan indeks
+  // const removeDropdown = (index) => {
+  //   setDropdowns(dropdowns.filter((_, i) => i !== index));
+  // };
+  // // Fungsi untuk mengubah nilai dropdown
+  // const handleDropdownChange = (index, value) => {
+  //   const updatedDropdowns = dropdowns.map((dropdown, i) =>
+  //     i === index ? { ...dropdown, value } : dropdown
+  //   );
+  //   setDropdowns(updatedDropdowns);
+  // };
 
-  const [editDropdowns, setEditDropdowns] = useState([
-    { id: Date.now(), value: "" },
-  ]);
+  // const [editDropdowns, setEditDropdowns] = useState([
+  //   { id: Date.now(), value: "" },
+  // ]);
   // Fungsi untuk menambah dropdown (Edit)
-  const addEditDropdown = () => {
-    setEditDropdowns([...editDropdowns, { id: Date.now(), value: "" }]);
-  };
+  // const addEditDropdown = () => {
+  //   setEditDropdowns([...editDropdowns, { id: Date.now(), value: "" }]);
+  // };
 
-  // Fungsi untuk menghapus dropdown (Edit)
-  const removeEditDropdown = (index) => {
-    setEditDropdowns(editDropdowns.filter((_, i) => i !== index));
-  };
-  // Fungsi untuk mengubah value dropdown (Edit)
-  const handleEditCheck = (index, value) => {
-    const updated = [...editDropdowns];
-    updated[index].value = value;
-    setEditDropdowns(updated);
-  };
+  // // Fungsi untuk menghapus dropdown (Edit)
+  // const removeEditDropdown = (index) => {
+  //   setEditDropdowns(editDropdowns.filter((_, i) => i !== index));
+  // };
+  // // Fungsi untuk mengubah value dropdown (Edit)
+  // const handleEditCheck = (index, value) => {
+  //   const updated = [...editDropdowns];
+  //   updated[index].value = value;
+  //   setEditDropdowns(updated);
+  // };
   return (
     <>
       <div className="rounded-lg max-w-full bg-slate-100">
@@ -935,7 +1018,7 @@ export default function DataGuru() {
                   name="id_guru"
                   value={guruData.id_guru}
                   onChange={handleChange}
-                  hidden="none"
+                  hidden={true}
                 />
                 <input
                   type="text"
@@ -943,7 +1026,7 @@ export default function DataGuru() {
                   name="id_admin"
                   value={guruData.id_admin}
                   onChange={handleChange}
-                  hidden="none"
+                  hidden={true}
                 />
                 <div>
                   <h2 className="block text-sm mb-2 sm:text-sm font-bold">
@@ -1446,7 +1529,9 @@ export default function DataGuru() {
                 </div>
 
                 <div className="overflow-x-auto">
-                  <DataTable columns={guruColumns} data={paginatedData} />
+                  <DataTable 
+                  columns={guruColumns as { header: string; accessor: keyof Guru; Cell?: ({ row }: { row: Guru }) => JSX.Element; }[]}
+                  data={paginatedData} />
                   <ToastContainer className="mt-14" />
                   {/* Column 2: Edit */}
                   {isModalEdit && (
@@ -1463,7 +1548,7 @@ export default function DataGuru() {
                             onChange={handleEditChange}
                             className="w-full p-2 border rounded text-sm sm:text-base mb-2"
                             placeholder="ID Guru..."
-                            hidden="none"
+                            hidden={true}
                           />
                           <input
                             type="text"
@@ -1472,7 +1557,7 @@ export default function DataGuru() {
                             onChange={handleEditChange}
                             className="w-full p-2 border rounded text-sm sm:text-base mb-2"
                             placeholder="id_admin..."
-                            hidden="none"
+                            hidden={true}
                           />
                           <h2 className="text-sm mb-2 sm:text-sm font-bold">
                             Nip
@@ -1535,7 +1620,7 @@ export default function DataGuru() {
                           <input
                             type="pass"
                             name="pass"
-                            value={editData ? editData.pass : ""}
+                            value={editData ? editData.pas : ""}
                             onChange={handleEditChange}
                             className="w-full p-2 border rounded text-sm sm:text-base mb-2"
                             placeholder="pass..."
