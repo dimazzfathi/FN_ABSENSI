@@ -33,7 +33,7 @@ export const addKelas = async (kelasData: { id_kelas: string, id_admin: string, 
   };
 
 // Fungsi untuk mengedit Kelas baru
-export const updateKelas = async (id: number, updatedData: Partial<Kelas>): Promise<Kelas> => {
+export const updateKelas = async (id: string, updatedData: Partial<Kelas>): Promise<Kelas> => {
   try {
     console.log(`Updating data at: ${baseUrl}/kelas/edit-kelas/${id}`);
     console.log('Data to be updated:', updatedData);
@@ -45,7 +45,7 @@ export const updateKelas = async (id: number, updatedData: Partial<Kelas>): Prom
   }
 };
 
-export const deleteKelas = async (id: number): Promise<void> => {
+export const deleteKelas = async (id: string): Promise<void> => {
   try {
     await axios.delete(`${baseUrl}/kelas/hapus-kelas/${id}`);
     console.log('Kelas berhasil dihapus');

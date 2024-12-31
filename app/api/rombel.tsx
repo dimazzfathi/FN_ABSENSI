@@ -4,7 +4,7 @@ const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export type Rombel = {
     id_rombel: string;
-    id_admin: number;
+    id_admin: string;
     nama_rombel: string; // Anda bisa menambahkan properti lain sesuai kebutuhan
   };
   
@@ -33,7 +33,7 @@ export const addRombel = async (rombelData: Rombel) => {
   };
 
 // Fungsi untuk mengedit rombel
-export const updateRombel = async (id: number, updatedData: Partial<Rombel>): Promise<Rombel> => {
+export const updateRombel = async (id: string, updatedData: Partial<Rombel>): Promise<Rombel> => {
   try {
     console.log(`Updating data at: ${baseUrl}/rombel/edit-rombel/${id}`);
     console.log('Data to be updated:', updatedData);
@@ -46,7 +46,7 @@ export const updateRombel = async (id: number, updatedData: Partial<Rombel>): Pr
 };
 
 // Fungsi untuk menghapus rombel
-export const deleteRombel = async (id: number): Promise<void> => {
+export const deleteRombel = async (id: string): Promise<void> => {
   try {
     await axios.delete(`${baseUrl}/rombel/hapus-rombel/${id}`);
     console.log('Rombel berhasil dihapus');

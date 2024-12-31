@@ -1,6 +1,8 @@
 import React from 'react';
-
-const Tbpas = ({ confirmedPassword }) => {
+interface TbpasProps {
+  confirmedPassword: string; // Mendefinisikan tipe confirmedPassword sebagai string
+}
+const Tbpas: React.FC<TbpasProps> = ({ confirmedPassword }) => {
   return (
     <div>
       {confirmedPassword && (

@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import Pw from "./pass";
+import axios from "axios";
 import bcrypt from "bcryptjs"; // Pastikan bcryptjs sudah terinstal
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { toast, ToastContainer } from "react-toastify";
@@ -16,17 +17,26 @@ import DataTable from "../../components/dataTabel";
 import useUserInfo from "@/app/components/useUserInfo";
 import Swal from "sweetalert2";
 
+interface Kelas {
+  id: number;
+  nama: string;
+  deskripsi?: string;
+}
+
+
+
 export default function DataSiswa() {
+  // const bcrypt = require("bcryptjs");
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [fotoPreview, setFotoPreview] = useState<string | null>(null);
   const [itemsPerPage, setItemsPerPage] = useState(5); // Default value is 5
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
-  const [editData, setEditData] = useState<Kelas | null>(null);
-  const [openDropdownId, setOpenDropdownId] = useState<number | null>(null); // Menyimpan ID baris yang dropdown-nya terbuka
+  const [editData, setEditData] = useState<Admin | null>(null);
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);  // Menyesuaikan tipe state menjadi string
   const [isAdminsValid, setIsAdminsValid] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false); // State untuk mengontrol modal
-  const [selectedRow, setSelectedRow] = useState(null);
+  const [selectedRow, setSelectedRow] = useState<Admin | null>(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const togglePasswordVisibility = () => {
     setPasswordVisible((prev) => !prev); // Toggle state
@@ -48,16 +58,15 @@ export default function DataSiswa() {
 
   useEffect(() => {
     const loadAdmins = async () => {
-      const response = await fetchAdmins();
+      const response = await fetchAdmins(); // response sekarang sudah berupa array Admin[]
       console.log("API response:", response); // Debugging tambahan
-      const data = response.data;
-      setAdmins(data);
+      setAdmins(response); // Set langsung ke admins karena response sudah berupa Admin[]
     };
     loadAdmins();
   }, []);
-
-  const adminColumns = [
-    { header: "ID", accessor: "id_admin" as keyof Admin },
+  
+  const adminColumns = [] = [
+    { header: "Id_admin", accessor: "id_admin" as keyof Admin },
     { header: "Nama", accessor: "nama_admin" as keyof Admin },
     { header: "Alamat", accessor: "alamat" as keyof Admin },
     { header: "Jk", accessor: "jenis_kelamin" as keyof Admin },
@@ -108,7 +117,8 @@ export default function DataSiswa() {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [password, setPassword] = useState("");
   const [isDetailPopupOpen, setIsDetailPopupOpen] = useState(false); // Kontrol pop-up detail
-  const [matchedAdmin, setMatchedAdmin] = useState(null); // Simpan admin yang cocok
+  const [matchedAdmin, setMatchedAdmin] = useState<Admin | null>(null);// Simpan admin yang cocok
+ 
   const handleDetailClick = (row: Admin) => {
     setIsPopupOpen(true); // Buka pop-up
     setOpenDropdownId(null); // Tutup dropdown setelah melihat detail
@@ -121,7 +131,8 @@ export default function DataSiswa() {
 
     // Loop untuk mencari admin dengan password yang sesuai
     for (const admin of admins) {
-      const isMatch = await bcrypt.compare(enteredPassword, admin.pass);
+      
+      const isMatch = await bcrypt.compare(enteredPassword, admin.pass ?? "");
       if (isMatch) {
         foundAdmin = admin;
         break; // Hentikan pencarian jika ditemukan
@@ -207,7 +218,7 @@ export default function DataSiswa() {
       } else {
         toast.success("Admin berhasil ditambahkan!");
         // Menambahkan admin yang baru ke dalam state admins agar langsung muncul di tabel
-        setAdmins((prevAdmins) => [...prevAdmins, response.data]);
+        setAdmins((prevAdmins) => [...prevAdmins, response]);
 
         // Reset form setelah berhasil
         setFormData({
@@ -251,11 +262,21 @@ export default function DataSiswa() {
     setIsModalOpen(true); // Buka modal saat tombol edit diklik
   };
   // Handle perubahan input pada form edit
-  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEditData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const fieldName = e.target.name as keyof Admin; // Pastikan fieldName valid
+    setEditData((prev) => {
+      if (!prev) return null; // Jika prev null, tidak melakukan apa-apa
+      return {
+        ...prev,
+        [fieldName]: e.target.value, // Perbarui properti dengan validasi tipe
+      };
+    });
   };
+  
+  
+  
   // Handle update data setelah form edit disubmit
-  const handleEditSubmit = async (e) => {
+  const handleEditSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (editData) {
       // Validasi sebelum mengupdate
@@ -294,11 +315,15 @@ export default function DataSiswa() {
     }
   };
 
-  const handleDeleteClickk = (row) => {
+  const handleDeleteClickk = (row: Admin) => {
     setSelectedRow(row); // Simpan data yang ingin dihapus
     setIsConfirmOpen(true); // Buka modal
   };
   const handleConfirmDelete = async () => {
+    if (!selectedRow) {
+      console.error("Tidak ada baris yang dipilih untuk dihapus");
+      return;
+    }
     try {
       // Panggil fungsi delete Admin untuk menghapus di backend
       await deleteAdmins(selectedRow.id_admin);
@@ -323,7 +348,7 @@ export default function DataSiswa() {
   };
 
   //tombol untuk filter, pindah halaman, search dan reset
-  const handleItemsPerPageChange = (e) => {
+  const handleItemsPerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setItemsPerPage(Number(e.target.value));
     setCurrentPage(1); //  Reset ke halaman pertama saat jumlah item per halaman berubah
   };
@@ -349,7 +374,7 @@ export default function DataSiswa() {
   ); // Data yang akan ditampilkan
   const totalPages = Math.ceil(totalData / itemsPerPage); // Total halaman
 
-  const handlePageChange = (newPage) => {
+  const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
   };
 
@@ -402,7 +427,7 @@ export default function DataSiswa() {
               onSubmit={handleSubmit}
               className="bg-white rounded-lg shadow-md p-4 lg:p-6 border"
             >
-              <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold">
+              <h2 className="text-sm mb-2 sm:text-sm pt-3 font-bold">
                 {" "}
                 Nama Admin
               </h2>
@@ -414,7 +439,7 @@ export default function DataSiswa() {
                 placeholder="Nama Admin..."
                 className="w-full p-2 border rounded text-sm sm:text-base mb-2"
               />
-              <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold">
+              <h2 className="text-sm mb-2 sm:text-sm pt-3 font-bold">
                 {" "}
                 Alamat
               </h2>
@@ -426,7 +451,7 @@ export default function DataSiswa() {
                 placeholder="Alamat..."
                 className="w-full p-2 border rounded text-sm sm:text-base mb-2"
               />
-              <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold">
+              <h2 className="text-sm mb-2 sm:text-sm pt-3 font-bold">
                 {" "}
                 Jenis Kelamin
               </h2>
@@ -440,7 +465,7 @@ export default function DataSiswa() {
                 <option value="Laki-laki">Laki-laki</option>
                 <option value="Perempuan">Perempuan</option>
               </select>
-              <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold">
+              <h2 className="text-sm mb-2 sm:text-sm pt-3 font-bold">
                 {" "}
                 Nomor Telepon
               </h2>
@@ -452,7 +477,7 @@ export default function DataSiswa() {
                 placeholder="No Telepon..."
                 className="w-full p-2 border rounded text-sm sm:text-base mb-2"
               />
-              <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold">
+              <h2 className="text-sm mb-2 sm:text-sm pt-3 font-bold">
                 {" "}
                 Email
               </h2>
@@ -464,7 +489,7 @@ export default function DataSiswa() {
                 placeholder="Email..."
                 className="w-full p-2 border rounded text-sm sm:text-base mb-2"
               />
-              <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold">
+              <h2 className="text-sm mb-2 sm:text-sm pt-3 font-bold">
                 {" "}
                 Username
               </h2>
@@ -476,7 +501,7 @@ export default function DataSiswa() {
                 placeholder="Username..."
                 className="w-full p-2 border rounded text-sm sm:text-base mb-2"
               />
-              <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold">
+              <h2 className="text-sm mb-2 sm:text-sm pt-3 font-bold">
                 {" "}
                 Password
               </h2>
@@ -496,7 +521,7 @@ export default function DataSiswa() {
                   {passwordVisible ? <FaEye /> : <FaEyeSlash />}
                 </span>
               </div>
-              <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold">
+              <h2 className="text-sm mb-2 sm:text-sm pt-3 font-bold">
                 {" "}
                 Foto
               </h2>
@@ -607,7 +632,7 @@ export default function DataSiswa() {
                 </div>
                 <div className="overflow-x-auto">
                   <DataTable
-                    columns={adminColumns}
+                    columns={adminColumns as { header: string; accessor: keyof Admin; Cell?: ({ row }: { row: Admin }) => JSX.Element; }[]}
                     data={paginatedData}
                     // onEdit={handleEdit} // Fungsi ini dipassing ke komponen DataTable
                     // onDelete={handleDelete}
@@ -803,7 +828,7 @@ export default function DataSiswa() {
                   )}
                 </div>
                 <div className="mt-4 flex justify-between items-center">
-                  <div className="text-sm text-gray-700 text-white">
+                  <div className="text-sm text-white">
                     Halaman {currentPage} dari {totalPages}
                   </div>
                   <div className="flex m-4 space-x-2">

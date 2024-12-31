@@ -8,8 +8,13 @@ import {
   UserGroupIcon,
   IdentificationIcon,
 } from "@heroicons/react/24/outline";
+import DataTable from "../components/dataTabel";
 
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+type DataItem = {
+  total_siswa: number;
+};
 
 type Admin = {
   id_admin: number;
@@ -23,6 +28,35 @@ const AdminPage = () => {
   const router = useRouter();
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const [totalSiswa, setTotalSiswa] = useState([]); // Menggunakan angka untuk total siswa// Inisialisasi dengan array kosong
+
+  useEffect(() => {
+    // Fungsi untuk mengambil data dari API
+    const fetchData = async () => {
+      try {
+        const response = await fetch(`${baseUrl}/total-kelas-siswa`);
+        const result = await response.json();
+
+        // Memeriksa apakah response berhasil
+        if (result.Status === 200) {
+          // Menghitung total siswa dari response.data
+          const total = result.data.reduce((sum: number, item: DataItem) => sum + item.total_siswa, 0);
+
+          // Menyimpan total siswa ke dalam state
+          setTotalSiswa(total);
+
+          // Menyimpan data kelas ke dalam state
+          setKelas(result.data);
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+
+    fetchData();
+  }, []); // Empty dependency array untuk menjalankan fetch hanya sekali saat komponen pertama kali dimuat
+
   // const router = useRouter();
 
   useEffect(() => {
@@ -34,6 +68,62 @@ const AdminPage = () => {
     }
     axios.defaults.headers.common["Authorization"] = token;
   }, [router]);
+
+  const [siswaData, setSiswaData] = useState([]);
+  const fetchNamaKelas = async () => {
+    try {
+      const response = await axios.get(
+        `${baseUrl}/joinNonMaster/nama-siswa-kelas`
+      );
+      setSiswaData(response.data.data); // Menyimpan data ke state kelas
+      console.log("total", response.data);
+    } catch (error) {
+      console.error("Fetch error:", error); // Menangani kesalahan
+    }
+  };
+  useEffect(() => {
+    fetchNamaKelas(); // Panggil fungsi fetch saat komponen di-mount
+  }, []);
+
+  const [kelas, setKelas] = useState([]);
+  const [totalSemuaSiswa, setTotalSemuaSiswa] = useState(0);
+  const [totalSemuaRombel, setTotalSemuaRombel] = useState(0);
+  const [totalSemuaGuru, setTotalSemuaGuru] = useState(0);
+  const fetchKelasSiswaTotal = async () => {
+    try {
+      const response = await axios.get(`${baseUrl}/joinNonMaster/total-kelas-siswa`);
+      
+      // Menyimpan data ke state
+      setKelas(response.data.data); 
+      setTotalSemuaSiswa(response.data.totalSemuaSiswa); // Simpan totalSemuaSiswa
+      setTotalSemuaRombel(response.data.totalSemuaRombel);
+      setTotalSemuaGuru(response.data.totalSemuaGuru);
+  
+      console.log("total siswa", response.data); // Debugging
+    } catch (error) {
+      console.error("Fetch error:", error); // Menangani kesalahan
+    }
+  };
+  
+  useEffect(() => {
+    fetchKelasSiswaTotal(); // Panggil fungsi fetch saat komponen di-mount
+  }, []);
+  
+  //   const headers = Object.keys(siswaData[0]);
+  
+
+  const tableColumns = [
+    { header: "Kelas", accessor: "kelas" },
+    { header: "Jumlah Siswa", accessor: "total_siswa" },
+    { header: "H", accessor: "total_hadir_perkelas" },
+    { header: "S", accessor: "s" },
+    { header: "I", accessor: "i" },
+    { header: "A", accessor: "a" },
+    { header: "T", accessor: "t" },
+    { header: "Walas", accessor: "walas" },
+    
+  ];
+
   return (
     <div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6 xl:grid-cols-3 2xl:gap-7.5 px-6">
@@ -43,10 +133,11 @@ const AdminPage = () => {
           </div>
           <div className="mt-4 flex items-end justify-between">
             <div>
-              <span className="text-sm font-medium">Total Siswa</span>
+            <h1>Total Siswa: </h1>
             </div>
-            <span className="flex items-center gap-1 text-sm font-medium text-meta-3 undefined ">
-              0
+
+            <span className="flex items-center gap-1 text-sm font-medium text-meta-3">
+               {totalSemuaSiswa}
             </span>
           </div>
         </div>
@@ -58,8 +149,8 @@ const AdminPage = () => {
             <div>
               <span className="text-sm font-medium">Total Rombel</span>
             </div>
-            <span className="flex items-center gap-1 text-sm font-medium text-meta-3 undefined ">
-              1
+            <span className="flex items-center gap-1 text-sm font-medium text-meta-3">
+               {totalSemuaRombel}
             </span>
           </div>
         </div>
@@ -72,7 +163,7 @@ const AdminPage = () => {
               <span className="text-sm font-medium">Total Staff</span>
             </div>
             <span className="flex items-center gap-1 text-sm font-medium text-meta-3 undefined ">
-              2
+              {totalSemuaGuru}
             </span>
           </div>
         </div>
@@ -81,53 +172,12 @@ const AdminPage = () => {
         {/* Column 1: Input */}
         <div className="w-full lg:w-1/2 p-4 lg:p-6">
           <div className="bg-white rounded-lg shadow-md p-4 lg:p-6 border overflow-x-auto">
-            <table className="min-w-full bg-white ">
-              <thead>
-                <tr>
-                  <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">
-                    NO
-                  </th>
-                  <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">
-                    KELAS
-                  </th>
-                  <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">
-                    JUMLAH
-                  </th>
-                  <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">
-                    H
-                  </th>
-                  <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">
-                    S
-                  </th>
-                  <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">
-                    I
-                  </th>
-                  <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">
-                    A
-                  </th>
-                  <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">
-                    T
-                  </th>
-                  <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">
-                    WALAS
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td className="px-6 py-4 border-b border-gray-300 text-sm"></td>
-                  <td className="px-6 py-4 border-b border-gray-300 text-sm"></td>
-                  <td className="px-6 py-4 border-b border-gray-300 text-sm"></td>
-                  <td className="px-6 py-4 border-b border-gray-300 text-sm"></td>
-                  <td className="px-6 py-4 border-b border-gray-300 text-sm"></td>
-                  <td className="px-6 py-4 border-b border-gray-300 text-sm"></td>
-                  <td className="px-6 py-4 border-b border-gray-300 text-sm"></td>
-                  <td className="px-6 py-4 border-b border-gray-300 text-sm"></td>
-                  <td className="px-6 py-4 border-b border-gray-300 text-sm"></td>
-                </tr>
-                {/* Tambahkan baris lain sesuai kebutuhan */}
-              </tbody>
-            </table>
+            <div className="bg-slate-600 p-2 rounded-lg h-full">
+              <div className="overflow-x-auto h-full">
+                <DataTable columns={tableColumns} data={kelas} />
+              </div>
+            </div>
+            
           </div>
         </div>
         {/* Column 2: Table */}

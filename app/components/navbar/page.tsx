@@ -17,7 +17,6 @@ import {
   UserCircleIcon,
   ChevronUpIcon,
   ChevronDownIcon,
-  LogoutIcon,
 } from "@heroicons/react/24/outline";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSignOutAlt } from "@fortawesome/free-solid-svg-icons";
@@ -25,13 +24,31 @@ import useUserInfo from "../useUserInfo"; // Pastikan path file sesuai
 
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-const Navbar = ({
-  toggleSidebar,
-  isOpen,
-}: {
-  toggleSidebar: () => void;
-  isOpen: false;
-}) => {
+
+interface PageProps {
+  [key: string]: any;  // Longgarkan indeks tipe untuk menerima properti apa saja
+} 
+interface NavbarBaseProps {
+  
+}
+
+interface NavbarWithSidebarProps extends NavbarBaseProps {
+  // toggleSidebar: () => void; // Fungsi toggleSidebar hanya ada pada tipe ini
+}
+
+type NavbarProps = NavbarBaseProps | NavbarWithSidebarProps;
+
+
+
+const Navbar: React.FC<NavbarProps> = (props) => {
+  const [isOpen, setIsOpen] = useState(false);
+    // const toggleSidebar = () => {
+    //   setIsOpen((prev) => !prev); // Toggle nilai isOpen antara true/false
+    // };
+    const toggleSidebar = () => {
+      setIsOpen(!isOpen);
+    };
+
   const [isToggleSidebar, setToggleSidebar] = useState(false);
   // const [isOpen, setIsOpen] = useState(false);
   const [isClick, setisClick] = useState(false);
@@ -83,7 +100,7 @@ const Navbar = ({
     setGuruOpen(false);
   };
 
-  const handleMenuClick = (menu) => {
+  const handleMenuClick = (menu: string) => {
     setActiveMenu(menu);
     // Remove or modify any logic that changes `isOpen` to false
     // Example:
@@ -114,10 +131,33 @@ const Navbar = ({
   };
 
   const { namaAdmin, status } = useUserInfo();
+  const [profileImage, setProfileImage] = useState("/default-image.jpg"); // Gambar default
 
+  useEffect(() => {
+    // Ambil gambar dari Local Storage
+    const savedImage = localStorage.getItem("profileImage");
+    if (savedImage) {
+      setProfileImage(savedImage);
+    }
+
+    // Tambahkan event listener untuk sinkronisasi real-time
+    const handleStorageChange = () => {
+      const updatedImage = localStorage.getItem("profileImage");
+      if (updatedImage) {
+        setProfileImage(updatedImage);
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    // Hapus event listener saat komponen di-unmount
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
   return (
     <>
-      <nav className="bg-teal-500 z-30 relative sticky top-0 shadow-lg">
+      <nav className="bg-teal-500 z-30 sticky top-0 shadow-lg">
         <div className="max-w mx-auto px-4 sm:px-6 lg:px-8 ">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
@@ -158,10 +198,19 @@ const Navbar = ({
                   <span className="block italic text-sm">{status}</span>
                   {/* <span className='block text-xs text-dark'>Admin</span> */}
                 </span>
-                <span className="w-10 h-10 rounded-full">
+                {/* <span className="w-10 h-10 rounded-full">
                   <img
                     src="/image/logo 2.jpg"
                     alt=""
+                    width={112}
+                    height={112}
+                    className="bg-black w-auto h-auto rounded-full"
+                  />
+                </span> */}
+                <span className="w-10 h-10 rounded-full">
+                  <img
+                    src={profileImage}
+                    alt="Profile"
                     width={112}
                     height={112}
                     className="bg-black w-auto h-auto rounded-full"
@@ -235,17 +284,16 @@ const Navbar = ({
               >
                 <div
                   onClick={() => handleMenuClick("master_data")}
-                  className={`w-full text-left px-4 py-2 hover:bg-teal-200 rounded focus:outline-none ${
-                    activeMenu === "master_data" ? "bg-teal-500" : ""
+                  className={`w-full text-left py-2 hover:bg-teal-200 flex items-center focus:outline-none ${
+                    activeMenu === "master_data" ? "bg-teal-400" : ""
                   }`}
-                  className="hover:bg-teal-200 rounded flex items-center cursor-pointer"
                 >
                   <ChartBarIcon className="h-6 w-6 mr-2" />
-                  <p className="pe-7">Master Data</p>
+                  <p className="">Master Data</p>
                   {isMasterDataOpen ? (
-                    <ChevronUpIcon className="h-5 w-5" />
+                    <ChevronUpIcon className="h-5 w-5 " />
                   ) : (
-                    <ChevronDownIcon className="h-5 w-5" />
+                    <ChevronDownIcon className="h-5 w-5 " />
                   )}
                 </div>
               </button>
@@ -367,6 +415,13 @@ const Navbar = ({
                                 </p>
                               </Link>
                             </li>
+                            <li>
+                              <Link href="/master_data/guru/mengampu">
+                                <p className="block px-4 py-2 hover:bg-teal-200 rounded opacity-70">
+                                  Mengampu
+                                </p>
+                              </Link>
+                            </li>
                           </ul>
                         )}
                       </div>
@@ -382,13 +437,12 @@ const Navbar = ({
               >
                 <div
                   onClick={() => handleMenuClick("master_data")}
-                  className={`w-full text-left flex items-center px-4 py-2 hover:bg-teal-200 rounded focus:outline-none ${
+                  className={`w-full text-left py-2 hover:bg-teal-200 flex items-center focus:outline-none ${
                     activeMenu === "master_data" ? "bg-teal-500" : ""
                   }`}
-                  className="hover:bg-teal-200 rounded flex items-center cursor-pointer"
                 >
                   <UserGroupIcon className="h-6 w-6 mr-2" />
-                  <p className="pe-4">Administrator</p>
+                  <p className="">Administrator</p>
                   {isAdminOpen ? (
                     <ChevronUpIcon className="h-5 w-5" />
                   ) : (

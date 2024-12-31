@@ -1,6 +1,5 @@
 "use client";
 import Guru from './hal';
-import Tes from './tes';
 import React, { useState } from 'react'
 import Navbar from "../../../components/navbar/page"
 import Footer from "../../../components/footer/page"
@@ -16,7 +15,7 @@ import Footer from "../../../components/footer/page"
   return (
     <>
     <div>
-    <Navbar isOpen={isOpen} toggleSidebar={toggleSidebar} />
+    <Navbar/>
     
     {/* Main Content */}
     <main className={`px-30 transition-transform relative duration-300 z-10 ${

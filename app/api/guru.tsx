@@ -8,23 +8,34 @@ export type Guru = {
   nip: string;
   nama_guru: string;
   jenis_kelamin: string;
-  id_mapel: string;
   email: string;
-  pass: string;
-  foto: string;
+  pas: string;
+  foto: string | File | null;
   walas: string;
+  staf: string;
   barcode: string;
-  id_kelas: string[];
-  rombel: string;
   no_telp: string;
   // Tambahkan properti lain yang sesuai dengan struktur data di tabel 'admin'
 };
+
+interface AddGuruResult {
+  nip: string;
+  status: string;
+  message: string;
+}
+
+interface AddGuruResponse {
+  Status: number;
+  success: boolean;
+  results: AddGuruResult[];
+}
+
 
 export const fetchGuru = async (): Promise<Guru[]> => {
     try {
       const res = await axios.get(`${baseUrl}/guru/all-guru`);
       
-      console.log(res)
+      console.log("data guru",res)
       return res.data as Guru[];
     } catch (error) {
       console.error('Error fetching guru:', error);
@@ -33,20 +44,21 @@ export const fetchGuru = async (): Promise<Guru[]> => {
   };
 
 // Fungsi untuk menambah guru
-export const addGuru = async (guruData: Guru): Promise<Guru> => {
+export const addGuru = async (guruData: Guru[]): Promise<AddGuruResponse> => {
     try {
       const response = await axios.post(`${baseUrl}/guru/add-guru`, guruData);
       console.log(response);
-      return response.data as Guru;
+      return response.data as AddGuruResponse;
     } catch (error) {
-      console.error('Error saat menambah guru:', error);
+      const axiosError = error as { response?: { data: string }; message?: string };
+      console.error('Error saat menambah guru:', axiosError.response?.data || axiosError.message);
       throw error;
     }
   };
 
-export const updateGuru = async (id: string, nip: string, guruData: Guru): Promise<Guru> => {
+export const updateGuru = async (guruData: Guru): Promise<Guru> => {
 try {
-    const res = await axios.put(`${baseUrl}/guru/edit-guru/${id}/${nip}`, guruData);
+    const res = await axios.put(`${baseUrl}/guru/edit-guru`, guruData);
       
     console.log(res);
     return res.data as Guru; // Mengembalikan data Guru yang telah diperbarui

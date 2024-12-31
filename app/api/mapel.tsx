@@ -3,27 +3,32 @@ import axios from 'axios';
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export type Mapel = {
-  id_mapel: string;
-  id_admin: number;
+  id_mapel: string | null;
+  id_admin: number | string;
   nama_mapel: string; // Anda bisa menambahkan properti lain sesuai kebutuhan
+};
+export type MapelResponse = {
+  data: Mapel; // Menambahkan tipe data respons
+  exists: boolean;
 };
 
 // Fungsi untuk mengambil daftar mapel
-export const fetchMapel = async (): Promise<Mapel[]> => {
+export const fetchMapel = async (): Promise<{ data: Mapel[] }> => {
   try {
     const response = await axios.get(`${baseUrl}/mapel/all-mapel`);
-    return response.data as Mapel[];
+    return { data: response.data }; // Bungkus data dalam objek dengan properti 'data'
   } catch (error) {
     console.error('Error fetching mapel:', error);
     throw error;
   }
 };
 
+
 // Fungsi untuk menambahkan mapel
-export const addMapel = async (mapel: Omit<Mapel, 'id_mapel'>): Promise<Mapel> => {
+export const addMapel = async (mapel: Omit<Mapel, 'id_mapel'>): Promise<MapelResponse> => {
   try {
     const response = await axios.post(`${baseUrl}/mapel/add-mapel`, mapel);
-    return response.data as Mapel; // Mengembalikan data mapel yang baru ditambahkan
+    return response.data; // Mengembalikan data mapel yang baru ditambahkan
   } catch (error) {
     console.error('Error adding mapel:', error);
     throw error;

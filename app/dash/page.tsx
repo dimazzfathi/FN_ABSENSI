@@ -15,7 +15,7 @@ import Footer from "../components/footer/page"
   return (
     <>
     <div>
-    <Navbar isOpen={isOpen} toggleSidebar={toggleSidebar} />
+    <Navbar  />
     
     {/* Main Content */}
     <main className={`px-30 transition-transform relative duration-300 z-10 ${

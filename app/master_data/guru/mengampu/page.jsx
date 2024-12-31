@@ -1,8 +1,8 @@
 "use client";
+import Mengampu from './mengampu';
 import React, { useState } from 'react'
-import TableTahunAjaran from './TableTahunAjaran';
-import Navbar from "../../components/navbar/page"
-import Footer from "../../components/footer/page"
+import Navbar from "../../../components/navbar/page"
+import Footer from "../../../components/footer/page"
 
   const Page = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -23,7 +23,8 @@ import Footer from "../../components/footer/page"
   }`}>
       <div className="flex-1 p-6">
           <div className="min-h-screen">
-            <TableTahunAjaran />
+            <Mengampu />
+            {/* <Tes /> */}
           </div>
       </div>
     </main>

@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import axios from "axios";
+import axios, { AxiosError, AxiosResponse } from "axios";
 import Cookies from "js-cookie"; // Import js-cookie
 import {
   addMapel,
@@ -17,16 +17,20 @@ import useUserInfo from "@/app/components/useUserInfo";
 import Swal from "sweetalert2";
 
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-
+interface MapelRow {
+  id_mapel?: string;
+  id_admin?: string;
+  nama_mapel?: string;
+}
 export default function _Mapel() {
   const [editData, setEditData] = useState<Mapel | null>(null);
-  const [openDropdownId, setOpenDropdownId] = useState<number | null>(null); // Menyimpan ID baris yang dropdown-nya terbuka
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null); // Menyimpan ID baris yang dropdown-nya terbuka
   const [isModalOpen, setIsModalOpen] = useState(false); // State untuk mengontrol modal
   const [isMapelValid, setIsMapelValid] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const fileInputRef = useRef(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [currentDataa, setCurrentDataa] = useState([]);
-  const [selectedRow, setSelectedRow] = useState(null);
+  const [selectedRow, setSelectedRow] = useState<Mapel | null>(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [mapels, setMapels] = useState([]); // Untuk menyimpan daftar mapel
   const { idAdmin } = useUserInfo();
@@ -36,13 +40,17 @@ export default function _Mapel() {
     // Data yang akan diisikan ke dalam file Excel untuk Mapel
   const data = [
     {
-      mapel: ""
+      id_mapel:"",
+      id_admin:"",
+      nama_mapel: "",
     },
   ];
 
   // Definisikan header file Excel
   const headers = [
-    "mapel"
+    'id_mapel',
+    'id_admin',
+    "nama_mapel",
   ];
 
   // Membuat worksheet
@@ -76,28 +84,47 @@ export default function _Mapel() {
     }
   };
 
-  const handleFileChange = (event) => {
-    const file = event.target.files[0];
+  const getAdmins = async () => {
+    try {
+      const response = await fetch(`${baseUrl}/admin/all-Admin`); // Ganti dengan endpoint API yang benar
+      const data = await response.json();
+      console.log('Data Admin:', data.data);
+      setAdmins(data.data); // Menyimpan data admin ke state
+    } catch (error) {
+      console.error('Error fetching admin data:', error);
+    }
+  };
+
+  // Panggil getAdmins saat pertama kali komponen dirender
+  useEffect(() => {
+    getAdmins();
+  }, []);
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       
       reader.onload = async (e) => {
+        if (!e.target) {
+          console.error("e.target is null");
+          return;
+        }
         try {
-          const data = new Uint8Array(e.target.result);
+          const data = new Uint8Array(e.target.result as ArrayBuffer); // Pastikan tipe adalah ArrayBuffer
           const workbook = XLSX.read(data, { type: 'array' });
           const sheetName = workbook.SheetNames[0];
           const sheet = workbook.Sheets[sheetName];
-          const jsonData = XLSX.utils.sheet_to_json(sheet).map((row) => ({
+          const jsonData = (XLSX.utils.sheet_to_json(sheet) as MapelRow[]).map((row) => ({
             id_mapel: row.id_mapel || 'default_value',
-            id_admin: row.id_admin || 'default_value',
+            id_admin: Number(row.id_admin) || 0,  // Mengonversi id_admin menjadi number
             nama_mapel: row.nama_mapel || 'default_value',
           }));
-
           console.log('Data dari Excel:', jsonData); // Log data dari Excel
           setMapel(jsonData); // Simpan data ke state
 
           // Lakukan pengiriman data ke server setelah file diproses
-          const response = await fetch('http://localhost:3005/mapel/add-mapel', {
+          const response = await fetch(`${baseUrl}/mapel/add-mapel`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -121,16 +148,21 @@ export default function _Mapel() {
     }
   };
   const [mapel, setMapel] = useState<Mapel[]>([]);
-  const [mapelData, setMapelData] = useState({
+  const [mapelData, setMapelData] = useState<Mapel>({
+    id_mapel: "",
     id_admin: "",
     nama_mapel: "",
   });
+  const fetchMapel = async (): Promise<AxiosResponse<{ data: Mapel[] }>> => {
+    const response = await axios.get(`${baseUrl}/mapel/all-mapel`);
+    return response; // respons ini memiliki properti data
+  };
+  
   useEffect(() => {
     const loadMapel = async () => {
       const response = await fetchMapel();
-      console.log("API Mapel:", response); // Debugging tambahan
-      const data = response.data;
-      setMapel(data);
+      const data = response.data; // Mengakses data di dalam response
+      setMapel(data.data); // Menyimpan data yang diperoleh ke dalam state
     };
     loadMapel();
   }, []);
@@ -145,7 +177,11 @@ export default function _Mapel() {
           <div>
             <button
               className="px-4 py-2 rounded"
-              onClick={() => handleToggleDropdown(row.id_mapel)}
+              onClick={() => {
+                if (row.id_mapel) {  // Pastikan id_mapel tidak null atau undefined
+                  handleToggleDropdown(row.id_mapel);
+                }
+              }}
             >
               &#8942; {/* Simbol menu */}
             </button>
@@ -199,7 +235,7 @@ export default function _Mapel() {
   }, [idAdmin]);
 
   const handleDetailClick = (row: Mapel) => {
-    const admin = admins.find(admin => admin.id_admin === row.id_admin); // Cari admin berdasarkan id_admin
+    const admin = admins.find(admin => admin.id_admin === String(row.id_admin)); // Ubah row.id_admin menjadi number
     console.log("id admin", admin)
     const namaAdmin = admin ? admin.nama_admin : "Tidak ada"; // Jika ditemukan, ambil nama_admin
     console.log("iki admin", namaAdmin)
@@ -221,14 +257,14 @@ export default function _Mapel() {
   const handleToggleDropdown = (id_mapel: string) => {
     setOpenDropdownId(openDropdownId === id_mapel ? null : id_mapel); // Toggle dropdown
   };
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setMapelData({
       ...mapelData,
       [name]: value,
     });
   };
-  const handleMapelSubmit = async (e) => {
+  const handleMapelSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     // Validasi: Pastikan field tidak kosong
@@ -240,12 +276,13 @@ export default function _Mapel() {
     try {
       const response = await addMapel(mapelData);
       console.log("API response:", response);
-      if (response?.data?.exists) {
+      if (response.exists) {
         toast.error("Mapel sudah ada!");
       } else {
         toast.success("Mapel berhasil ditambahkan!");
         setMapel((prev) => [...prev, response.data]);
         setMapelData({
+          id_mapel:"",
           id_admin: "",
           nama_mapel: "",
         });
@@ -255,20 +292,21 @@ export default function _Mapel() {
       toast.error("Terjadi kesalahan saat menambah mapel");
     }
   };
-  const handleDeleteClick = (row) => {
+  const handleDeleteClick = (row: Mapel) => {
     setSelectedRow(row); // Simpan data yang ingin dihapus
     setIsConfirmOpen(true); // Buka modal
   };
   const handleConfirmDelete = async () => {
+    
     try {
       // Panggil fungsi delete Mapel untuk menghapus di backend
-      await deleteMapel(selectedRow.id_mapel);
+      await deleteMapel(selectedRow!.id_mapel!);
 
       // Setelah sukses, update state di frontend
       setMapel((prevMapel) =>
-        prevMapel.filter((mapel) => mapel.id_mapel !== selectedRow.id_mapel)
+        prevMapel.filter((mapel) => mapel.id_mapel !== selectedRow!.id_mapel)
       );
-      toast.success(`Mapel ${selectedRow.nama_mapel} berhasil dihapus`);
+      toast.success(`Mapel ${selectedRow!.nama_mapel} berhasil dihapus`);
       setIsConfirmOpen(false); // Tutup modal
       setSelectedRow(null); // Reset selectedRow
     } catch (error) {
@@ -281,21 +319,41 @@ export default function _Mapel() {
     setSelectedRow(null); // Reset selectedRow
   };
   // Fungsi untuk handle klik edit
-  const handleEditClick = (row: Kelas) => {
+  const handleEditClick = (row: Mapel) => {
     setEditData(row); // Set data yang dipilih ke form edit
     setIsModalOpen(true); // Buka modal saat tombol edit diklik
   };
   // Handle perubahan input pada form edit
   const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEditData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    setEditData((prev) => {
+      if (!prev) {
+        // Jika prev adalah null, buat objek baru yang sesuai dengan tipe Mapel
+        return {
+          id_mapel: "",
+          id_admin: "",
+          nama_mapel: "",
+          [e.target.name]: e.target.value,
+        };
+      }
+  
+      // Jika prev ada, perbarui properti yang diubah
+      return { ...prev, [e.target.name]: e.target.value };
+    });
   };
+  
   // Handle update data setelah form edit disubmit
-  const handleEditSubmit = async (e) => {
+  const handleEditSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (editData) {
-      // Validasi sebelum mengupdate
-      if (editData.nama_mapel.trim() === "") {
+      // Validasi nama mapel
+      if (!editData.nama_mapel || editData.nama_mapel.trim() === "") {
         setIsMapelValid(false);
+        return;
+      }
+  
+      // Pastikan id_mapel tidak null
+      if (!editData.id_mapel) {
+        toast.error("ID Mapel tidak valid");
         return;
       }
 
@@ -319,7 +377,7 @@ export default function _Mapel() {
 const [itemsPerPage, setItemsPerPage] = useState(5); // Default value is 5
 const [currentPage, setCurrentPage] = useState(1);
 
-const handleItemsPerPageChange = (e) => {
+const handleItemsPerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
   setItemsPerPage(Number(e.target.value));
   setCurrentPage(1); //  Reset ke halaman pertama saat jumlah item per halaman berubah
 };
@@ -331,16 +389,23 @@ const filteredData = mapel.filter((item) => {
   // item.id_admin.toLowerCase().includes(searchTerm.toLowerCase())
 });
 
+ // Fungsi untuk mengurutkan data berdasarkan nama secara alfabetis
+ const sortedData = [...filteredData].sort((a, b) => {
+  if (a.nama_mapel < b.nama_mapel) return -1; // Urutkan dari A ke Z
+  if (a.nama_mapel > b.nama_mapel) return 1;
+  return 0;
+});
+
 // Menghitung pagination
-const totalData = filteredData.length; // Total item setelah difilter
+const totalData = sortedData.length; // Total item setelah difilter
 const startIndex = (currentPage - 1) * itemsPerPage; // Indeks awal untuk pagination
-const paginatedData = filteredData.slice(
+const paginatedData = sortedData.slice(
   startIndex,
   startIndex + itemsPerPage
 ); // Data yang akan ditampilkan
 const totalPages = Math.ceil(totalData / itemsPerPage); // Total halaman
 
-const handlePageChange = (newPage) => {
+const handlePageChange = (newPage: number) => {
   setCurrentPage(newPage);
 };
 
@@ -507,7 +572,7 @@ const isResettable = searchTerm.length > 0; // Tombol reset aktif jika ada input
 
                 <div className="overflow-x-auto">
                   <DataTable
-                    columns={mapelColumns}
+                    columns={mapelColumns as { header: string; accessor: keyof Mapel; Cell?: ({ row }: { row: Mapel }) => JSX.Element; }[]}
                     data={paginatedData}
                     // onEdit={handleEdit}
                     // onDelete={handleDelete}
@@ -563,7 +628,7 @@ const isResettable = searchTerm.length > 0; // Tombol reset aktif jika ada input
                     )}
                 </div>
                 <div className="mt-4 flex justify-between items-center">
-                  <div className="text-sm text-gray-700 text-white">
+                  <div className="text-sm  text-white">
                     Halaman {currentPage} dari {totalPages}
                   </div>
                   <div className="flex overflow-hidden m-4 space-x-2">

@@ -1,8 +1,13 @@
 
 import React, { useState } from 'react';
-import Tbpas from './Tbpas';
+import Tbpas from './tbpas';
+interface PassProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: (password: string) => void;
+}
 
-const pass = ({ isOpen, onClose, onConfirm }) => {
+const pass: React.FC<PassProps> = ({ isOpen, onClose, onConfirm }) => {
     const [password, setPassword] = useState('');
     const [confirmedPassword, setConfirmedPassword] = useState('');
   
