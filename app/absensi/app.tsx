@@ -376,10 +376,8 @@ const Filters = () => {
             }
           }
         }
-  
         // Sortir opsi berdasarkan tanggal
         options.sort((a, b) => new Date(a.value) - new Date(b.value));
-  
         setMonthYearOptions(options);
       };
   
