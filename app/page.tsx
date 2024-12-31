@@ -11,18 +11,38 @@ import {
   fetchSiswa,
   deleteSiswa,
   updateSiswa,
-  Siswa,
+  // Siswa,
 } from "./api/siswa";
 import {
   addKelas,
   fetchKelas,
   deleteKelas,
   updateKelas,
-  Kelas,
+  // Kelas,
 } from "./api/kelas";
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 import dynamic from "next/dynamic";
 import { Noto_Serif_Georgian } from "next/font/google";
+type Item = {
+  id: string;
+  nama_siswa: string;
+  kelas: string;
+  name: string;
+};
+
+interface Sakit {
+  id: number;
+  name: string;
+}
+type Kelas = { i: number }; // Tipe data untuk item dalam kelas
+interface AbsensiItem {
+  id_siswa: string;
+  absensi: { [key: string]: string | undefined }; // Waktu bisa undefined jika tidak ada
+}
+interface Siswa {
+  id_siswa: string;
+  // Properti lain yang ada dalam data siswa, seperti nama atau umur, bisa ditambahkan di sini
+}
 
 const Page = () => {
   const [isDropdownVisible, setDropdownVisible] = useState(false);
@@ -31,7 +51,7 @@ const Page = () => {
     setDropdownVisible(!isDropdownVisible);
   };
 
-  const [siswaData, setSiswaData] = useState([]);
+  const [siswaData, setSiswaData] = useState<Item[]>([]);
   const fetchNamaKelas = async () => {
     try {
       const response = await axios.get(
@@ -47,7 +67,7 @@ const Page = () => {
     fetchNamaKelas(); // Panggil fungsi fetch saat komponen di-mount
   }, []);
 
-  const [kelas, setKelas] = useState([]);
+  const [kelas, setKelas] = useState<Kelas[]>([]);
   const fetchKelasSiswaTotal = async () => {
     try {
       const response = await axios.get(
@@ -77,22 +97,22 @@ const Page = () => {
   ];
 
   const [clickedRowIndex, setClickedRowIndex] = useState(null);
-  const tableRef = useRef(null);
-  const buttonRef = useRef(null); // Ref untuk tombol "Kirim"
-  const handleRowClick = (row, index) => {
+  const tableRef = useRef<HTMLTableElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null); // Ref untuk tombol "Kirim"
+  const handleRowClick = (row: any, index: any) => {
     // Set indeks baris yang diklik untuk mengubah latar belakang
     setClickedRowIndex(index);
     console.log("Baris diklik:", row);
   };
   // Menghapus highlight saat pengguna mengklik di luar tabel
   useEffect(() => {
-    const handleClickOutside = (event) => {
+    const handleClickOutside = (event: MouseEvent) => {
       // Memeriksa apakah klik terjadi di luar elemen tabel dan tombol "Kirim"
       if (
         tableRef.current &&
-        !tableRef.current.contains(event.target) &&
+        !tableRef.current.contains(event.target as Node) &&
         buttonRef.current &&
-        !buttonRef.current.contains(event.target)
+        !buttonRef.current.contains(event.target as Node)
       ) {
         setClickedRowIndex(null); // Reset indeks baris yang diklik
         console.log("Klik terdeteksi di luar tabel dan tombol Kirim");
@@ -110,7 +130,7 @@ const Page = () => {
   // State untuk kontrol popup Sakit
   const [isPopupVisibleSakit, setIsPopupVisibleSakit] = useState(false);
   // State untuk menyimpan data sakit yang dipilih
-  const [selectedSakit, setSelectedSakit] = useState([]);
+  const [selectedSakit, setSelectedSakit] = useState<Sakit[]>([]);
   const [tableData, setTableData] = useState([]);
 
   // // Data contoh untuk item Sakit
@@ -159,7 +179,9 @@ const Page = () => {
 
   //function untuk search
   const [searchTermSakit, setSearchTermSakit] = useState("");
-  const handleSearchSakitChange = (event) => {
+  const handleSearchSakitChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     setSearchTermSakit(event.target.value);
   };
 
@@ -180,7 +202,9 @@ const Page = () => {
   );
 
   // Fungsi untuk mengubah item per halaman
-  const handleSakitItemsPerPageChange = (e) => {
+  const handleSakitItemsPerPageChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     setSakitItemsPerPage(parseInt(e.target.value));
   };
 
@@ -190,36 +214,35 @@ const Page = () => {
   //   sakitCurrentPage * sakitItemsPerPage
   // );
 
+  const [id_siswa, setIdSiswa] = useState<string | null>(null);
   //Handle untuk ngirim sakit
   const handleSakitSubmit = async () => {
     try {
-        const data = {
-            id_siswa: id_siswa, // Ganti dengan state atau variabel yang memuat ID siswa
-            keterangan: 'Sakit',
-        };
+      const data = {
+        id_siswa: id_siswa, // Ganti dengan state atau variabel yang memuat ID siswa
+        keterangan: "Sakit",
+      };
 
-        const response = await post(`${baseUrl}/siswa-absensi-sakit`, data);
-        console.log('sakit bisa', response);
-        if (!response.ok) {
-            alert(`Error: ${response.message}`);
-            return;
-        }
+      const response = await axios.post(`${baseUrl}/siswa-absensi-sakit`, data);
+      console.log("sakit bisa", response);
+      if (!response) {
+        toast.error(`Error: ${response}`);
+        return;
+      }
 
-        alert('Absensi sakit berhasil dicatat!');
-        console.log(response.data);
-
+      toast.success("Absensi sakit berhasil dicatat!");
+      console.log(response.data);
     } catch (error) {
-        console.error('Terjadi kesalahan:', error);
-        toast('Gagal mencatat absensi sakit. Coba lagi nanti.');
+      console.error("Terjadi kesalahan:", error);
+      toast("Gagal mencatat absensi sakit. Coba lagi nanti.");
     }
-};
-
+  };
 
   // Fungsi untuk menambahkan siswa yang dipilih ke selectedSakit
-  const handleSakitSelect = (item) => {
-    setSelectedSakit(item); // Menyimpan item yang dipilih
-    setSearchTermSakit(item.name);
-  };
+  // const handleSakitSelect = (item) => {
+  //   setSelectedSakit(item); // Menyimpan item yang dipilih
+  //   setSearchTermSakit(item.name);
+  // };
 
   // Fungsi untuk toggle popup Sakit
   const togglePopupSakit = () => {
@@ -237,7 +260,7 @@ const Page = () => {
     useState(false);
 
   // State untuk menyimpan data keterangan lain yang dipilih
-  const [selectedKeteranganLain, setSelectedKeteranganLain] = useState([]);
+  const [selectedKeteranganLain, setSelectedKeteranganLain] = useState<Item[]>([]);
 
   // Data contoh untuk item keterangan lain bisa diganti secara dinamis
   const keteranganItems = [
@@ -289,7 +312,9 @@ const Page = () => {
 
   //function untuk search
   const [searchTermKeterangan, setSearchTermKeterangan] = useState("");
-  const handleKeteranganSearchChange = (event) => {
+  const handleKeteranganSearchChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     setSearchTermKeterangan(event.target.value);
   };
 
@@ -325,8 +350,8 @@ const Page = () => {
     setKelas(updatedKelas);
   };
   // Fungsi untuk menambahkan siswa yang dipilih ke selectedKeteranganLain
-  const handleKeteranganLainSelect = (item) => {
-    setSelectedKeteranganLain(item); // Menyimpan item yang dipilih
+  const handleKeteranganLainSelect = (item: Item) => {
+    setSelectedKeteranganLain([...selectedKeteranganLain, item]); // Menyimpan item yang dipilih
     setSearchTermKeterangan(item.name);
   };
 
@@ -344,7 +369,9 @@ const Page = () => {
   };
 
   // Fungsi untuk mengubah item per halaman
-  const handleKeteranganItemsPerPageChange = (e) => {
+  const handleKeteranganItemsPerPageChange = (
+    e: React.ChangeEvent<HTMLSelectElement>
+  ) => {
     setKeteranganItemsPerPage(parseInt(e.target.value));
   };
 
@@ -353,7 +380,7 @@ const Page = () => {
   // State untuk kontrol popup pulang
   const [isPopupVisiblePulang, setIsPopupVisiblePulang] = useState(false);
   // State untuk menyimpan data pulang yang dipilih
-  const [selectedPulang, setSelectedPulang] = useState([]);
+  const [selectedPulang, setSelectedPulang] = useState<Item[]>([]);
 
   // Data contoh untuk item pulang bisa diganti secara dinamis
   const pulangItems = [
@@ -400,7 +427,9 @@ const Page = () => {
 
   //function untuk search
   const [searchTermPulang, setSearchTermPulang] = useState("");
-  const handlePulangSearchChange = (event) => {
+  const handlePulangSearchChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     setSearchTermPulang(event.target.value);
   };
 
@@ -437,8 +466,8 @@ const Page = () => {
   };
 
   // Fungsi untuk menambahkan siswa yang dipilih ke selectedPulang
-  const handlePulangSelect = (item) => {
-    setSelectedPulang(item); // Menyimpan item yang dipilih
+  const handlePulangSelect = (item: Item) => {
+    setSelectedPulang([...selectedPulang, item]); // Menyimpan item yang dipilih
     setSearchTermPulang(item.name);
   };
 
@@ -461,7 +490,9 @@ const Page = () => {
   };
 
   // Fungsi untuk mengubah item per halaman
-  const handlePulangItemsPerPageChange = (e) => {
+  const handlePulangItemsPerPageChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     setSakitItemsPerPage(parseInt(e.target.value));
   };
 
@@ -511,7 +542,7 @@ const Page = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     // Hapus tanda kurung dari input
     const cleanValue = e.target.value.replace(/[()]/g, "");
-    
+
     // Perbarui state barcode dengan nilai yang sudah dibersihkan
     setBarcode(cleanValue);
   };
@@ -546,9 +577,11 @@ const Page = () => {
   }, []);
 
   //state untuk dropdown aksi
-  const [openDropdown, setOpenDropdown] = useState(null);
-  const handleDropdownClick = (id) => {
-    setOpenDropdown((prev) => (prev === id ? null : id));
+  const [openDropdown, setOpenDropdown] = useState<string | number | null>(
+    null
+  );
+  const handleDropdownClick = (id: string | number) => {
+    setOpenDropdown((prevDrop) => (prevDrop === id ? null : id));
   };
   //state jam digital
   const DigitalClock = dynamic(() => import("./components/DIgitalClock"), {
@@ -580,76 +613,157 @@ const Page = () => {
     } else {
       return "Waktu absensi tidak valid";
     }
-        return { keterangan, datang, pulang };
+    return { keterangan, datang, pulang };
   };
-    const [absensi, setAbsensi] = useState([]);
+  const [absensi, setAbsensi] = useState<AbsensiItem[]>([]);
 
-    const handleSubmit1 = async (e) => {
-      e.preventDefault();
-  
-      // Ambil status absensi berdasarkan waktu komputer
-      const { keterangan, datang, pulang, tanggal } = getAbsensiStatus();
+  // const handleSubmit1 = async (e: React.SyntheticEvent) => {
+  //   e.preventDefault();
+
+  //   // Ambil status absensi berdasarkan waktu komputer
+  //   const { keterangan, datang, pulang, tanggal } = getAbsensiStatus();
+  //   const formattedBarcode = barcode.trim(); // Menghapus spasi
+
+  //   // Kosongkan barcode setelah beberapa detik
+  //   setTimeout(() => {
+  //     setBarcode("");
+  //   }, 500);
+
+  //   if (keterangan === "") {
+  //     toast.error("Waktu absensi tidak valid");
+  //     return;
+  //   }
+
+  //   try {
+  //     // Cek apakah ID siswa ada
+  //     const checkResponse = await axios.get(`${baseUrl}/siswa/all-siswa`);
+
+  //     // Pastikan ID siswa ada dalam respons
+  //     const siswaList = checkResponse.data?.data || [];
+  //     const isSiswaValid = siswaList.some(
+  //       (siswa) => siswa.id_siswa === formattedBarcode
+  //     );
+
+  //     if (!isSiswaValid) {
+  //       toast.error("ID siswa tidak ditemukan");
+  //       return;
+  //     }
+
+  //     // Kirim data absensi ke backend
+  //     const response = await axios.post(`${baseUrl}/absensi/siswa-abseni`, {
+  //       id_siswa: formattedBarcode,
+  //       datang,
+  //       tanggal,
+  //       pulang,
+  //       keterangan,
+  //     });
+
+  //     // Perbarui state absensi di frontend
+  //     setAbsensi((prevDrop) =>
+  //       prevDrop.map((item) =>
+  //         item.id_siswa === formattedBarcode && item.absensi[tanggal]
+  //           ? {
+  //               ...item,
+  //               absensi: {
+  //                 ...item.absensi,
+  //                 [`${tanggal}_pulang`]: pulang, // Tambahkan waktu pulang
+  //               },
+  //             }
+  //           : item
+  //       )
+  //     );
+  //     // Jika absensi tidak tercatat atau tidak ada waktu datang
+  //     if (response.data.keterangan === "Alpa") {
+  //       toast.success(`${response.data.message} (Alpa)`);
+  //     } else {
+  //       toast.success(response.data.message);
+  //     }
+  //   } catch (error: unknown) {
+  //     if (error instanceof Error) {
+  //       console.log(error.message);
+  //     } else {
+  //       console.log("Unknown error");
+  //     }
+  //   }
+  // };
+  const handleSubmit1 = async (e: React.SyntheticEvent) => {
+    e.preventDefault();
+
+    const absensiStatus = getAbsensiStatus();
+
+    if (typeof absensiStatus !== "string") {
+      const { keterangan, datang, pulang } = absensiStatus;
+      const tanggal = new Date().toISOString().split("T")[0]; // Atur tanggal di sini
+
+      if (keterangan === "") {
+        toast.error("Waktu absensi tidak valid");
+        return;
+      }
+
       const formattedBarcode = barcode.trim(); // Menghapus spasi
-  
+
       // Kosongkan barcode setelah beberapa detik
       setTimeout(() => {
-          setBarcode('');
+        setBarcode("");
       }, 500);
-  
-      if (keterangan === '') {
-          toast.error('Waktu absensi tidak valid');
-          return;
-      }
-  
-      try {
-          // Cek apakah ID siswa ada
-          const checkResponse = await axios.get(`${baseUrl}/siswa/all-siswa`);
-  
-          // Pastikan ID siswa ada dalam respons
-          const siswaList = checkResponse.data?.data || [];
-          const isSiswaValid = siswaList.some((siswa) => siswa.id_siswa === formattedBarcode);
-  
-          if (!isSiswaValid) {
-              toast.error('ID siswa tidak ditemukan');
-              return;
-          }
-  
-          // Kirim data absensi ke backend
-          const response = await axios.post(`${baseUrl}/absensi/siswa-abseni`, {
-              id_siswa: formattedBarcode,
-              datang,
-              tanggal,
-              pulang,
-              keterangan,
-          });
 
-          // Perbarui state absensi di frontend
-          setAbsensi((prev) =>
-            prev.map((item) =>
-              item.id_siswa === formattedBarcode && item.absensi[tanggal]
-                ? {
-                    ...item,
-                    absensi: {
-                      ...item.absensi,
-                      [`${tanggal}_pulang`]: pulang, // Tambahkan waktu pulang
-                    },
-                  }
-                : item
-            )
-          );
-          // Jika absensi tidak tercatat atau tidak ada waktu datang
-          if (response.data.keterangan === 'Alpa') {
-              toast.success(`${response.data.message} (Alpa)`);
-          } else {
-              toast.success(response.data.message);
-          }
-  
-      } catch (error) {
-          console.error('Error saat memeriksa siswa:', error);
-          toast.error(error.response?.data?.message || 'Terjadi kesalahan');
+      try {
+        // Cek apakah ID siswa ada
+        const checkResponse = await axios.get(`${baseUrl}/siswa/all-siswa`);
+
+        // Pastikan ID siswa ada dalam respons
+        const siswaList: Siswa[] = checkResponse.data?.data || [];
+        const isSiswaValid = siswaList.some(
+          (siswa) => siswa.id_siswa === formattedBarcode
+        );
+
+        if (!isSiswaValid) {
+          toast.error("ID siswa tidak ditemukan");
+          return;
+        }
+
+        // Kirim data absensi ke backend
+        const response = await axios.post(`${baseUrl}/absensi/siswa-abseni`, {
+          id_siswa: formattedBarcode,
+          datang,
+          tanggal,
+          pulang,
+          keterangan,
+        });
+
+        // Perbarui state absensi di frontend
+        setAbsensi((prevDrop) =>
+          prevDrop.map((item) =>
+            item.id_siswa === formattedBarcode && item.absensi[tanggal]
+              ? {
+                  ...item,
+                  absensi: {
+                    ...item.absensi,
+                    [`${tanggal}_pulang`]: pulang, // Tambahkan waktu pulang
+                  },
+                }
+              : item
+          )
+        );
+
+        // Jika absensi tidak tercatat atau tidak ada waktu datang
+        if (response.data.keterangan === "Alpa") {
+          toast.success(`${response.data.message} (Alpa)`);
+        } else {
+          toast.success(response.data.message);
+        }
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          console.log(error.message);
+        } else {
+          console.log("Unknown error");
+        }
       }
+    } else {
+      toast.error(absensiStatus); // Menampilkan pesan error jika absensiStatus adalah string
+    }
   };
-  
+
   return (
     <>
       <div>
@@ -869,9 +983,9 @@ const Page = () => {
                                 <thead>
                                   <tr
                                     className="bg-slate-500"
-                                    onClick={() =>
-                                      handleKeteranganLainSelect(item)
-                                    }
+                                    // onClick={() =>
+                                    //   handleKeteranganLainSelect(item)
+                                    // }
                                   >
                                     <th className="text-white text-left rounded-l-lg px-4 py-2">
                                       Nama
@@ -1042,7 +1156,7 @@ const Page = () => {
                           <thead>
                             <tr
                               className="bg-slate-500"
-                              onClick={() => handlePulangSelect(item)}
+                              // onClick={() => handlePulangSelect(item)}
                             >
                               <th className="text-white text-left rounded-l-lg px-4 py-2">
                                 Nama
@@ -1155,7 +1269,7 @@ const Page = () => {
           }`}
         >
           <div className="bg-white rounded-lg shadow-lg p-6 text-center h-full lg:ml-5">
-            <DigitalClock className="" /> {/* Menambahkan ukuran font */}
+            <DigitalClock /> {/* Menambahkan ukuran font */}
           </div>
         </div>
 
@@ -1169,7 +1283,16 @@ const Page = () => {
                 </h2>
               </div>
               <div className="overflow-x-auto h-full">
-                <DataTable columns={tableColumns} data={kelas} />
+                <DataTable
+                  columns={
+                    tableColumns as {
+                      header: string;
+                      accessor: keyof Kelas;
+                      Cell?: ({ row }: { row: Kelas }) => JSX.Element;
+                    }[]
+                  }
+                  data={kelas}
+                />
               </div>
             </div>
           </div>
@@ -1214,86 +1337,4 @@ const Page = () => {
     </>
   );
 };
-// function DropdownMenu({ isOpen, onClick, onEdit, onDelete, onClose }) {
-//   const dropdownRef = useRef(null);
-
-//   // Fungsi untuk menutup dropdown saat pengguna mengklik di luar dropdown.
-//   const handleClickOutside = (event) => {
-//     console.log("Clicked outside"); // Debugging
-//     if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-//       console.log("Outside detected"); // Debugging
-//       if (typeof onClick === "function") {
-//         onClick(); // Memanggil fungsi onClose untuk menutup dropdown
-//       }
-//     }
-//   };
-
-//   useEffect(() => {
-//     console.log("Effect ran", isOpen); // Debugging
-//     // Menambahkan event listener untuk menangani klik di luar dropdown jika dropdown terbuka.
-//     if (isOpen) {
-//       document.addEventListener("mousedown", handleClickOutside);
-//     } else {
-//       // Menghapus event listener ketika dropdown ditutup.
-//       document.removeEventListener("mousedown", handleClickOutside);
-//     }
-
-//     // Cleanup function untuk menghapus event listener saat komponen di-unmount atau isOpen berubah.
-//     return () => {
-//       document.removeEventListener("mousedown", handleClickOutside);
-//       console.log("Cleanup"); // Debugging
-//     };
-//   }, [isOpen]);
-
-//   return (
-//     <div className="relative" ref={dropdownRef}>
-//       <button
-//         onClick={onClick}
-//         className="p-1 z-40  text-white text-xs sm:text-sm"
-//       >
-//         &#8942;
-//       </button>
-//       {isOpen && (
-//         <div
-//           className="absolute z-50 mt-1 w-24 sm:w-32 bg-slate-600 border rounded-md shadow-lg"
-//           style={{ left: "-62px", top: "20px" }} // Menggeser dropdown ke kiri
-//         >
-//           <button
-//             className="block w-full px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm hover:bg-slate-500"
-//             onClick={() => {
-//               alert("Detail clicked");
-//               if (typeof onClose === "function") {
-//                 onClose(); // Menutup dropdown setelah detail diklik
-//               }
-//             }}
-//           >
-//             Detail
-//           </button>
-//           <button
-//             onClick={() => {
-//               onEdit();
-//               if (typeof onClose === "function") {
-//                 onClose(); // Menutup dropdown setelah edit diklik
-//               }
-//             }}
-//             className="block w-full px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm hover:bg-slate-500"
-//           >
-//             Edit
-//           </button>
-//           <button
-//             onClick={() => {
-//               onDelete();
-//               if (typeof onClose === "function") {
-//                 onClose(); // Menutup dropdown setelah delete diklik
-//               }
-//             }}
-//             className="block w-full px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm hover:bg-slate-500"
-//           >
-//             Hapus
-//           </button>
-//         </div>
-//       )}
-//     </div>
-//   );
-// }
 export default Page;

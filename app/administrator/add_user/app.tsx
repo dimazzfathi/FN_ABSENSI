@@ -427,7 +427,7 @@ export default function DataSiswa() {
               onSubmit={handleSubmit}
               className="bg-white rounded-lg shadow-md p-4 lg:p-6 border"
             >
-              <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold">
+              <h2 className="text-sm mb-2 sm:text-sm pt-3 font-bold">
                 {" "}
                 Nama Admin
               </h2>
@@ -439,7 +439,7 @@ export default function DataSiswa() {
                 placeholder="Nama Admin..."
                 className="w-full p-2 border rounded text-sm sm:text-base mb-2"
               />
-              <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold">
+              <h2 className="text-sm mb-2 sm:text-sm pt-3 font-bold">
                 {" "}
                 Alamat
               </h2>
@@ -451,7 +451,7 @@ export default function DataSiswa() {
                 placeholder="Alamat..."
                 className="w-full p-2 border rounded text-sm sm:text-base mb-2"
               />
-              <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold">
+              <h2 className="text-sm mb-2 sm:text-sm pt-3 font-bold">
                 {" "}
                 Jenis Kelamin
               </h2>
@@ -465,7 +465,7 @@ export default function DataSiswa() {
                 <option value="Laki-laki">Laki-laki</option>
                 <option value="Perempuan">Perempuan</option>
               </select>
-              <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold">
+              <h2 className="text-sm mb-2 sm:text-sm pt-3 font-bold">
                 {" "}
                 Nomor Telepon
               </h2>
@@ -477,7 +477,7 @@ export default function DataSiswa() {
                 placeholder="No Telepon..."
                 className="w-full p-2 border rounded text-sm sm:text-base mb-2"
               />
-              <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold">
+              <h2 className="text-sm mb-2 sm:text-sm pt-3 font-bold">
                 {" "}
                 Email
               </h2>
@@ -489,7 +489,7 @@ export default function DataSiswa() {
                 placeholder="Email..."
                 className="w-full p-2 border rounded text-sm sm:text-base mb-2"
               />
-              <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold">
+              <h2 className="text-sm mb-2 sm:text-sm pt-3 font-bold">
                 {" "}
                 Username
               </h2>
@@ -501,7 +501,7 @@ export default function DataSiswa() {
                 placeholder="Username..."
                 className="w-full p-2 border rounded text-sm sm:text-base mb-2"
               />
-              <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold">
+              <h2 className="text-sm mb-2 sm:text-sm pt-3 font-bold">
                 {" "}
                 Password
               </h2>
@@ -521,7 +521,7 @@ export default function DataSiswa() {
                   {passwordVisible ? <FaEye /> : <FaEyeSlash />}
                 </span>
               </div>
-              <h2 className="text-sm pt-3 mb-2 sm:text-sm pt-3 font-bold">
+              <h2 className="text-sm mb-2 sm:text-sm pt-3 font-bold">
                 {" "}
                 Foto
               </h2>
@@ -828,7 +828,7 @@ export default function DataSiswa() {
                   )}
                 </div>
                 <div className="mt-4 flex justify-between items-center">
-                  <div className="text-sm text-gray-700 text-white">
+                  <div className="text-sm text-white">
                     Halaman {currentPage} dari {totalPages}
                   </div>
                   <div className="flex m-4 space-x-2">

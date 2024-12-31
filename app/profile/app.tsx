@@ -4,7 +4,7 @@ import Image from "next/image";
 const ProfileCard = () => {
   const [activeTab, setActiveTab] = useState("detail");
   const [profileImage, setProfileImage] = useState(null); // Untuk menyimpan URL gambar
-  const [imagePreview, setImagePreview] = useState(null); // Untuk pratinjau gambar
+  const [imagePreview, setImagePreview] = useState<string | ArrayBuffer | null>(null); // Untuk pratinjau gambar
   const [isSaving, setIsSaving] = useState(false);
   // State untuk menyimpan data profil yang ditampilkan
   const [profileData, setProfileData] = useState({
@@ -20,6 +20,13 @@ const ProfileCard = () => {
   // State untuk menyimpan data profil yang sedang diedit
   const [editProfileData, setEditProfileData] = useState({
     profileImage: "", // Gambar kosong secara default
+    status: "",
+    tentang: "",
+    nama: "",
+    alamat: "",
+    jenisKelamin: "",
+    nomorTelepon: "",
+    email: "",
   });
   const [passwordData, setPasswordData] = useState({
     oldPassword: "",
@@ -28,7 +35,7 @@ const ProfileCard = () => {
   });
 
   // Fungsi untuk menangani perubahan input
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement |  HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setEditProfileData((prevData) => ({
       ...prevData,
@@ -36,7 +43,7 @@ const ProfileCard = () => {
     }));
   };
 
-  const handlePasswordChange = (e) => {
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setPasswordData((prevData) => ({
       ...prevData,
@@ -45,13 +52,13 @@ const ProfileCard = () => {
   };
 
   // Fungsi untuk menangani perubahan gambar profil
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     const reader = new FileReader();
 
     reader.onloadend = () => {
       setImagePreview(reader.result);
-      localStorage.setItem("profileImage", reader.result);
+      // localStorage.setItem("profileImage", reader.result);
     };
 
     if (file) {
@@ -79,7 +86,11 @@ const ProfileCard = () => {
   const handleSave = () => {
     // Simpan data gambar profil
     if (imagePreview) {
-      localStorage.setItem('profileImage', imagePreview);
+      if (typeof imagePreview === 'string') {
+        localStorage.setItem('profileImage', imagePreview);
+      } else {
+        console.error("imagePreview bukan string, tidak dapat disimpan ke localStorage.");
+      }
     }
   
     // Simpan data lainnya
@@ -97,6 +108,22 @@ const ProfileCard = () => {
       newPassword: "",
       confirmPassword: "",
     });
+  };
+
+  const getImageSrc = (imagePreview: string | ArrayBuffer | null) => {
+    if (imagePreview === null) {
+      return ''; // Atau gambar default jika null
+    }
+
+    if (typeof imagePreview === 'string') {
+      return imagePreview; // Jika sudah string (Data URL)
+    } else if (imagePreview instanceof ArrayBuffer) {
+      // Jika ArrayBuffer, buat URL objek dari ArrayBuffer
+      const blob = new Blob([imagePreview], { type: 'image/jpeg' }); // Sesuaikan dengan tipe gambar
+      return URL.createObjectURL(blob);
+    }
+
+    return ''; // Jika tidak ada gambar, kembalikan string kosong
   };
 
   return (
@@ -128,7 +155,7 @@ const ProfileCard = () => {
                 <div className="flex space-x-4">
                   {imagePreview && (
                     <Image
-                      src={imagePreview} // Ganti dengan path ke foto profil Anda
+                      src={getImageSrc(imagePreview)} // Ganti dengan path ke foto profil Anda
                       alt="Foto Profil"
                       width={128}
                       height={128}
@@ -229,7 +256,7 @@ const ProfileCard = () => {
                   <div className="lg:ml-14 md:ml-6 flex-col items-center sm:ml-0">
                     {imagePreview && (
                       <img
-                        src={imagePreview || "/default-image.jpg"} // Gambar default jika belum ada
+                        src={getImageSrc(imagePreview)} // Gambar default jika belum ada
                         alt="Profile Preview"
                         className="w-32 h-32 mb-2 rounded-full object-cover"
                       />

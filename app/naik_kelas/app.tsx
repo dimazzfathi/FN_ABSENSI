@@ -5,12 +5,22 @@ import DataTable from "@/app/components/dataTabel";
 import { updateSiswa } from "../api/siswa";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { Kelas } from "../api/kelas";
 
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
+type item = {
+  kelas: string;
+  nama_siswa: string;
+  id_siswa: string;
+  nis: string;
+  tinggalKelas: boolean;
+  id_kelas: string;
+}
+
 export default function NaikKelas() {
-  const [kelas, setKelas] = useState([]);
-  const [allKelas, setAllKelas] = useState([]);
+  const [kelas, setKelas] = useState<item[]>([]);
+  const [allKelas, setAllKelas] = useState<item[]>([]);
   const fetchKelasSiswaTotal = async () => {
     try {
       const response = await axios.get(
@@ -41,9 +51,9 @@ export default function NaikKelas() {
   const [showLulusNotif, setShowLulusNotif] = useState(false);
   const [searchName, setSearchName] = useState("");
   const [newIdKelas, setNewIdKelas] = useState("");
-  const [filteredKelas, setFilteredKelas] = useState([]);
+  const [filteredKelas, setFilteredKelas] = useState<item[]>([]);
   const [selectedKelas, setSelectedKelas] = useState("");
-  const [updatedKelas, setUpdatedKelas] = useState([]);
+  const [updatedKelas, setUpdatedKelas] = useState<item[]>([]);
   const [showLihatButton, setShowLihatButton] = useState(false); // State untuk tombol Lihat
   const [showData, setShowData] = useState(false); // State untuk menampilkan data setelah klik Lihat
   const [showUpdatedData, setShowUpdatedData] = useState(false);
@@ -68,7 +78,7 @@ export default function NaikKelas() {
     setFilteredKelas(updatedKelas);
   }, [selectedKelas, searchName, kelas]);
 
-  const handleCheckboxChange = (index) => {
+  const handleCheckboxChange = (index: number) => {
     setFilteredKelas((prev) =>
       prev.map((item, i) =>
         i === index ? { ...item, tinggalKelas: !item.tinggalKelas } : item
@@ -103,7 +113,7 @@ export default function NaikKelas() {
       setShowLihatButton(true);
     } catch (error) {
       toast.error("Gagal memperbarui data");
-      console.error(error.response?.data || error.message);
+      // console.error(error.response?.data || error.message);
     }
   };
   const handleLihatClick = () => {

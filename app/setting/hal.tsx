@@ -37,9 +37,16 @@ const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 //     </select>
 //   );
 // };
+interface Item {
+  jam_masuk: string;
+  jam_pulang: string;
+  jam_terlambat: string;
+  id_setting: string;
+  hari: string;
+}
 
 const Schedule = () => {
-  const [settings, setSettings] = useState([]);
+  const [settings, setSettings] = useState<Item[]>([]);
   // const [settings, setSettings] = useState<any[]>([]);// State untuk menyimpan data settings
   console.log('Tabel Seting', settings); 
   const hariUrutan = [
@@ -51,7 +58,7 @@ const Schedule = () => {
         const response = await axios.get(`${baseUrl}/setting/all-setting`);
         console.log('Data fetched:', response.data.data); // Debug: Cek data
         // Urutkan data berdasarkan 'hari' secara abjad (A-Z)
-        const sortedData = response.data.data.sort((a, b) => {
+        const sortedData = response.data.data.sort((a: any, b: any) => {
           // Mengurutkan berdasarkan hari menggunakan index hari dalam urutan
           return hariUrutan.indexOf(a.hari) - hariUrutan.indexOf(b.hari);
         });
@@ -80,9 +87,9 @@ const Schedule = () => {
     to: 'libur',
   });
   
-  const [selectedDays, setSelectedDays] = useState([]);
+  const [selectedDays, setSelectedDays] = useState<string[]>([]);
 
-  const handleTimeChange = (type, value, timeType) => {
+  const handleTimeChange = (type: string, value: string, timeType: string) => {
     const newValue = value === '' ? 'libur' : value; // Jika value kosong, simpan 'libur'
   
     if (type === 'arrival') {
@@ -107,7 +114,7 @@ const Schedule = () => {
   };
   
   // Contoh fungsi untuk menyimpan ke database
-  const saveToDatabase = (type, timeType, value) => {
+  const saveToDatabase = (type: string, value: string, timeType: string) => {
     const tableName = `${type}Times`; // Misalnya 'arrivalTimes'
     const data = {
       [timeType]: value,
@@ -117,7 +124,7 @@ const Schedule = () => {
     // Ganti dengan API atau mekanisme penyimpanan yang sesuai
   };
 
-  const handleDayChange = (day) => {
+  const handleDayChange = (day: string) => {
     setSelectedDays(prevDays => {
       if (prevDays.includes(day)) {
         // Hapus hari dari array jika sudah ada
@@ -129,7 +136,7 @@ const Schedule = () => {
     });
   };
   
-  const formatTime = (time) => {
+  const formatTime = (time: string) => {
     return time.replace(':', '.'); // Mengubah format dari HH:mm menjadi HH.mm
   };
 
@@ -155,12 +162,12 @@ const Schedule = () => {
   
       // Filter data yang sudah ada untuk hari yang dipilih
       const daysToUpdate = selectedDays.filter((day) =>
-        existingData.some((item) => item.hari === day)
+        existingData.some((item: any) => item.hari === day)
       );
   
       // Filter data yang belum ada untuk hari yang dipilih
       const daysToInsert = selectedDays.filter((day) =>
-        !existingData.some((item) => item.hari === day)
+        !existingData.some((item: any) => item.hari === day)
       );
   
       // Lakukan update untuk hari yang sudah ada
@@ -225,11 +232,11 @@ const Schedule = () => {
   
   
   
-  const [logo, setLogo] = useState(null);
+  const [logo, setLogo] = useState<string | ArrayBuffer | null>(null);
   const [instansiName, setInstansiName] = useState('');
 
-  const handleLogoChange = (event) => {
-    const file = event.target.files[0];
+  const handleLogoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -239,13 +246,25 @@ const Schedule = () => {
     }
   };
 
-  const handleInstansiNameChange = (event) => {
+  const handleInstansiNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setInstansiName(event.target.value);
   };
 
   const handleSave = () => {
     // Add any save logic here if needed, like sending data to the server or saving in localStorage
   };
+
+  // Fungsi untuk mengonversi ArrayBuffer menjadi objek URL
+const arrayBufferToUrl = (buffer: ArrayBuffer): string => {
+  const blob = new Blob([buffer]); // Membuat Blob dari ArrayBuffer
+  return URL.createObjectURL(blob); // Membuat URL objek dari Blob
+};
+
+// Misalnya logo adalah ArrayBuffer
+const logo1: ArrayBuffer = new ArrayBuffer(8); // Contoh ArrayBuffer
+
+// Membuat URL objek dari ArrayBuffer
+const imageUrl = arrayBufferToUrl(logo1);
 
   return (
     <>
@@ -616,7 +635,7 @@ const Schedule = () => {
               <div className="text-white">
                 {logo && (
                   <div className="mb-4">
-                    <img src={logo} alt="Logo" className="w-24 h-24 object-contain" />
+                    <img src={imageUrl} alt="Logo" className="w-24 h-24 object-contain" />
                   </div>
                 )}
                 {instansiName ? (
