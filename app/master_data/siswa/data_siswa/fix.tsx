@@ -593,9 +593,7 @@ export default function DataSiswa() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-<<<<<<< HEAD
-   //proses mencocokkan data dari excel dengan tabel databse untuk diambilid nya
-=======
+
     // Validasi: Pastikan nis, nama_siswa, dan jenis_kelamin tidak kosong
     if (!formData.nis || !formData.nama_siswa || !formData.jenis_kelamin) {
       // Temukan input yang kosong dan beri fokus pada input pertama yang kosong
@@ -611,7 +609,7 @@ export default function DataSiswa() {
       );
       return; // Menghentikan proses submit jika ada input yang kosong
     }
->>>>>>> 93499a9217fd3634a5fe0b09f157dccaf6126ccc
+
 
     try {
       // Gantikan dengan URL server Anda
@@ -644,7 +642,7 @@ export default function DataSiswa() {
 
         // Kosongkan form setelah submit berhasil
         setFormData({
-<<<<<<< HEAD
+
           id_siswa: '',
           id_admin: '',
           nis: '',
@@ -655,7 +653,7 @@ export default function DataSiswa() {
           id_rombel: '',
           nama_wali: '',
           nomor_wali: '',
-=======
+
           id_siswa: "",
           id_admin: "",
           nis: "",
@@ -670,7 +668,7 @@ export default function DataSiswa() {
           pass: "",
           foto: "",
           barcode: "",
->>>>>>> 93499a9217fd3634a5fe0b09f157dccaf6126ccc
+
         });
       } else {
         toast.error("Gagal menambahkan data siswa");
@@ -798,8 +796,7 @@ const tahunText = `Isi dengan Format:\n${tahunPelajaran.map(tahun => tahun.tahun
 worksheet["F1"].c = [{ t: tahunText }];
 
 
-<<<<<<< HEAD
-=======
+
     // Menggabungkan nilai tahun menjadi satu string dengan format yang diinginkan
     const tahunText = `Isi dengan Format:\n${tahunPelajaran
       .map((tahun) => tahun.tahun)
@@ -819,7 +816,7 @@ worksheet["F1"].c = [{ t: tahunText }];
     // Menambahkan ke komentar worksheet sebagai satu entri
     worksheet["H1"].c = [{ t: rombelText }];
 
->>>>>>> 93499a9217fd3634a5fe0b09f157dccaf6126ccc
+
     // Membuat workbook
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Siswa");
