@@ -10,13 +10,26 @@ export type Guru = {
   jenis_kelamin: string;
   email: string;
   pas: string;
-  foto: string;
+  foto: string | File | null;
   walas: string;
   staf: string;
   barcode: string;
   no_telp: string;
   // Tambahkan properti lain yang sesuai dengan struktur data di tabel 'admin'
 };
+
+interface AddGuruResult {
+  nip: string;
+  status: string;
+  message: string;
+}
+
+interface AddGuruResponse {
+  Status: number;
+  success: boolean;
+  results: AddGuruResult[];
+}
+
 
 export const fetchGuru = async (): Promise<Guru[]> => {
     try {
@@ -31,11 +44,11 @@ export const fetchGuru = async (): Promise<Guru[]> => {
   };
 
 // Fungsi untuk menambah guru
-export const addGuru = async (guruData: Guru): Promise<Guru> => {
+export const addGuru = async (guruData: Guru[]): Promise<AddGuruResponse> => {
     try {
       const response = await axios.post(`${baseUrl}/guru/add-guru`, guruData);
       console.log(response);
-      return response.data as Guru;
+      return response.data as AddGuruResponse;
     } catch (error) {
       const axiosError = error as { response?: { data: string }; message?: string };
       console.error('Error saat menambah guru:', axiosError.response?.data || axiosError.message);
